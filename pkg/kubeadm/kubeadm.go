@@ -44,7 +44,7 @@ func Init(podNetwork string, kubernetesVersion string) (bool, string) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		log.Warn("Error invoking kubeadm init command: " + fmt.Sprint(err) + "\n" + stderr.String())
+		log.Error("Error invoking kubeadm init command: " + fmt.Sprint(err) + "\n" + stderr.String())
 		return false, "kubeadm init: " + err.Error()
 	} else {
 		log.Info(out.String())
@@ -55,7 +55,7 @@ func Init(podNetwork string, kubernetesVersion string) (bool, string) {
 	out.Reset()
 	stderr.Reset()
 	if err := cmd.Run(); err != nil {
-		log.Warn("Error setting up flannel: " + fmt.Sprint(err) + "\n" + stderr.String())
+		log.Error("Error setting up flannel: " + fmt.Sprint(err) + "\n" + stderr.String())
 		return false, "Setting up flannel: " + err.Error()
 	} else {
 		log.Info(out.String())
@@ -66,7 +66,7 @@ func Init(podNetwork string, kubernetesVersion string) (bool, string) {
 	stderr.Reset()
 	cmd = exec.Command("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "/usr/share/k8s-yaml/kured/kured.yaml")
 	if err := cmd.Run(); err != nil {
-		log.Warn("Error setting up kured: " + fmt.Sprint(err) + "\n" + stderr.String())
+		log.Error("Error setting up kured: " + fmt.Sprint(err) + "\n" + stderr.String())
 		return false, "Setting up kured: " + err.Error()
 	} else {
 		log.Info(out.String())

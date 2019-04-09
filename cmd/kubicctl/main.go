@@ -16,6 +16,9 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
 	"context"
 	"os"
 	"time"
@@ -23,6 +26,7 @@ import (
 
         log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
@@ -30,10 +34,42 @@ const (
 	address     = "localhost:50051"
 	defaultNetwork = "flannel"
 )
+// Client Certificates
+var (
+	crtFile = "certs/admin.crt"
+        keyFile = "certs/admin.key"
+        caFile = "certs/Kubic-Control.crt"
+)
 
 func main() {
 	// Set up a connection to the server.
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
+
+	// Load the certificates from disk
+	certificate, err := tls.LoadX509KeyPair(crtFile, keyFile)
+	if err != nil {
+		log.Fatalf("could not load client key pair: %s", err)
+	}
+
+	// Create a certificate pool from the certificate authority
+	certPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile(caFile)
+	if err != nil {
+		log.Fatalf("could not read ca certificate: %s", err)
+	}
+
+	// Append the client certificates from the CA
+	if ok := certPool.AppendCertsFromPEM(ca); !ok {
+		log.Fatal("failed to append ca certs")
+	}
+
+	// Create the TLS credentials for transport
+	creds := credentials.NewTLS(&tls.Config{
+		ServerName:  "KubicD",
+		Certificates: []tls.Certificate{certificate},
+		RootCAs:      certPool,
+	})
+
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
