@@ -23,12 +23,8 @@ api: $(API_GO) ## Auto-generate grpc go sources
 dep: ## Get the dependencies
 	@$(GO) get -v -d ./...
 
-build: api dep $(KUBICD_BIN) $(KUBICCTL_BIN) ## Build the binary files
-
-$(KUBICD_BIN):
+build: api dep ## Build the binary files
 	$(GO) build -i -v -o $(KUBICD_BIN) $(LOCAL_LDFLAGS) ./cmd/kubicd
-
-$(KUBICCTL_BIN):
 	$(GO) build -i -v -o $(KUBICCTL_BIN) $(LOCAL_LDFLAGS) ./cmd/kubicctl
 
 clean: ## Remove previous builds

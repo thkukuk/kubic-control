@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"net"
+	"time"
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
@@ -26,6 +27,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	"gopkg.in/ini.v1"
 	log "github.com/sirupsen/logrus"
 	"github.com/thkukuk/kubic-control/pkg/kubeadm"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -33,10 +35,11 @@ import (
 
 var (
 	version = "unreleased"
-	port = ":50051"
+	port = ":7148"
 	crt = "certs/KubicD.crt"
 	key = "certs/KubicD.key"
 	ca = "certs/Kubic-Control.crt"
+	rbac, err = ini.LooseLoad("/usr/share/defaults/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
 )
 
 type server struct{}
@@ -59,20 +62,26 @@ func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "no peer found")
 	}
-
 	tlsAuth, ok := p.AuthInfo.(credentials.TLSInfo)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "unexpected peer transport credentials")
 	}
-
 	if len(tlsAuth.State.VerifiedChains) == 0 || len(tlsAuth.State.VerifiedChains[0]) == 0 {
 		return nil, status.Error(codes.Unauthenticated, "could not verify peer certificate")
 	}
-
 	// Check subject common name against configured username
 	log.Info(tlsAuth.State.VerifiedChains[0][0].Subject.CommonName)
 
-	return handler(ctx, req)
+	start := time.Now()
+	// Calls the handler
+	h, err := handler(ctx, req)
+
+	log.Infof("Function: %s, Caller: %s, Duration: %s, Error: %v",
+		info.FullMethod,
+		tlsAuth.State.VerifiedChains[0][0].Subject.CommonName,
+		time.Since(start), err)
+
+	return h, err
 }
 
 func main() {
