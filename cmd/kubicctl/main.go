@@ -27,21 +27,57 @@ import (
         log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"github.com/spf13/cobra"
+	homedir "github.com/mitchellh/go-homedir"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
-const (
-	address     = "localhost:7148"
-	defaultNetwork = "flannel"
-)
-// Client Certificates
 var (
-	crtFile = "certs/admin.crt"
-        keyFile = "certs/admin.key"
-        caFile = "certs/Kubic-Control.crt"
+        version = "unreleased"
+	servername = "localhost"
+	port = "7148"
+	defaultNetwork = "flannel"
+
+	// Client Certificates
+	crtFile = "~/.config/kubicctl/certs/user.crt"
+        keyFile = "~/.config/kubicctl/certs/user.key"
+        caFile = "~/.config/kubicctl/certs/Kubic-Control.crt"
 )
 
 func main() {
+	rootCmd := &cobra.Command{
+                Use:   "kubicctl",
+                Short: "Kubic Control  Daemon Interface",
+                Run:   kubicctl}
+
+	rootCmd.Version = version
+	rootCmd.PersistentFlags().StringVarP(&servername, "server", "s", servername, "Name of server kubicd is running on")
+	rootCmd.PersistentFlags().StringVarP(&port, "port", "p", port, "Port on which kubicd is listening")
+	rootCmd.PersistentFlags().StringVar(&crtFile, "crtfile", crtFile, "Certificate with the public key for the user")
+	rootCmd.PersistentFlags().StringVar(&keyFile, "keyfile", keyFile, "Private key for the user")
+	rootCmd.PersistentFlags().StringVar(&caFile, "cafile", caFile, "Certificate with the public key of the CA for the server certificate")
+
+	var err error
+	crtFile, err = homedir.Expand(crtFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	keyFile, err = homedir.Expand(keyFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	caFile, err = homedir.Expand(caFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := rootCmd.Execute(); err != nil {
+                log.Fatal(err)
+        }
+
+}
+
+func kubicctl(cmd *cobra.Command, args []string) {
 	// Set up a connection to the server.
 
 	// Load the certificates from disk
@@ -69,7 +105,7 @@ func main() {
 		RootCAs:      certPool,
 	})
 
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(servername + ":" + port, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

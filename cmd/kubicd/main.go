@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"gopkg.in/ini.v1"
+	"github.com/spf13/cobra"
 	log "github.com/sirupsen/logrus"
 	"github.com/thkukuk/kubic-control/pkg/kubeadm"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -35,7 +36,8 @@ import (
 
 var (
 	version = "unreleased"
-	port = ":7148"
+	servername = ""
+	port = "7148"
 	crt = "certs/KubicD.crt"
 	key = "certs/KubicD.key"
 	ca = "certs/Kubic-Control.crt"
@@ -85,6 +87,19 @@ func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 }
 
 func main() {
+	rootCmd := &cobra.Command{
+                Use:   "kubicd",
+                Short: "Kubic Control  Daemon",
+                Run:   kubicd}
+
+	rootCmd.Version = version
+
+	if err := rootCmd.Execute(); err != nil {
+                log.Fatal(err)
+        }
+}
+
+func kubicd(cmd *cobra.Command, args []string) {
         log.Infof("Kubic Daemon: %s", version)
 
 	// Load the certificates from disk
@@ -105,7 +120,7 @@ func main() {
 		log.Fatal("failed to append client certs")
 	}
 
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", servername + ":" + port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

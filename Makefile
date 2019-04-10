@@ -7,8 +7,9 @@ PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO ?= go
 GO_MD2MAN ?= go-md2man
 
-VERSION    := $(shell cat VERSION)
-LOCAL_LDFLAGS = -ldflags "-X=main.version=$(VERSION)"
+VERSION	:= $(shell cat VERSION)
+PORT	:= $(shell cat PORT)
+LOCAL_LDFLAGS = -ldflags "-X=main.version=$(VERSION) -X=main.port=$(PORT)"
 
 .PHONY: all api build
 all: build
