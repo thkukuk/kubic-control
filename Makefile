@@ -9,7 +9,7 @@ GO_MD2MAN ?= go-md2man
 
 VERSION	:= $(shell cat VERSION)
 PORT	:= $(shell cat PORT)
-LOCAL_LDFLAGS = -ldflags "-X=main.version=$(VERSION) -X=main.port=$(PORT)"
+LOCAL_LDFLAGS = -ldflags "-X=main.Version=$(VERSION) -X=main.port=$(PORT)"
 
 .PHONY: all api build
 all: build
@@ -23,6 +23,9 @@ api: $(API_GO) ## Auto-generate grpc go sources
 
 dep: ## Get the dependencies
 	@$(GO) get -v -d ./...
+
+update: ## Get and update the dependencies
+	@$(GO) get -v -d -u ./...
 
 build: api dep ## Build the binary files
 	$(GO) build -i -v -o $(KUBICD_BIN) $(LOCAL_LDFLAGS) ./cmd/kubicd

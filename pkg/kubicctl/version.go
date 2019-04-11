@@ -12,14 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package kubicctl
 
 import (
-	"github.com/thkukuk/kubic-control/pkg/kubicctl"
+	"fmt"
+
+	"github.com/spf13/cobra"
 )
 
-var Version = "unreleased"
-
-func main() {
-  kubicctl.Execute()
+func VersionCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "version",
+		Short: "Print version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("kubicctl version %s\n", Version)
+		},
+	}
 }
