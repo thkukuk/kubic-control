@@ -9,7 +9,7 @@ GO_MD2MAN ?= go-md2man
 
 VERSION	:= $(shell cat VERSION)
 PORT	:= $(shell cat PORT)
-LOCAL_LDFLAGS = -ldflags "-X=main.Version=$(VERSION) -X=main.port=$(PORT)"
+LOCAL_LDFLAGS = -ldflags "-X=main.Version=$(VERSION) -X=main.Port=$(PORT)"
 
 .PHONY: all api build
 all: build

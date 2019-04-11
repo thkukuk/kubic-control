@@ -16,57 +16,52 @@ package kubicctl
 
 import (
 	"context"
-	"os"
 	"time"
-	"flag"
+	"fmt"
 
         log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
-var (
-	defaultNetwork = "flannel"
-)
-
-func InitMasterCmd() *cobra.Command {
+func AddNodeCmd() *cobra.Command {
         var subCmd = &cobra.Command {
-                Use:   "init",
+                Use:   "node",
                 Short: "Initialize Kubernetes Master Node",
-                Run: initMaster,
+                Run: addNode,
+		Args: cobra.ExactArgs(1),
 	}
 
 	return subCmd
 }
 
-func initMaster(cmd *cobra.Command, args []string) {
+func addNode(cmd *cobra.Command, args []string) {
 	// Set up a connection to the server.
+
+	nodes := args[0]
 
 	conn, err := CreateConnection()
 	if err != nil {
 		return
 	}
 	defer conn.Close()
+
 	c := pb.NewKubeadmClient(conn)
 
-	// Contact the server and print out its response.
-	podNetwork := defaultNetwork
-	if len(os.Args) > 1 {
-		podNetwork = os.Args[1]
-	}
-
-	var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
-	clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
-	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	// var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
+	// clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
+	// ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	r, err := c.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork})
+
+	r, err := c.AddNode(ctx, &pb.AddNodeRequest{NodeNames: nodes})
 	if err != nil {
 		log.Errorf("could not initialize: %v", err)
+		return
 	}
 	if r.Success {
-		log.Printf("Kubernetes master was succesfully setup\n")
+		fmt.Printf("Nodes %s added\n", nodes)
 	} else {
-		log.Errorf("Creating Kubernetes master failed: %s", r.Message)
+		log.Errorf("Add nodes %s failed: %s", nodes, r.Message)
 	}
 }

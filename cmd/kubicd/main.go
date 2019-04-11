@@ -22,6 +22,7 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 	"os"
+	"errors"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -51,13 +52,14 @@ type server struct{}
 func (s *server) InitMaster(ctx context.Context, in *pb.InitRequest) (*pb.StatusReply, error) {
 	log.Infof("Received: Kubernetes Version=%v, POD Network=%v",
 		in.KubernetesVersion, in.PodNetworking)
-	status, message := kubeadm.Init(in.PodNetworking, in.KubernetesVersion)
+	status, message := kubeadm.InitMaster(in.PodNetworking, in.KubernetesVersion)
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
 func (s *server) AddNode(ctx context.Context, in *pb.AddNodeRequest) (*pb.StatusReply, error) {
-	log.Printf("Received: add node  %v", in.NodeName)
-	return &pb.StatusReply{Success: true}, nil
+	log.Printf("Received: add node  %v", in.NodeNames)
+	status, message := kubeadm.AddNode(in.NodeNames)
+	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
 func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {

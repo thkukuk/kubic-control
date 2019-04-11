@@ -12,17 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package kubeadm
 
-import (
-	"os"
-	"github.com/thkukuk/kubic-control/pkg/kubicctl"
-)
+func ResetMaster() (bool, string) {
+	arg_socket := "--cri-socket=/run/crio/crio.sock"
 
-var Version = "unreleased"
-
-func main() {
-	if err := kubicctl.Execute(); err != nil {
-		os.Exit(1)
-	}
+	return  ExecuteCmd("kubeadm", "reset", "-f", arg_socket)
 }

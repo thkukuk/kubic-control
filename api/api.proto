@@ -40,5 +40,5 @@ message InitRequest {
 
 // The name of a new worker which should be added
 message AddNodeRequest {
-   string node_name = 1;
+   string node_names = 1;
 }

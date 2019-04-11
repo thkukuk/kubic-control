@@ -37,7 +37,7 @@ var (
         caFile = "~/.config/kubicctl/certs/Kubic-Control.crt"
 )
 
-func Execute() {
+func Execute() error {
 	rootCmd := &cobra.Command{
                 Use:   "kubicctl",
                 Short: "Kubic Control  Daemon Interface"}
@@ -51,6 +51,7 @@ func Execute() {
         rootCmd.AddCommand(
 		VersionCmd(),
                 InitMasterCmd(),
+		AddNodeCmd(),
         )
 
 	var err error
@@ -68,9 +69,11 @@ func Execute() {
 	}
 
 	if err := rootCmd.Execute(); err != nil {
-                log.Fatal(err)
+                // log.Fatal(err)
+		return err
         }
 
+	return nil
 }
 
 func CreateConnection() (*grpc.ClientConn, error) {
@@ -105,6 +108,7 @@ func CreateConnection() (*grpc.ClientConn, error) {
 	conn, err := grpc.Dial(servername + ":" + port, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Errorf("did not connect: %v", err)
+		return nil, err
 	}
 
 	return conn, nil
