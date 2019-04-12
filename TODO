@@ -8,3 +8,4 @@ kubicctl: use always fmt, not log
 kubicctl: read config file for server, port and path to certificates
 rebootNode: implement, drain and call reboot
 Replace homedir with os call
+Fix initializing Version and Port from Makefile

@@ -19,8 +19,6 @@ import (
 	"github.com/thkukuk/kubic-control/pkg/kubicctl"
 )
 
-var Version = "unreleased"
-
 func main() {
 	if err := kubicctl.Execute(); err != nil {
 		os.Exit(1)

@@ -27,7 +27,7 @@ import (
 )
 
 var (
-        Version string
+	Version = "unreleased"
 	servername = "localhost"
 	port = "7148"
 

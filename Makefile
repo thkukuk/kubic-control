@@ -9,7 +9,9 @@ GO_MD2MAN ?= go-md2man
 
 VERSION	:= $(shell cat VERSION)
 PORT	:= $(shell cat PORT)
-LOCAL_LDFLAGS = -ldflags "-X=main.Version=$(VERSION) -X=main.Port=$(PORT)"
+LOCAL_LDFLAGS = -ldflags "-X=main.Version=$(VERSION) -X=main.port=$(PORT)\
+	-X=github.com/thkukuk/kubic-control/pkg/kubicctl.Version=$(VERSION) \
+	-X=github.com/thkukuk/kubic-control/pkg/kubicctl.port=$(PORT)"
 
 .PHONY: all api build
 all: build
@@ -26,6 +28,12 @@ dep: ## Get the dependencies
 
 update: ## Get and update the dependencies
 	@$(GO) get -v -d -u ./...
+
+tidy: ## Clean up dependencies
+	@$(GO) mod tidy
+
+vendor: ## Create vendor directory
+	@$(GO) mod vendor
 
 build: api dep ## Build the binary files
 	$(GO) build -i -v -o $(KUBICD_BIN) $(LOCAL_LDFLAGS) ./cmd/kubicd
