@@ -26,6 +26,8 @@ service Kubeadm {
   rpc RemoveNode (RemoveNodeRequest) returns (StatusReply) {}
   // Upgrade cluster to newest version (as of kubeadm on master)
   rpc UpgradeKubernetes (Version) returns (StatusReply) {}
+  // Fetch kubeconfig
+  rpc FetchKubeconfig (Empty) returns (StatusReply) {}
 }
 
 // Tell success or not
@@ -54,3 +56,5 @@ message RemoveNodeRequest {
 message Version {
    string version = 1;
 }
+
+message Empty {}

@@ -15,6 +15,7 @@
 package kubeadm
 
 import (
+	"strings"
 )
 
 func UpgradeKubernetes(Version string) (bool, string) {
@@ -23,7 +24,7 @@ func UpgradeKubernetes(Version string) (bool, string) {
 	if success != true {
 		return success, message
 	}
-	kubernetes_version := message
+	kubernetes_version := strings.Replace(message, "'", "", -1)
 
 	// Check if kuberadm and kubelet is new enough on all nodes
 	// salt '*' --out=yaml pkg.version kubernetes-kubeadm kubernetes-kubelet
@@ -33,15 +34,41 @@ func UpgradeKubernetes(Version string) (bool, string) {
 		return success, message
 	}
 
-	success, message = ExecuteCmd("kubeadm",  "upgrade", "apply", kubernetes_version, "--yes")
+	success, message = ExecuteCmd("kubeadm",  "upgrade", "apply", "v"+kubernetes_version, "--yes")
 	if success != true {
 		return success, message
 	}
 
-	//success, message = ExecuteCmd("salt",  nodeNames, "cmd.run",  "\"" + joincmd + " " + arg_socket + "\"")
-	//if success != true {
-	//	return success, message
-	//}
+	// Get list of all worker nodes:
+	success, message = ExecuteCmd("salt", "-G", "kubicd:kubic-worker-node", "grains.get",  "kubic-worker-node")
+	if success != true {
+		return success, message
+	}
+	message = strings.TrimSuffix(message, "\n")
+	nodelist := strings.Split (strings.Replace(message, ":", "", -1), "\n")
+
+	var failedNodes = ""
+	for i := range nodelist {
+		hostname := GetNodeName(nodelist[i])
+		// if draining fails, ignore
+		ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
+			"drain",  hostname,  "--force",  "--ignore-daemonsets")
+
+		success,message = ExecuteCmd("salt", nodelist[i], "cmd.run",
+			"\"kubeadm upgrade node config --kubelet-version " + kubernetes_version + "\"")
+		if success != true {
+			failedNodes = failedNodes+nodelist[i]+" (kubeadm), "
+		} else {
+			success,message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon",  hostname)
+			if success != true {
+				failedNodes = failedNodes+nodelist[i]+" (uncordon), "
+			}
+		}
+	}
+
+	if len(failedNodes) > 0 {
+		return false, failedNodes
+	}
 
 	return true, ""
 }

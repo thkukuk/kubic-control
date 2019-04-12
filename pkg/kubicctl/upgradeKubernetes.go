@@ -25,24 +25,18 @@ import (
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
-var (
-	podNetwork = "flannel"
-)
-
-func InitMasterCmd() *cobra.Command {
+func UpgradeKubernetesCmd() *cobra.Command {
         var subCmd = &cobra.Command {
-                Use:   "init",
-                Short: "Initialize Kubernetes Master Node",
-                Run: initMaster,
+                Use:   "upgrade",
+                Short: "Upgrade Kubernetes Cluster",
+                Run: upgradeKubernetes,
 		Args: cobra.ExactArgs(0),
 	}
-
-        subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network should be used")
 
 	return subCmd
 }
 
-func initMaster(cmd *cobra.Command, args []string) {
+func upgradeKubernetes(cmd *cobra.Command, args []string) {
 	// Set up a connection to the server.
 
 	conn, err := CreateConnection()
@@ -53,21 +47,21 @@ func initMaster(cmd *cobra.Command, args []string) {
 
 	c := pb.NewKubeadmClient(conn)
 
-	var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
+	var deadlineMin = flag.Int("deadline_min", 20, "Default deadline in minutes.")
 	clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
 	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")
-	r, err := c.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork})
+	fmt.Print ("Upgrading kubernetes can take a very long time, please be patient.\n")
+	r, err := c.UpgradeKubernetes(ctx, &pb.Version{Version: ""})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not initialize: %v", err)
+		fmt.Fprintf(os.Stderr, "Could not upgrade: %v", err)
 		return
 	}
 	if r.Success {
-		fmt.Printf("Kubernetes master was succesfully setup\n")
+		fmt.Printf("Kubernetes cluster was successfully upgraded\n")
 	} else {
-		fmt.Fprintf(os.Stderr, "Creating Kubernetes master failed: %s", r.Message)
+		fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %s", r.Message)
 	}
 }

@@ -14,24 +14,12 @@
 
 package kubeadm
 
-import (
-	"strings"
-)
-
 func RemoveNode(nodeName string) (bool, string) {
 
 	// salt host names are not identical with kubernetes node name.
-	// Output of hostname should be identical to node name
-	success, message := ExecuteCmd("salt",  nodeName, "cmd.run",  "hostname")
-	if success != true {
-		return success, message
-	}
-	hostname := strings.Replace(message, "\n","",-1)
-	i := strings.Index(hostname,":")+1
-	hostname = hostname[i:]
-	hostname = strings.TrimSpace(hostname)
+	hostname := GetNodeName(nodeName)
 
-	success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
+	success, message := ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
 		"drain",  hostname, "--delete-local-data",  "--force",  "--ignore-daemonsets")
 	if success != true {
 		return success, message

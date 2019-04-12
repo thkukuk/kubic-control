@@ -17,32 +17,30 @@ package kubicctl
 import (
 	"context"
 	"time"
-	"flag"
 	"fmt"
 	"os"
+	"io/ioutil"
 
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
-var (
-	podNetwork = "flannel"
-)
+var output = ""
 
-func InitMasterCmd() *cobra.Command {
+func FetchKubeconfigCmd() *cobra.Command {
         var subCmd = &cobra.Command {
-                Use:   "init",
-                Short: "Initialize Kubernetes Master Node",
-                Run: initMaster,
+                Use:   "kubeconfig",
+                Short: "Download kubeconfig",
+                Run: fetchKubeconfig,
 		Args: cobra.ExactArgs(0),
 	}
 
-        subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network should be used")
+        subCmd.PersistentFlags().StringVarP(&output, "output", "o",  "stdout", "File kubeconfig should be stored")
 
 	return subCmd
 }
 
-func initMaster(cmd *cobra.Command, args []string) {
+func fetchKubeconfig(cmd *cobra.Command, args []string) {
 	// Set up a connection to the server.
 
 	conn, err := CreateConnection()
@@ -53,21 +51,27 @@ func initMaster(cmd *cobra.Command, args []string) {
 
 	c := pb.NewKubeadmClient(conn)
 
-	var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
-	clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
-	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")
-	r, err := c.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork})
+	r, err := c.FetchKubeconfig(ctx, &pb.Empty{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not initialize: %v", err)
-		return
+		os.Exit(1)
 	}
 	if r.Success {
-		fmt.Printf("Kubernetes master was succesfully setup\n")
+		if len(output) > 0 {
+			message:=[]byte(r.Message)
+			err := ioutil.WriteFile(output, message, 0600)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error writing '%s': %v", output, err)
+				os.Exit(1)
+			}
+		} else {
+			fmt.Printf(r.Message)
+		}
 	} else {
-		fmt.Fprintf(os.Stderr, "Creating Kubernetes master failed: %s", r.Message)
+		fmt.Fprintf(os.Stderr, "Couldn't get kubeconfig: %s", r.Message)
+		os.Exit(1)
 	}
 }

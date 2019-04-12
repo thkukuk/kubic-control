@@ -73,6 +73,12 @@ func (s *server) UpgradeKubernetes(ctx context.Context, in *pb.Version) (*pb.Sta
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
+func (s *server) FetchKubeconfig(ctx context.Context, in *pb.Empty) (*pb.StatusReply, error) {
+	log.Printf("Received: fetch kubeconfig")
+	status, message := kubeadm.FetchKubeconfig()
+	return &pb.StatusReply{Success: status, Message: message}, nil
+}
+
 func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 	p, ok := peer.FromContext(ctx)

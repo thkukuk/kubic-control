@@ -52,6 +52,8 @@ func Execute() error {
 		VersionCmd(),
                 InitMasterCmd(),
 		NodeCmd(),
+		UpgradeKubernetesCmd(),
+		FetchKubeconfigCmd(),
         )
 
 	var err error
