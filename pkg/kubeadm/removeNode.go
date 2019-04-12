@@ -47,6 +47,7 @@ func RemoveNode(nodeName string) (bool, string) {
 		return success, message
 	}
 	// Try some system cleanup, ignore if fails
+	ExecuteCmd("salt",  nodeName, "grains.delkey",  "kubicd")
 	ExecuteCmd("salt",  nodeName, "cmd.run",  "\"iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
 	ExecuteCmd("salt",  nodeName, "cmd.run",  "\"ip link delete cni0;  ip link delete flannel.1\"")
 	ExecuteCmd("salt",  nodeName, "cmd.run",  "\"systemctl disable --now crio\"")
