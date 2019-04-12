@@ -30,7 +30,7 @@ func ExecuteCmd(command string, arg ...string) (bool,string) {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
-	log.Info(cmd)
+	//log.Info(cmd)
 
 	if err := cmd.Run(); err != nil {
 		if (command == "salt") {

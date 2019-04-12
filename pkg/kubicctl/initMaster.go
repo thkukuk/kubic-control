@@ -19,8 +19,8 @@ import (
 	"time"
 	"flag"
 	"fmt"
+	"os"
 
-        log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
@@ -59,15 +59,15 @@ func initMaster(cmd *cobra.Command, args []string) {
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	fmt.Print ("Initializing first kubernetes master. This can take several minutes, please be patient\n")
+	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")
 	r, err := c.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork})
 	if err != nil {
-		log.Errorf("could not initialize: %v", err)
+		fmt.Fprintf(os.Stderr, "could not initialize: %v", err)
 		return
 	}
 	if r.Success {
-		log.Printf("Kubernetes master was succesfully setup\n")
+		fmt.Printf("Kubernetes master was succesfully setup\n")
 	} else {
-		log.Errorf("Creating Kubernetes master failed: %s", r.Message)
+		fmt.Fprintf(os.Stderr, "Creating Kubernetes master failed: %s", r.Message)
 	}
 }

@@ -22,7 +22,6 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 	"os"
-	"errors"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -59,6 +58,18 @@ func (s *server) InitMaster(ctx context.Context, in *pb.InitRequest) (*pb.Status
 func (s *server) AddNode(ctx context.Context, in *pb.AddNodeRequest) (*pb.StatusReply, error) {
 	log.Printf("Received: add node  %v", in.NodeNames)
 	status, message := kubeadm.AddNode(in.NodeNames)
+	return &pb.StatusReply{Success: status, Message: message}, nil
+}
+
+func (s *server) RemoveNode(ctx context.Context, in *pb.RemoveNodeRequest) (*pb.StatusReply, error) {
+	log.Printf("Received: remove node  %v", in.NodeNames)
+	status, message := kubeadm.RemoveNode(in.NodeNames)
+	return &pb.StatusReply{Success: status, Message: message}, nil
+}
+
+func (s *server) UpgradeKubernetes(ctx context.Context, in *pb.Version) (*pb.StatusReply, error) {
+	log.Printf("Received: upgrade Kubernetes  %v", in.Version)
+	status, message := kubeadm.UpgradeKubernetes(in.Version)
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
@@ -118,7 +129,9 @@ func main() {
 	rootCmd := &cobra.Command{
                 Use:   "kubicd",
                 Short: "Kubic Control  Daemon",
-                Run:   kubicd}
+                Run:   kubicd,
+	        Args: cobra.ExactArgs(0),
+	}
 
 	rootCmd.Version = Version
         rootCmd.PersistentFlags().StringVarP(&servername, "server", "s", servername, "Servername kubicd is listening on")
@@ -128,7 +141,7 @@ func main() {
         rootCmd.PersistentFlags().StringVar(&caFile, "cafile", caFile, "Certificate with the public key of the CA for the server certificate")
 
 	if err := rootCmd.Execute(); err != nil {
-                log.Fatal(err)
+                os.Exit (1)
         }
 }
 

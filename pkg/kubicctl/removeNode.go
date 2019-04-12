@@ -24,18 +24,18 @@ import (
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
-func AddNodeCmd() *cobra.Command {
+func RemoveNodeCmd() *cobra.Command {
         var subCmd = &cobra.Command {
-                Use:   "add <node>",
-                Short: "Add new nodes to cluster",
-                Run: addNode,
+                Use:   "remove <node>",
+                Short: "Remove node form cluster",
+                Run: removeNode,
 		Args: cobra.ExactArgs(1),
 	}
 
 	return subCmd
 }
 
-func addNode(cmd *cobra.Command, args []string) {
+func removeNode(cmd *cobra.Command, args []string) {
 	// Set up a connection to the server.
 
 	nodes := args[0]
@@ -54,14 +54,14 @@ func addNode(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	r, err := c.AddNode(ctx, &pb.AddNodeRequest{NodeNames: nodes})
+	r, err := c.RemoveNode(ctx, &pb.RemoveNodeRequest{NodeNames: nodes})
 	if err != nil {
 		log.Errorf("could not initialize: %v", err)
 		return
 	}
 	if r.Success {
-		fmt.Printf("Nodes %s added\n", nodes)
+		fmt.Printf("Node %s removed\n", nodes)
 	} else {
-		log.Errorf("Add nodes %s failed: %s", nodes, r.Message)
+		log.Errorf("Removing node %s failed: %s", nodes, r.Message)
 	}
 }

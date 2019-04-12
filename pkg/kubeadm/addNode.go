@@ -21,6 +21,8 @@ import (
 func AddNode(nodeNames string) (bool, string) {
 	arg_socket := "--cri-socket=/run/crio/crio.sock"
 
+	// XXX Check if node isn't already part of the kubernetes cluster
+
 	// XXX Store join command for 23 hours 30 minutes and re-use it.
 	success, joincmd := ExecuteCmd("kubeadm", "token", "create", "--print-join-command")
 	if success != true {
@@ -36,8 +38,16 @@ func AddNode(nodeNames string) (bool, string) {
 		if success != true {
 			return success, message
 		}
+		success, message = ExecuteCmd("salt", "-L", nodeNames, "grains.append", "kubicd", "kubic-worker-node")
+		if success != true {
+			return success, message
+		}
 	} else {
 		success, message = ExecuteCmd("salt",  nodeNames, "cmd.run",  "\"" + joincmd + " " + arg_socket + "\"")
+		if success != true {
+			return success, message
+		}
+		success, message = ExecuteCmd("salt", nodeNames, "grains.append", "kubicd", "kubic-worker-node")
 		if success != true {
 			return success, message
 		}

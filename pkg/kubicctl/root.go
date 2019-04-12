@@ -51,7 +51,7 @@ func Execute() error {
         rootCmd.AddCommand(
 		VersionCmd(),
                 InitMasterCmd(),
-		AddNodeCmd(),
+		NodeCmd(),
         )
 
 	var err error
