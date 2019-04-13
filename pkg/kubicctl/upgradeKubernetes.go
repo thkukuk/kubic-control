@@ -60,7 +60,7 @@ func upgradeKubernetes(cmd *cobra.Command, args []string) {
 		return
 	}
 	if r.Success {
-		fmt.Printf("Kubernetes cluster was successfully upgraded\n")
+		fmt.Printf("Kubernetes cluster was successfully upgraded to version %s", r.Message)
 	} else {
 		fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %s", r.Message)
 	}

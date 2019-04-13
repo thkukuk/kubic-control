@@ -70,5 +70,5 @@ func UpgradeKubernetes(Version string) (bool, string) {
 		return false, failedNodes
 	}
 
-	return true, ""
+	return true, kubernetes_version
 }
