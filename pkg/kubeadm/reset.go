@@ -17,5 +17,10 @@ package kubeadm
 func ResetMaster() (bool, string) {
 	arg_socket := "--cri-socket=/run/crio/crio.sock"
 
-	return  ExecuteCmd("kubeadm", "reset", "-f", arg_socket)
+	success, message :=  ExecuteCmd("kubeadm", "reset", "-f", arg_socket)
+
+	ExecuteCmd("systemctl", "disable", "--now", "crio")
+	ExecuteCmd("systemctl", "disable", "--now", "kubelet")
+
+	return success, message
 }

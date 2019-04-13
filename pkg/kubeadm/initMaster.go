@@ -23,6 +23,16 @@ func InitMaster(podNetwork string, kubernetesVersion string) (bool, string) {
 	arg_pod_network_cidr := ""
 	arg_kubernetes_version := ""
 
+	success, message := ExecuteCmd("systemctl", "enable", "--now", "crio")
+	if success != true {
+		return success, message
+	}
+	success, message = ExecuteCmd("systemctl", "enable", "--now", "kubelet")
+	if success != true {
+		ExecuteCmd("systemctl", "disable", "--now", "crio")
+		return success, message
+	}
+
 	if (strings.EqualFold(podNetwork, "flannel")) {
 		arg_pod_network_cidr = "--pod-network-cidr=10.244.0.0/16"
 	}
@@ -36,7 +46,7 @@ func InitMaster(podNetwork string, kubernetesVersion string) (bool, string) {
 		}
 	}
 
-	success, message := ExecuteCmd("kubeadm", "init", arg_socket,
+	success, message = ExecuteCmd("kubeadm", "init", arg_socket,
 		arg_pod_network_cidr, arg_kubernetes_version)
 	if success != true {
 		ResetMaster()

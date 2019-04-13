@@ -34,6 +34,22 @@ func AddNode(nodeNames string) (bool, string) {
 	var message string
 	// Differentiate between 'name1,name2' and 'name[1,2]'
 	if strings.Index(nodeNames, ",") >= 0 && strings.Index(nodeNames, "[") == -1 {
+		success, message = ExecuteCmd("salt", "-L", nodeNames, "service.start", "crio")
+		if success != true {
+			return success, message
+		}
+		success, message = ExecuteCmd("salt", "-L", nodeNames, "service.enable", "crio")
+		if success != true {
+			return success, message
+		}
+		success, message = ExecuteCmd("salt", "-L", nodeNames, "service.start", "kubelet")
+		if success != true {
+			return success, message
+		}
+		success, message = ExecuteCmd("salt", "-L", nodeNames, "service.enable", "kubelet")
+		if success != true {
+			return success, message
+		}
 		success, message = ExecuteCmd("salt", "-L", nodeNames, "cmd.run", "\"" + joincmd + " " + arg_socket + "\"")
 		if success != true {
 			return success, message
@@ -43,6 +59,22 @@ func AddNode(nodeNames string) (bool, string) {
 			return success, message
 		}
 	} else {
+		success, message = ExecuteCmd("salt", nodeNames, "service.start", "crio")
+		if success != true {
+			return success, message
+		}
+		success, message = ExecuteCmd("salt", nodeNames, "service.enable", "crio")
+		if success != true {
+			return success, message
+		}
+		success, message = ExecuteCmd("salt", nodeNames, "service.start", "kubelet")
+		if success != true {
+			return success, message
+		}
+		success, message = ExecuteCmd("salt", nodeNames, "service.enable", "kubelet")
+		if success != true {
+			return success, message
+		}
 		success, message = ExecuteCmd("salt",  nodeNames, "cmd.run",  "\"" + joincmd + " " + arg_socket + "\"")
 		if success != true {
 			return success, message

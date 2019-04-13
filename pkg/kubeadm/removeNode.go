@@ -38,7 +38,9 @@ func RemoveNode(nodeName string) (bool, string) {
 	ExecuteCmd("salt",  nodeName, "grains.delkey",  "kubicd")
 	ExecuteCmd("salt",  nodeName, "cmd.run",  "\"iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
 	ExecuteCmd("salt",  nodeName, "cmd.run",  "\"ip link delete cni0;  ip link delete flannel.1\"")
-	ExecuteCmd("salt",  nodeName, "cmd.run",  "\"systemctl disable --now crio\"")
-	ExecuteCmd("salt",  nodeName, "cmd.run",  "\"systemctl disable --now kubelet\"")
+	ExecuteCmd("salt",  nodeName, "service.disable",  "kubelet")
+	ExecuteCmd("salt",  nodeName, "service.stop",  "kubelet")
+	ExecuteCmd("salt",  nodeName, "service.disable",  "crio")
+	ExecuteCmd("salt",  nodeName, "service.stop",  "crio")
 	return true, ""
 }
