@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"github.com/spf13/cobra"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/thkukuk/kubic-control/pkg/certificates"
 )
 
 var (
@@ -54,6 +55,7 @@ func Execute() error {
 		NodeCmd(),
 		UpgradeKubernetesCmd(),
 		FetchKubeconfigCmd(),
+		certificates.CertificatesCmd(),
         )
 
 	var err error
