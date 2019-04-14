@@ -20,7 +20,7 @@ package api;
 // The kubeadm definition
 service Kubeadm {
   // Creates a new master
-  rpc InitMaster (InitRequest) returns (StatusReply) {}
+  rpc InitMaster (InitRequest) returns (stream StatusReply) {}
   // Add a new worker node to the cluster
   rpc AddNode (AddNodeRequest) returns (StatusReply) {}
   rpc RemoveNode (RemoveNodeRequest) returns (StatusReply) {}

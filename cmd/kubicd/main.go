@@ -48,11 +48,8 @@ var (
 
 type server struct{}
 
-func (s *server) InitMaster(ctx context.Context, in *pb.InitRequest) (*pb.StatusReply, error) {
-	log.Infof("Received: Kubernetes Version=%v, POD Network=%v",
-		in.KubernetesVersion, in.PodNetworking)
-	status, message := kubeadm.InitMaster(in.PodNetworking, in.KubernetesVersion)
-	return &pb.StatusReply{Success: status, Message: message}, nil
+func (s *server) InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
+	return kubeadm.InitMaster(in, stream)
 }
 
 func (s *server) AddNode(ctx context.Context, in *pb.AddNodeRequest) (*pb.StatusReply, error) {

@@ -56,7 +56,7 @@ func fetchKubeconfig(cmd *cobra.Command, args []string) {
 
 	r, err := c.FetchKubeconfig(ctx, &pb.Empty{})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not initialize: %v", err)
+		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
 		os.Exit(1)
 	}
 	if r.Success {
@@ -64,14 +64,14 @@ func fetchKubeconfig(cmd *cobra.Command, args []string) {
 			message:=[]byte(r.Message)
 			err := ioutil.WriteFile(output, message, 0600)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error writing '%s': %v", output, err)
+				fmt.Fprintf(os.Stderr, "Error writing '%s': %v\n", output, err)
 				os.Exit(1)
 			}
 		} else {
 			fmt.Printf(r.Message)
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "Couldn't get kubeconfig: %s", r.Message)
+		fmt.Fprintf(os.Stderr, "Couldn't get kubeconfig: %s\n", r.Message)
 		os.Exit(1)
 	}
 }

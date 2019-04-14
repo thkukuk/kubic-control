@@ -35,7 +35,7 @@ var (
 	// Client Certificates
 	crtFile = "~/.config/kubicctl/pki/user.crt"
         keyFile = "~/.config/kubicctl/pki/user.key"
-        caFile = "~/.config/kubicctl/pki/Kubic-Control.crt"
+        caFile = "~/.config/kubicctl/pki/Kubic-Control-CA.crt"
 )
 
 func Execute() error {

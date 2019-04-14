@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"io"
 
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -51,7 +52,7 @@ func initMaster(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	c := pb.NewKubeadmClient(conn)
+	client := pb.NewKubeadmClient(conn)
 
 	var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
 	clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
@@ -60,14 +61,20 @@ func initMaster(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")
-	r, err := c.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork})
+	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not initialize: %v", err)
+		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
 		return
 	}
-	if r.Success {
-		fmt.Printf("Kubernetes master was succesfully setup\n")
-	} else {
-		fmt.Fprintf(os.Stderr, "Creating Kubernetes master failed: %s", r.Message)
+	for {
+		r, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Creating Kubernetes master failed: %s\n%v", r.Message, err)
+			return
+		}
+		fmt.Printf("%s\n", r.Message)
 	}
 }
