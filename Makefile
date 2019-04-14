@@ -13,7 +13,7 @@ LOCAL_LDFLAGS = -ldflags "-X=main.Version=$(VERSION) -X=main.port=$(PORT)\
 	-X=github.com/thkukuk/kubic-control/pkg/kubicctl.Version=$(VERSION) \
 	-X=github.com/thkukuk/kubic-control/pkg/kubicctl.port=$(PORT)"
 
-.PHONY: all api build
+.PHONY: all api build vendor
 all: build
 
 $(API_GO): api/api.proto
