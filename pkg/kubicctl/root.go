@@ -32,9 +32,9 @@ var (
 	port = "7148"
 
 	// Client Certificates
-	crtFile = "~/.config/kubicctl/certs/user.crt"
-        keyFile = "~/.config/kubicctl/certs/user.key"
-        caFile = "~/.config/kubicctl/certs/Kubic-Control.crt"
+	crtFile = "~/.config/kubicctl/pki/user.crt"
+        keyFile = "~/.config/kubicctl/pki/user.key"
+        caFile = "~/.config/kubicctl/pki/Kubic-Control.crt"
 )
 
 func Execute() error {
@@ -96,7 +96,7 @@ func CreateConnection() (*grpc.ClientConn, error) {
 
 	// Append the client certificates from the CA
 	if ok := certPool.AppendCertsFromPEM(ca); !ok {
-		log.Error("failed to append ca certs")
+		log.Error("failed to append ca pki")
 		return nil, err
 	}
 

@@ -18,30 +18,27 @@ import (
 	"context"
 	"time"
 	"fmt"
-	"os"
-	"io/ioutil"
 
+        log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
-var output = ""
-
-func FetchKubeconfigCmd() *cobra.Command {
+func RebootNodeCmd() *cobra.Command {
         var subCmd = &cobra.Command {
-                Use:   "kubeconfig",
-                Short: "Download kubeconfig",
-                Run: fetchKubeconfig,
-		Args: cobra.ExactArgs(0),
+                Use:   "reboot <node>",
+                Short: "Reboot node form cluster",
+                Run: rebootNode,
+		Args: cobra.ExactArgs(1),
 	}
-
-        subCmd.PersistentFlags().StringVarP(&output, "output", "o",  "stdout", "File kubeconfig should be stored")
 
 	return subCmd
 }
 
-func fetchKubeconfig(cmd *cobra.Command, args []string) {
+func rebootNode(cmd *cobra.Command, args []string) {
 	// Set up a connection to the server.
+
+	nodes := args[0]
 
 	conn, err := CreateConnection()
 	if err != nil {
@@ -51,27 +48,20 @@ func fetchKubeconfig(cmd *cobra.Command, args []string) {
 
 	c := pb.NewKubeadmClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	// var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
+	// clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
+	// ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	r, err := c.FetchKubeconfig(ctx, &pb.Empty{})
+	r, err := c.RebootNode(ctx, &pb.RebootNodeRequest{NodeNames: nodes})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not initialize: %v", err)
-		os.Exit(1)
+		log.Errorf("could not initialize: %v", err)
+		return
 	}
 	if r.Success {
-		if len(output) > 0 && output != "stdout" {
-			message:=[]byte(r.Message)
-			err := ioutil.WriteFile(output, message, 0600)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error writing '%s': %v", output, err)
-				os.Exit(1)
-			}
-		} else {
-			fmt.Printf(r.Message)
-		}
+		fmt.Printf("Node %s rebootd\n", nodes)
 	} else {
-		fmt.Fprintf(os.Stderr, "Couldn't get kubeconfig: %s", r.Message)
-		os.Exit(1)
+		log.Errorf("Removing node %s failed: %s", nodes, r.Message)
 	}
 }

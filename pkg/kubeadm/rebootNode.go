@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubicctl
+package kubeadm
 
-import (
-	"github.com/spf13/cobra"
-)
+func RebootNode(nodeName string) (bool, string) {
 
-func NodeCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "node",
-                Short: "Manage kubernetes nodes",
+	// salt host names are not identical with kubernetes node name.
+	hostname := GetNodeName(nodeName)
+
+	success, message := ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
+		"drain",  hostname, "--force",  "--ignore-daemonsets")
+	if success != true {
+		return success, message
 	}
 
-	subCmd.AddCommand(
-		AddNodeCmd(),
-		RemoveNodeCmd(),
-		RebootNodeCmd(),
-	)
+	success, message = ExecuteCmd("salt",  nodeName, "sytem.reboot")
+	if success != true {
+		return success, message
+	}
 
-	return subCmd
+	return true, ""
 }

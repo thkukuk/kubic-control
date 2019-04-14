@@ -24,6 +24,7 @@ service Kubeadm {
   // Add a new worker node to the cluster
   rpc AddNode (AddNodeRequest) returns (StatusReply) {}
   rpc RemoveNode (RemoveNodeRequest) returns (StatusReply) {}
+  rpc RebootNode (RebootNodeRequest) returns (StatusReply) {}
   // Upgrade cluster to newest version (as of kubeadm on master)
   rpc UpgradeKubernetes (Version) returns (StatusReply) {}
   // Fetch kubeconfig
@@ -50,6 +51,11 @@ message AddNodeRequest {
 
 // The Nodes which should be remove
 message RemoveNodeRequest {
+  string node_names = 1;
+}
+
+// The Nodes which should be rebooted
+message RebootNodeRequest {
   string node_names = 1;
 }
 

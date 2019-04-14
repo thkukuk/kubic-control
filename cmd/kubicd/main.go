@@ -37,13 +37,13 @@ import (
 
 var (
 	Version = "unreleased"
-	servername = ""
+	servername = "localhost"
 	port = "7148"
-	crtFile = "/etc/kubicd/certs/KubicD.crt"
-	keyFile = "/etc/kubicd/certs/KubicD.key"
-	caFile = "/etc/kubicd/certs/Kubic-Control.crt"
+	crtFile = "/etc/kubicd/pki/KubicD.crt"
+	keyFile = "/etc/kubicd/pki/KubicD.key"
+	caFile = "/etc/kubicd/pki/Kubic-Control-CA.crt"
 	rbac, rbac_err = ini.LooseLoad("/usr/share/defaults/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
-	cfg, cfg_err = ini.LooseLoad("/etc/kubicd/kubicd.conf")
+	cfg, cfg_err = ini.LooseLoad("/usr/share/defaults/kubicd/kubicd.conf", "/etc/kubicd/kubicd.conf")
 )
 
 type server struct{}
@@ -64,6 +64,12 @@ func (s *server) AddNode(ctx context.Context, in *pb.AddNodeRequest) (*pb.Status
 func (s *server) RemoveNode(ctx context.Context, in *pb.RemoveNodeRequest) (*pb.StatusReply, error) {
 	log.Printf("Received: remove node  %v", in.NodeNames)
 	status, message := kubeadm.RemoveNode(in.NodeNames)
+	return &pb.StatusReply{Success: status, Message: message}, nil
+}
+
+func (s *server) RebootNode(ctx context.Context, in *pb.RebootNodeRequest) (*pb.StatusReply, error) {
+	log.Printf("Received: reboot node  %v", in.NodeNames)
+	status, message := kubeadm.RebootNode(in.NodeNames)
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
@@ -112,17 +118,17 @@ func loadConfigFile() {
 		log.Fatal(cfg_err)
 	}
 
-	if cfg.Section("global").HasKey("crtFile") {
-		crtFile =  cfg.Section("global").Key("crtFile").String()
+	if cfg.Section("global").HasKey("crtfile") {
+		crtFile =  cfg.Section("global").Key("crtfile").String()
 	}
-	if cfg.Section("global").HasKey("keyFile") {
-		keyFile =  cfg.Section("global").Key("keyFile").String()
+	if cfg.Section("global").HasKey("keyfile") {
+		keyFile =  cfg.Section("global").Key("keyfile").String()
 	}
-	if cfg.Section("global").HasKey("caFile") {
-		caFile =  cfg.Section("global").Key("caFile").String()
+	if cfg.Section("global").HasKey("cafile") {
+		caFile =  cfg.Section("global").Key("cafile").String()
 	}
-	if cfg.Section("global").HasKey("servername") {
-		servername =  cfg.Section("global").Key("servername").String()
+	if cfg.Section("global").HasKey("server") {
+		servername =  cfg.Section("global").Key("server").String()
 	}
 	if cfg.Section("global").HasKey("port") {
 		port =  cfg.Section("global").Key("port").String()
