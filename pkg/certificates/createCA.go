@@ -15,7 +15,7 @@
 package certificates
 
 func CreateCA (pki_dir string) error {
-	err, _ := ExecuteCmd("certstrap", "--depot-path", pki_dir, "init",  "--common-name", "Kubic-Control-CA", "--passphrase", "''")
+	err, _ := ExecuteCmd("certstrap", "--depot-path", pki_dir, "init",  "--common-name", "Kubic-Control-CA", "--passphrase", "")
 
 	return err
 }

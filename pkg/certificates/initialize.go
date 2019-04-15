@@ -18,10 +18,10 @@ import (
         "github.com/spf13/cobra"
 )
 
-var (
-	pki_dir = "/etc/kubicd/pki"
+// var (
+//	PKI_dir string
 	//cfg, cfg_err = ini.LooseLoad("/usr/share/defaults/kubicd/kubicd.conf", "/etc/kubicd/kubicd.conf")
-)
+//)
 
 func InitializeCertsCmd() *cobra.Command {
         var subCmd = &cobra.Command {
@@ -35,9 +35,24 @@ func InitializeCertsCmd() *cobra.Command {
 }
 
 func initializeCerts (cmd *cobra.Command, args []string) {
-	CreateCA(pki_dir)
-	CreateUser(pki_dir, "KubicD")
-	SignUser(pki_dir, "KubicD")
-	CreateUser(pki_dir, "admin")
-	SignUser(pki_dir, "admin")
+	err := CreateCA(PKI_dir)
+	if err != nil {
+		return
+	}
+	err = CreateUser(PKI_dir, "KubicD")
+	if err != nil {
+		return
+	}
+	err = SignUser(PKI_dir, "KubicD")
+	if err != nil {
+		return
+	}
+	err = CreateUser(PKI_dir, "admin")
+	if err != nil {
+		return
+	}
+	err = SignUser(PKI_dir, "admin")
+	if err != nil {
+		return
+	}
 }

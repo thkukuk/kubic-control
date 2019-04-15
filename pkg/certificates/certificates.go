@@ -18,11 +18,18 @@ import (
         "github.com/spf13/cobra"
 )
 
+var (
+	PKI_dir = "/etc/kubicd/pki"
+)
+
 func CertificatesCmd() *cobra.Command {
         var subCmd = &cobra.Command {
 		Use:   "certificates",
                 Short: "Manage certificates for kubicd/kubicctl communication",
         }
+
+	subCmd.PersistentFlags().StringVar(&PKI_dir, "pki-dir", PKI_dir, "PKI directory to find and store certificates")
+
 
         subCmd.AddCommand(
                 InitializeCertsCmd(),
