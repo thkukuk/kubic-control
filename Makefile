@@ -46,6 +46,14 @@ help: ## Display this help screen
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 
+.PHONY: release
+release: ## create release package from git
+	-git clone https://github.com/thkukuk/kubic-control
+	-mv kubic-control kubic-control-$(VERSION)
+	-make -C kubic-control-$(VERSION) vendor
+	-tar cJf kubic-control-$(VERSION).tar.xz kubic-control-$(VERSION)
+	-rm -rf kubic-control-$(VERSION)
+
 #MANPAGES_MD := $(wildcard docs/man/*.md)
 #MANPAGES    := $(MANPAGES_MD:%.md=%)
 
