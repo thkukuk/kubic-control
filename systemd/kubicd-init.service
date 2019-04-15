@@ -1,0 +1,15 @@
+[Unit]
+Description=Create certificates for KubicD
+DefaultDependencies=no
+Wants=local-fs.target
+After=local-fs.target
+Before=kubicd.service
+ConditionPathExists=!/etc/kubicd/pki/Kubic-Control-CA.crt
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/kubicctl certificates initialization
+
+[Install]
+WantedBy=multi-user.target
