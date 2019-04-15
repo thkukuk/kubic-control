@@ -18,6 +18,7 @@ import (
 	"context"
 	"net"
 	"time"
+	"strings"
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
@@ -82,7 +83,33 @@ func (s *server) FetchKubeconfig(ctx context.Context, in *pb.Empty) (*pb.StatusR
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
-func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func rbacCheck(user string, function string) bool {
+
+	if rbac_err != nil {
+		log.Error ("Error opening rbac config file: %v", rbac_err)
+		return false
+	}
+
+	api := strings.TrimPrefix(function, "/api.")
+
+	if !rbac.Section("").HasKey(api) {
+		log.Errorf ("RBAC: no entry for '%s'", api)
+		return false
+	}
+	value := rbac.Section("").Key(api).String()
+	userList := strings.Split(value, ",")
+	for i := range userList {
+		if user == strings.TrimSpace(userList[i]) {
+			return true
+		}
+	}
+
+	log.Warnf("User '%s' wants access to function '%s', refused", user, function)
+
+	return false
+}
+
+func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 	p, ok := peer.FromContext(ctx)
 	if !ok {
@@ -96,7 +123,10 @@ func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 		return nil, status.Error(codes.Unauthenticated, "could not verify peer certificate")
 	}
 	// Check subject common name against configured username
-	log.Info(tlsAuth.State.VerifiedChains[0][0].Subject.CommonName)
+	ok = rbacCheck(tlsAuth.State.VerifiedChains[0][0].Subject.CommonName, info.FullMethod)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "permission denied")
+	}
 
 	start := time.Now()
 	// Calls the handler
@@ -109,6 +139,38 @@ func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 
 	return h, err
 }
+
+func AuthStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+
+	p, ok := peer.FromContext(ss.Context())
+	if !ok {
+		return status.Error(codes.Unauthenticated, "no peer found")
+	}
+	tlsAuth, ok := p.AuthInfo.(credentials.TLSInfo)
+	if !ok {
+		return status.Error(codes.Unauthenticated, "unexpected peer transport credentials")
+	}
+	if len(tlsAuth.State.VerifiedChains) == 0 || len(tlsAuth.State.VerifiedChains[0]) == 0 {
+		return status.Error(codes.Unauthenticated, "could not verify peer certificate")
+	}
+	// Check subject common name against configured username
+	ok = rbacCheck(tlsAuth.State.VerifiedChains[0][0].Subject.CommonName, info.FullMethod)
+	if !ok {
+		return status.Error(codes.Unauthenticated, "permission denied")
+	}
+
+	start := time.Now()
+	// Calls the handler
+	err := handler(srv, ss)
+
+	log.Infof("Function: %s, Caller: %s, Duration: %s, Error: %v",
+		info.FullMethod,
+		tlsAuth.State.VerifiedChains[0][0].Subject.CommonName,
+		time.Since(start), err)
+
+	return err
+}
+
 
 func loadConfigFile() {
 	if cfg_err, ok := cfg_err.(*os.PathError); ok {
@@ -188,7 +250,8 @@ func kubicd(cmd *cobra.Command, args []string) {
 	})
 
 	s := grpc.NewServer(grpc.Creds(creds),
-		grpc.UnaryInterceptor(AuthInterceptor))
+		grpc.StreamInterceptor(AuthStreamInterceptor),
+		grpc.UnaryInterceptor(AuthUnaryInterceptor))
 	pb.RegisterKubeadmServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

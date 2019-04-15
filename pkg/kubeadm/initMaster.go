@@ -41,7 +41,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 
 	found, _ := exists ("/etc/kubernetes/manifests/kube-apiserver.yaml")
 	if found == true {
-		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Seems like a kubernetes control-plane is already running. If not, please use \"kubeadm reset\" to clean up the system"}); err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Seems like a kubernetes control-plane is already running. If not, please use \"kubeadm reset\" to clean up the system."}); err != nil {
 			return err
 		}
 		return nil
@@ -130,6 +130,8 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 	// Configure transactional-update to inform kured
+	ini.PrettyFormat = false
+	ini.PrettyEqual = false
 	cfg, err := ini.LooseLoad("/etc/transactional-update.conf")
 	if err != nil {
 		stream.Send(&pb.StatusReply{Success: true, Message: "Adjusting transactional-update to use kured for reboot failed.\nPlease ajdust /etc/transactional-update.conf yourself."})

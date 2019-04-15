@@ -72,7 +72,11 @@ func initMaster(cmd *cobra.Command, args []string) {
 			break
 		}
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Creating Kubernetes master failed: %s\n%v", r.Message, err)
+			if r == nil {
+				fmt.Fprintf(os.Stderr, "Creating Kubernetes master failed: %v\n",  err)
+			} else {
+				fmt.Fprintf(os.Stderr, "Creating Kubernetes master failed: %s\n%v\n", r.Message, err)
+			}
 			return
 		}
 		fmt.Printf("%s\n", r.Message)
