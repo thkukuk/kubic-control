@@ -1,9 +1,8 @@
 RBAC: - implement authentification checks
       - kubicctl rbac interface to manage it
-certificates: kubicctl certificate create ...
+certificates: kubicctl certificates create ...
 Exit code: make sure in error case we always exit with an error code
 kubicctl: use always fmt, not log
-kubicctl: read config file for server, port and path to certificates
+kubicctl: read config file for server, port and path to certificates if root
 Replace homedir with os call
-Fix initializing Version and Port from Makefile
 Wait after draining a node before continue, but how long for what?

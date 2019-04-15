@@ -13,6 +13,7 @@
 
 # Backup files
 *~
+kubic-control-*.tar.xz
 
 vendor
 api/api.pb.go

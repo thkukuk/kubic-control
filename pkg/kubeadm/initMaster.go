@@ -15,11 +15,21 @@
 package kubeadm
 
 import (
+	"os"
 	"strings"
 
+	"gopkg.in/ini.v1"
 	log "github.com/sirupsen/logrus"
 	pb "github.com/thkukuk/kubic-control/api"
 )
+
+// exists returns whether the given file or directory exists
+func exists(path string) (bool, error) {
+    _, err := os.Stat(path)
+    if err == nil { return true, nil }
+    if os.IsNotExist(err) { return false, nil }
+    return true, err
+}
 
 func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	arg_socket := "--cri-socket=/run/crio/crio.sock"
@@ -28,6 +38,28 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 
 	log.Infof("Received: Kubernetes Version=%v, POD Network=%v",
 		in.KubernetesVersion, in.PodNetworking)
+
+	found, _ := exists ("/etc/kubernetes/manifests/kube-apiserver.yaml")
+	if found == true {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Seems like a kubernetes control-plane is already running. If not, please use \"kubeadm reset\" to clean up the system"}); err != nil {
+			return err
+		}
+		return nil
+	}
+	found, _ = exists ("/etc/kubernetes/manifests/kube-scheduler.yaml")
+	if found == true {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Seems like a kubernetes control-plane is already running. If not, please use \"kubeadm reset\" to clean up the system"}); err != nil {
+			return err
+		}
+		return nil
+	}
+	found, _ = exists ("/etc/kubernetes/manifests/etcd.yaml")
+	if found == true {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Seems like a kubernetes control-plane is already running. If not, please use \"kubeadm reset\" to clean up the system"}); err != nil {
+			return err
+		}
+		return nil
+	}
 
 	success, message := ExecuteCmd("systemctl", "enable", "--now", "crio")
 	if success != true {
@@ -96,6 +128,14 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			return err
 		}
 		return nil
+	}
+	// Configure transactional-update to inform kured
+	cfg, err := ini.LooseLoad("/etc/transactional-update.conf")
+	if err != nil {
+		stream.Send(&pb.StatusReply{Success: true, Message: "Adjusting transactional-update to use kured for reboot failed.\nPlease ajdust /etc/transactional-update.conf yourself."})
+	} else {
+		cfg.Section("").Key("REBOOT_METHOD").SetValue("kured")
+		cfg.SaveTo("/etc/transactional-update.conf")
 	}
 
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Kubernetes master was succesfully setup."}); err != nil {

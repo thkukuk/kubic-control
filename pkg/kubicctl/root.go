@@ -33,9 +33,9 @@ var (
 	port = "7148"
 
 	// Client Certificates
-	crtFile = "~/.config/kubicctl/pki/user.crt"
-        keyFile = "~/.config/kubicctl/pki/user.key"
-        caFile = "~/.config/kubicctl/pki/Kubic-Control-CA.crt"
+	crtFile = "~/.config/kubicctl/user.crt"
+        keyFile = "~/.config/kubicctl/user.key"
+        caFile = "~/.config/kubicctl/Kubic-Control-CA.crt"
 )
 
 func Execute() error {
