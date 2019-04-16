@@ -58,6 +58,10 @@ func AddNode(nodeNames string) (bool, string) {
 		if success != true {
 			return success, message
 		}
+		success, message = ExecuteCmd("salt", "-L", nodeNames, "cmd.run", "if [ -f /etc/transactional-update.conf ]; then grep -q ^REBOOT_METHOD= /etc/transactional-update.conf && sed -i -e 's|REBOOT_METHOD=.*|REBOOT_METHOD=kured|g' /etc/transactional-update.conf || echo REBOOT_METHOD=kured >> /etc/transactional-update.conf ; else echo REBOOT_METHOD=kured > /etc/transactional-update.conf ; fi")
+		if success != true {
+			return success, message
+		}
 	} else {
 		success, message = ExecuteCmd("salt", nodeNames, "service.start", "crio")
 		if success != true {
@@ -80,6 +84,11 @@ func AddNode(nodeNames string) (bool, string) {
 			return success, message
 		}
 		success, message = ExecuteCmd("salt", nodeNames, "grains.append", "kubicd", "kubic-worker-node")
+		if success != true {
+			return success, message
+		}
+		// Configure transactinal-update
+		success, message = ExecuteCmd("salt", nodeNames, "cmd.run", "if [ -f /etc/transactional-update.conf ]; then grep -q ^REBOOT_METHOD= /etc/transactional-update.conf && sed -i -e 's|REBOOT_METHOD=.*|REBOOT_METHOD=kured|g' /etc/transactional-update.conf || echo REBOOT_METHOD=kured >> /etc/transactional-update.conf ; else echo REBOOT_METHOD=kured > /etc/transactional-update.conf ; fi")
 		if success != true {
 			return success, message
 		}

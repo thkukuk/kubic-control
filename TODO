@@ -1,6 +1,5 @@
-RBAC: - implement authentification checks
-      - kubicctl rbac interface to manage it
-certificates: kubicctl certificates create ...
+RBAC: - kubicctl rbac interface to manage it
+certificates: kubicctl certificates create <user>
 Exit code: make sure in error case we always exit with an error code
 kubicctl: use always fmt, not log
 kubicctl: read config file for server, port and path to certificates if root

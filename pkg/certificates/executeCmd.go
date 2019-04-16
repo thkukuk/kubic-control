@@ -29,7 +29,7 @@ func ExecuteCmd(command string, arg ...string) (error,string) {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
-	//log.Info(cmd)
+	//cmd.Print(cmd)
 
 	if err := cmd.Run(); err != nil {
 		fmt.Fprint(os.Stderr, "Error invoking " + command + ": " + fmt.Sprint(err) + "\n" + stderr.String() + "\n")
