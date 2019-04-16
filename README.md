@@ -7,7 +7,7 @@ kubic-control consists of two binaries:
 - kubicd, a daemon which communicates via gRPC with clients. It's setting up kubernetes on openSUSE Kubic, including pod network, kured, transactional-update, ...
 - kubicctl, a cli interface
 
-The communication is encrypted, the kubicctl command can run on any machine. The user authenticates with his certificate, using RBAC to determine if the user is allowed to call this function. kubiccd will use kubeadm and kubectl to deploy and manage the cluster. So the admin can at everytime modify the cluster with this commands, too, there is no hidden state-database.  
+The communication is encrypted, the kubicctl command can run on any machine. The user authenticates with his certificate, using RBAC to determine if the user is allowed to call this function. kubiccd will use kubeadm and kubectl to deploy and manage the cluster. So the admin can at everytime modify the cluster with this commands, too, there is no hidden state-database.
 
 ## Installation
 
@@ -29,8 +29,10 @@ This will create a CA and several certificates in `/etc/kubicd/pki`:
 For `kubicctl`, you need to create a directory `~/.config/kubicctl` which
 contains `Kubic-Control-CA.crt`, `user.key` and `user.crt`. For the admin
 role, this need to be a copy of admin.key and admin.crt. For other users,
-you need to create corresponding certificates and sign them with 
+you need to create corresponding certificates and sign them with
 `Kubic-Control-CA.crt`.
+Please take care of this certificates and store them secure, this are the
+passwords to access kubicd!
 
 ## Usage
 
@@ -59,11 +61,23 @@ The kubernetes cluster can be upgraded with:
 kubicctl upgrade
 ```
 
+## Configuration Files
+
+`Kubicd` reads two configuration files: `kubicd.conf` and `rbac.conf`. The
+first one is optional and contains the paths to the certificates and the server
+name with port `kubicd` should listen to. The default file can be found in
+`/usr/share/defaults/kubicd/kubicd.conf`. The variables can be overriden with
+`/etc/kubicd/conf`, which only contains the changed entries.
+
+The second file, `rbac.conf`, is mandatory, else nobody can access `kubicd`,
+all requests will be rejected. The default file can be found in
+`/usr/share/defaults/kubicd/kubicd.conf`. Changed entries should be written
+to `/etc/kubicd/rbac.conf`.
+
 ## Notes
 
 `Kubicd` does not store any informations about the state of the kubernetes
-cluster. This allows to manage the cluster with `kubectl` and `kubeadm` 
+cluster. This allows to manage the cluster with `kubectl` and `kubeadm`
 yourself without `kubicctl`. There is only one important thing: a grain
 has to be set on new worker nodes: `kubicd=kubic-worker-node`. If nodes
 gets manual removed, this grain has to be deleted, too.
-
