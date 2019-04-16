@@ -3,8 +3,7 @@ Description=Kubic Daemon to setup Kubernetes
 After=local-fs.target kubicd-init.service
 
 [Service]
-Type=notify
-NotifyAccess=all
+Type=simple
 ExecStart=/usr/sbin/kubicd
 
 [Install]
