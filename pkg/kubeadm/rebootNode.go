@@ -17,7 +17,10 @@ package kubeadm
 func RebootNode(nodeName string) (bool, string) {
 
 	// salt host names are not identical with kubernetes node name.
-	hostname := GetNodeName(nodeName)
+	hostname, err := GetNodeName(nodeName)
+	if err != nil {
+		return false, err.Error()
+	}
 
 	success, message := ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
 		"drain",  hostname, "--force",  "--ignore-daemonsets")

@@ -49,24 +49,29 @@ func UpgradeKubernetes(Version string) (bool, string) {
 
 	var failedNodes = ""
 	for i := range nodelist {
-		hostname := GetNodeName(nodelist[i])
-		// if draining fails, ignore
-		ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
-			"drain",  hostname,  "--force",  "--ignore-daemonsets")
-
-		success,message = ExecuteCmd("salt", nodelist[i], "cmd.run",
-			"\"kubeadm upgrade node config --kubelet-version " + kubernetes_version + "\"")
-		if success != true {
-			failedNodes = failedNodes+nodelist[i]+" (kubeadm), "
+		hostname, err := GetNodeName(nodelist[i])
+		if err != nil {
+			failedNodes = failedNodes+nodelist[i]+" (uncordon), "
 		} else {
-			success,message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon",  hostname)
+			// if draining fails, ignore
+			ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
+				"drain",  hostname,  "--force",  "--ignore-daemonsets")
+
+			success,message = ExecuteCmd("salt", nodelist[i], "cmd.run",
+				"\"kubeadm upgrade node config --kubelet-version " + kubernetes_version + "\"")
 			if success != true {
-				failedNodes = failedNodes+nodelist[i]+" (uncordon), "
+				failedNodes = failedNodes+nodelist[i]+" (kubeadm), "
+			} else {
+				success,message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon",  hostname)
+				if success != true {
+					failedNodes = failedNodes+nodelist[i]+" (uncordon), "
+				}
 			}
 		}
 	}
 
 	if len(failedNodes) > 0 {
+		// XXX remove ", " Suffix
 		return false, failedNodes
 	}
 

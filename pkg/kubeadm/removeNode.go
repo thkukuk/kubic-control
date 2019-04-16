@@ -17,7 +17,10 @@ package kubeadm
 func RemoveNode(nodeName string) (bool, string) {
 
 	// salt host names are not identical with kubernetes node name.
-	hostname := GetNodeName(nodeName)
+	hostname, err := GetNodeName(nodeName)
+	if err != nil {
+		return false, err.Error()
+	}
 
 	success, message := ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
 		"drain",  hostname, "--delete-local-data",  "--force",  "--ignore-daemonsets")
@@ -30,17 +33,18 @@ func RemoveNode(nodeName string) (bool, string) {
 		return success, message
 	}
 
-	success, message = ExecuteCmd("salt",  nodeName, "cmd.run",  "\"kubeadm reset --force\"")
+	success, message = ExecuteCmd("salt", nodeName, "cmd.run",  "kubeadm reset --force")
 	if success != true {
 		return success, message
 	}
 	// Try some system cleanup, ignore if fails
-	ExecuteCmd("salt",  nodeName, "grains.delkey",  "kubicd")
-	ExecuteCmd("salt",  nodeName, "cmd.run",  "\"iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
-	ExecuteCmd("salt",  nodeName, "cmd.run",  "\"ip link delete cni0;  ip link delete flannel.1\"")
-	ExecuteCmd("salt",  nodeName, "service.disable",  "kubelet")
-	ExecuteCmd("salt",  nodeName, "service.stop",  "kubelet")
-	ExecuteCmd("salt",  nodeName, "service.disable",  "crio")
-	ExecuteCmd("salt",  nodeName, "service.stop",  "crio")
+	ExecuteCmd("salt", nodeName, "cmd.run", "sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
+	ExecuteCmd("salt", nodeName, "grains.delkey",  "kubicd")
+	ExecuteCmd("salt", nodeName, "cmd.run",  "\"iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
+	ExecuteCmd("salt", nodeName, "cmd.run",  "\"ip link delete cni0;  ip link delete flannel.1\"")
+	ExecuteCmd("salt", nodeName, "service.disable",  "kubelet")
+	ExecuteCmd("salt", nodeName, "service.stop",  "kubelet")
+	ExecuteCmd("salt", nodeName, "service.disable",  "crio")
+	ExecuteCmd("salt", nodeName, "service.stop",  "crio")
 	return true, ""
 }
