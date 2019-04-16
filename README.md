@@ -1,5 +1,5 @@
 # kubic-control
-[![license](http://img.shields.io/badge/license-apache_2.0-red.svg?style=flat)](https://raw.githubusercontent.com/thkukuk/kubic-control/master/LICENSE)
+[![license](http://img.shields.io/badge/license-apache_2.0-blue.svg?style=flat)](https://raw.githubusercontent.com/thkukuk/kubic-control/master/LICENSE)
 
 Tool to deploy a kubernetes cluster on openSUSE Kubic using kubeadm and salt
 
