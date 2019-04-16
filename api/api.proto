@@ -26,7 +26,7 @@ service Kubeadm {
   rpc RemoveNode (RemoveNodeRequest) returns (StatusReply) {}
   rpc RebootNode (RebootNodeRequest) returns (StatusReply) {}
   // Upgrade cluster to newest version (as of kubeadm on master)
-  rpc UpgradeKubernetes (Version) returns (StatusReply) {}
+  rpc UpgradeKubernetes (Empty) returns (stream StatusReply) {}
   // Fetch kubeconfig
   rpc FetchKubeconfig (Empty) returns (StatusReply) {}
 }

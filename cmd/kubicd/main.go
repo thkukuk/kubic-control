@@ -50,7 +50,14 @@ var (
 type server struct{}
 
 func (s *server) InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
+	log.Infof("Received: Kubernetes Version=%v, POD Network=%v",
+                in.KubernetesVersion, in.PodNetworking)
 	return kubeadm.InitMaster(in, stream)
+}
+
+func (s *server) UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) error {
+	log.Infof("Received: upgrade Kubernetes")
+	return kubeadm.UpgradeKubernetes(in, stream)
 }
 
 func (s *server) AddNode(ctx context.Context, in *pb.AddNodeRequest) (*pb.StatusReply, error) {
@@ -68,12 +75,6 @@ func (s *server) RemoveNode(ctx context.Context, in *pb.RemoveNodeRequest) (*pb.
 func (s *server) RebootNode(ctx context.Context, in *pb.RebootNodeRequest) (*pb.StatusReply, error) {
 	log.Printf("Received: reboot node  %v", in.NodeNames)
 	status, message := kubeadm.RebootNode(in.NodeNames)
-	return &pb.StatusReply{Success: status, Message: message}, nil
-}
-
-func (s *server) UpgradeKubernetes(ctx context.Context, in *pb.Version) (*pb.StatusReply, error) {
-	log.Printf("Received: upgrade Kubernetes  %v", in.Version)
-	status, message := kubeadm.UpgradeKubernetes(in.Version)
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 

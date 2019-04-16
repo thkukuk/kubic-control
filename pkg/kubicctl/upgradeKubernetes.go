@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"io"
 
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -45,7 +46,7 @@ func upgradeKubernetes(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	c := pb.NewKubeadmClient(conn)
+	client := pb.NewKubeadmClient(conn)
 
 	var deadlineMin = flag.Int("deadline_min", 20, "Default deadline in minutes.")
 	clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
@@ -54,14 +55,24 @@ func upgradeKubernetes(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	fmt.Print ("Upgrading kubernetes can take a very long time, please be patient.\n")
-	r, err := c.UpgradeKubernetes(ctx, &pb.Version{Version: ""})
+	stream, err := client.UpgradeKubernetes(ctx, &pb.Empty{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not upgrade: %v", err)
 		return
 	}
-	if r.Success {
-		fmt.Printf("Kubernetes cluster was successfully upgraded to version %s", r.Message)
-	} else {
-		fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %s", r.Message)
-	}
+	for {
+                r, err := stream.Recv()
+                if err == io.EOF {
+                        break
+                }
+                if err != nil {
+                        if r == nil {
+                                fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %v\n",  err)
+                        } else {
+                                fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %s\n%v\n", r.Message, err)
+                        }
+                        return
+                }
+                fmt.Printf("%s\n", r.Message)
+        }
 }

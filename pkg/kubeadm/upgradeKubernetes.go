@@ -16,39 +16,62 @@ package kubeadm
 
 import (
 	"strings"
+
+	pb "github.com/thkukuk/kubic-control/api"
 )
 
-func UpgradeKubernetes(Version string) (bool, string) {
+func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) error {
 	// find out our kubeadm version and use that to upgrade to this version
 	success, message := ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
 	if success != true {
-		return success, message
+		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+                        return err
+                }
+                return nil
 	}
 	kubernetes_version := strings.Replace(message, "'", "", -1)
 
 	// Check if kuberadm and kubelet is new enough on all nodes
 	// salt '*' --out=yaml pkg.version kubernetes-kubeadm kubernetes-kubelet
 
+	if err := stream.Send(&pb.StatusReply{Success: success, Message: "Validate whether the cluster is upgradeable..."}); err != nil {
+		return err
+	}
 	success, message = ExecuteCmd("kubeadm",  "upgrade", "plan", kubernetes_version)
 	if success != true {
-		return success, message
+		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+                        return err
+                }
+                return nil
 	}
 
+	if err := stream.Send(&pb.StatusReply{Success: success, Message: "Upgrade the control plane..."}); err != nil {
+		return err
+	}
 	success, message = ExecuteCmd("kubeadm",  "upgrade", "apply", "v"+kubernetes_version, "--yes")
 	if success != true {
-		return success, message
+		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+                        return err
+                }
+                return nil
 	}
 
 	// Get list of all worker nodes:
 	success, message = ExecuteCmd("salt", "-G", "kubicd:kubic-worker-node", "grains.get",  "kubic-worker-node")
 	if success != true {
-		return success, message
+		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+                        return err
+                }
+                return nil
 	}
 	message = strings.TrimSuffix(message, "\n")
 	nodelist := strings.Split (strings.Replace(message, ":", "", -1), "\n")
 
 	var failedNodes = ""
 	for i := range nodelist {
+		if err := stream.Send(&pb.StatusReply{Success: success, Message: "Upgrade "+nodelist[i]+"..."}); err != nil {
+			return err
+		}
 		hostname, err := GetNodeName(nodelist[i])
 		if err != nil {
 			failedNodes = failedNodes+nodelist[i]+" (uncordon), "
@@ -72,8 +95,13 @@ func UpgradeKubernetes(Version string) (bool, string) {
 
 	if len(failedNodes) > 0 {
 		// XXX remove ", " Suffix
-		return false, failedNodes
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: failedNodes}); err != nil {
+			return err
+		}
 	}
 
-	return true, kubernetes_version
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Kubernetes cluster was successfully upgraded to version " + kubernetes_version}); err != nil {
+		return err
+	}
+	return nil
 }

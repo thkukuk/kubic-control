@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	"gopkg.in/ini.v1"
-	log "github.com/sirupsen/logrus"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
@@ -35,9 +34,6 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	arg_socket := "--cri-socket=/run/crio/crio.sock"
 	arg_pod_network_cidr := ""
 	arg_kubernetes_version := ""
-
-	log.Infof("Received: Kubernetes Version=%v, POD Network=%v",
-		in.KubernetesVersion, in.PodNetworking)
 
 	found, _ := exists ("/etc/kubernetes/manifests/kube-apiserver.yaml")
 	if found == true {
