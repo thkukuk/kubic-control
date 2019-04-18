@@ -18,6 +18,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
+	"os"
 
         log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -25,6 +26,12 @@ import (
 	"github.com/spf13/cobra"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/thkukuk/kubic-control/pkg/certificates"
+)
+
+const (
+	root_crtFile = "/etc/kubicd/pki/admin.crt"
+        root_keyFile = "/etc/kubicd/pki/admin.key"
+        root_caFile = "/etc/kubicd/pki/Kubic-Control-CA.crt"
 )
 
 var (
@@ -38,7 +45,30 @@ var (
         caFile = "~/.config/kubicctl/Kubic-Control-CA.crt"
 )
 
+// exists returns whether the given file or directory exists
+func exists(path string) (bool, error) {
+    _, err := os.Stat(path)
+    if err == nil { return true, nil }
+    if os.IsNotExist(err) { return false, nil }
+    return true, err
+}
+
 func Execute() error {
+
+	// if called as root, use admin certificates as default if local
+	// ones don't exit
+	if os.Getuid() == 0 {
+		crt, err := homedir.Expand(crtFile)
+		if err == nil {
+			found, _ := exists (crt)
+			if found == false {
+				crtFile = root_crtFile
+				keyFile = root_keyFile
+				caFile = root_caFile
+			}
+		}
+	}
+
 	rootCmd := &cobra.Command{
                 Use:   "kubicctl",
                 Short: "Kubic Control  Daemon Interface"}
