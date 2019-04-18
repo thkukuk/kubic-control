@@ -30,7 +30,9 @@ For `kubicctl`, you need to create a directory `~/.config/kubicctl` which
 contains `Kubic-Control-CA.crt`, `user.key` and `user.crt`. For the admin
 role, this need to be a copy of admin.key and admin.crt. For other users,
 you need to create corresponding certificates and sign them with
-`Kubic-Control-CA.crt`.
+`Kubic-Control-CA.crt`. If you call `kubicctl` as root and there is no
+`user.crt` in `~/.config/kubicctl`, the admin certificates from
+`/etc/kubicd/pki` are used if they exist.
 Please take care of this certificates and store them secure, this are the
 passwords to access kubicd!
 
