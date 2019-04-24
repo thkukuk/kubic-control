@@ -15,13 +15,11 @@
 package certificates
 
 import (
+	"os"
+	"fmt"
+
         "github.com/spf13/cobra"
 )
-
-// var (
-//	PKI_dir string
-	//cfg, cfg_err = ini.LooseLoad("/usr/share/defaults/kubicd/kubicd.conf", "/etc/kubicd/kubicd.conf")
-//)
 
 func InitializeCertsCmd() *cobra.Command {
         var subCmd = &cobra.Command {
@@ -37,22 +35,28 @@ func InitializeCertsCmd() *cobra.Command {
 func initializeCerts (cmd *cobra.Command, args []string) {
 	err := CreateCA(PKI_dir)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating CA: %v\n", err)
 		return
 	}
 	err = CreateUser(PKI_dir, "KubicD")
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating user 'KubicD': %v\n", err)
 		return
 	}
 	err = SignUser(PKI_dir, "KubicD")
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error signing user 'KubicD': %v\n", err)
 		return
 	}
 	err = CreateUser(PKI_dir, "admin")
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating user 'admin': %v\n", err)
 		return
 	}
 	err = SignUser(PKI_dir, "admin")
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error signing user 'admin': %v\n", err)
 		return
 	}
+	fmt.Printf("All certificates and the CA are created and can be found in '%s'\n", PKI_dir)
 }

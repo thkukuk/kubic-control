@@ -32,6 +32,7 @@ func CertificatesCmd() *cobra.Command {
 
 
         subCmd.AddCommand(
+		CreateCertsCmd(),
                 InitializeCertsCmd(),
         )
 
