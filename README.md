@@ -33,6 +33,9 @@ you need to create corresponding certificates and sign them with
 `Kubic-Control-CA.crt`. If you call `kubicctl` as root and there is no
 `user.crt` in `~/.config/kubicctl`, the admin certificates from
 `/etc/kubicd/pki` are used if they exist.
+Certificates for additional users can be created with `kubicctl certificates
+create <account>`.
+
 Please take care of this certificates and store them secure, this are the
 passwords to access kubicd!
 
@@ -73,8 +76,16 @@ name with port `kubicd` should listen to. The default file can be found in
 
 The second file, `rbac.conf`, is mandatory, else nobody can access `kubicd`,
 all requests will be rejected. The default file can be found in
-`/usr/share/defaults/kubicd/kubicd.conf`. Changed entries should be written
+`/usr/share/defaults/kubicd/rbac.conf`. Changed entries should be written
 to `/etc/kubicd/rbac.conf`.
+
+## RBAC
+
+`rbac.conf` contains the roles as key and the users, who are allowed to use
+this functionality as comma seperated list. `kubicctl rbac list` will print
+out a list of current configured roles and the corresponding users. `kubicctl
+rbac add <role> <user>` will add the user to the role.
+
 
 ## Notes
 
