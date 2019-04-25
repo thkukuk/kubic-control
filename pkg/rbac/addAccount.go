@@ -42,7 +42,7 @@ func addAccount (cmd *cobra.Command, args []string) {
 	cfg, err := ini.LooseLoad("/usr/share/defaults/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
         if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot load rbac.conf: %v\n", err)
-		return
+		os.Exit(1)
 	}
 
 	if !cfg.Section("").HasKey(role) {
@@ -66,8 +66,12 @@ func addAccount (cmd *cobra.Command, args []string) {
 	if werr != nil {
 		fmt.Fprintf(os.Stderr, "Cannot open /etc/kubicd/rbac.conf: %v\n",
 			werr)
-		return
+		os.Exit(1)
 	}
 	wcfg.Section("").Key(role).SetValue(entry)
-	wcfg.SaveTo("/etc/kubicd/rbac.conf")
+	werr = wcfg.SaveTo("/etc/kubicd/rbac.conf")
+	if werr != nil {
+		fmt.Fprintf(os.Stderr, "Writing rbac.conf failed: %v\n", werr)
+		os.Exit (1)
+	}
 }
