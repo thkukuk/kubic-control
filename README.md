@@ -48,10 +48,12 @@ To deploy the control-plane on the master with flannel as POD network and
 kubicctl init
 ```
 
+For cilium instead of flannel you have to use `kubicctl init --pod-network cilium`.
+
 To add additional nodes:
 
 ```
-kubicctl node add
+kubicctl node add node1,...
 ```
 
 In the same way, you can remove nodes: `kubicctl node remove` or reboot
