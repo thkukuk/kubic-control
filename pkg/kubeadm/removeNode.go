@@ -43,7 +43,7 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
                 return nil
 	}
 
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Removing node " + hostname + "from Kubernetes"}); err != nil {
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Removing node " + hostname + " from Kubernetes"}); err != nil {
 		return err
 	}
 	success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
@@ -69,13 +69,10 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 	ExecuteCmd("salt", in.NodeNames, "cmd.run", "sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
 	ExecuteCmd("salt", in.NodeNames, "grains.delkey",  "kubicd")
 	success, message = ExecuteCmd("salt", in.NodeNames, "cmd.run",  "\"iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Warning: removal of iptables failed: "+message}); err != nil {
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Warning: removal of iptables failed."}); err != nil {
 		return err
 	}
-	success, message = ExecuteCmd("salt", in.NodeNames, "cmd.run",  "\"ip link delete cni0;  ip link delete flannel.1\"")
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Warning: removal of network interfaces failed: "+message}); err != nil {
-		return err
-	}
+	ExecuteCmd("salt", in.NodeNames, "cmd.run",  "\"ip link delete cni0;  ip link delete flannel.1; ip link delete cilium_vxlan\"")
 	ExecuteCmd("salt", in.NodeNames, "service.disable",  "kubelet")
 	ExecuteCmd("salt", in.NodeNames, "service.stop",  "kubelet")
 	ExecuteCmd("salt", in.NodeNames, "service.disable",  "crio")
