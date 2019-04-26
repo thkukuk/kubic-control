@@ -101,8 +101,13 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Initialize Kubernetes control-plane"}); err != nil {
 		return err
 	}
-	success, message = ExecuteCmd("kubeadm", "init", arg_socket,
-		arg_pod_network_cidr, arg_kubernetes_version)
+	if len(arg_pod_network_cidr) > 0 {
+		success, message = ExecuteCmd("kubeadm", "init", arg_socket,
+			arg_pod_network_cidr, arg_kubernetes_version)
+	} else {
+		success, message = ExecuteCmd("kubeadm", "init", arg_socket,
+			arg_kubernetes_version)
+	}
 	if success != true {
 		ResetMaster()
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
