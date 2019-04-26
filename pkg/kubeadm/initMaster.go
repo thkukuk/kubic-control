@@ -32,6 +32,7 @@ func exists(path string) (bool, error) {
 
 func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	arg_socket := "--cri-socket=/run/crio/crio.sock"
+	arg_pod_network := in.PodNetworking
 	arg_pod_network_cidr := ""
 	arg_kubernetes_version := ""
 
@@ -57,6 +58,16 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
+	// verify, that we got only a supported pod network
+	if len(arg_pod_network) < 1 {
+		arg_pod_network = "flannel"
+	} else if !strings.EqualFold(arg_pod_network, "flannel") &&  !strings.EqualFold(arg_pod_network, "cilium") {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Unsupported pod network, please use 'flannel' or 'cilium'"}); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	success, message := ExecuteCmd("systemctl", "enable", "--now", "crio")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
@@ -73,7 +84,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
-	if (strings.EqualFold(in.PodNetworking, "flannel")) {
+	if strings.EqualFold(arg_pod_network, "flannel") {
 		arg_pod_network_cidr = "--pod-network-cidr=10.244.0.0/16"
 	}
 	if len (in.KubernetesVersion) > 0 {
@@ -100,17 +111,33 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
-	// Setting up flannel
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy flannel"}); err != nil {
-		return err
-	}
-	success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "https://raw.githubusercontent.com/coreos/flannel/bc79dd1505b0c8681ece4de4c0d86c5cd2643275/Documentation/kube-flannel.yml")
-	if success != true {
-		ResetMaster()
-		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+	if strings.EqualFold(arg_pod_network, "flannel") {
+		// Setting up flannel
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy flannel"}); err != nil {
 			return err
 		}
-		return nil
+		success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "https://raw.githubusercontent.com/coreos/flannel/bc79dd1505b0c8681ece4de4c0d86c5cd2643275/Documentation/kube-flannel.yml")
+		if success != true {
+			ResetMaster()
+			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+				return err
+			}
+			return nil
+		}
+	} else if strings.EqualFold(arg_pod_network, "cilium") {
+		// Setting up cilium
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy cilium"}); err != nil {
+			return err
+		}
+		//		success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "https://raw.githubusercontent.com/kubic-project/k8s-manifests/cilium/cilium.yaml")
+		success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "https://raw.githubusercontent.com/kubic-project/k8s-manifests/65cc2ac79b2ed2448b366f9d89c1bf43e35c827f/cilium.yaml")
+		if success != true {
+			ResetMaster()
+			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+				return err
+			}
+			return nil
+		}
 	}
 
 	// Setting up kured

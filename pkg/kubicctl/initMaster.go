@@ -38,7 +38,7 @@ func InitMasterCmd() *cobra.Command {
 		Args: cobra.ExactArgs(0),
 	}
 
-        subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network should be used")
+        subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network, valid values are 'flannel' or 'cilium'")
 
 	return subCmd
 }
