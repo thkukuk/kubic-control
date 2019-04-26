@@ -134,8 +134,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy cilium"}); err != nil {
 			return err
 		}
-		//		success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "https://raw.githubusercontent.com/kubic-project/k8s-manifests/cilium/cilium.yaml")
-		success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "https://raw.githubusercontent.com/kubic-project/k8s-manifests/65cc2ac79b2ed2448b366f9d89c1bf43e35c827f/cilium.yaml")
+		success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "https://raw.githubusercontent.com/kubic-project/k8s-manifests/cilium/cilium.yaml")
 		if success != true {
 			ResetMaster()
 			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
