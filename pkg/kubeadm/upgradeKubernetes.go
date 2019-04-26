@@ -34,7 +34,7 @@ func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) 
 	// Check if kuberadm and kubelet is new enough on all nodes
 	// salt '*' --out=yaml pkg.version kubernetes-kubeadm kubernetes-kubelet
 
-	if err := stream.Send(&pb.StatusReply{Success: success, Message: "Validate whether the cluster is upgradeable..."}); err != nil {
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Validate whether the cluster is upgradeable..."}); err != nil {
 		return err
 	}
 	success, message = ExecuteCmd("kubeadm",  "upgrade", "plan", kubernetes_version)
@@ -45,7 +45,7 @@ func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) 
                 return nil
 	}
 
-	if err := stream.Send(&pb.StatusReply{Success: success, Message: "Upgrade the control plane..."}); err != nil {
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Upgrade the control plane..."}); err != nil {
 		return err
 	}
 	success, message = ExecuteCmd("kubeadm",  "upgrade", "apply", "v"+kubernetes_version, "--yes")
@@ -69,7 +69,7 @@ func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) 
 
 	var failedNodes = ""
 	for i := range nodelist {
-		if err := stream.Send(&pb.StatusReply{Success: success, Message: "Upgrade "+nodelist[i]+"..."}); err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Upgrade "+nodelist[i]+"..."}); err != nil {
 			return err
 		}
 		hostname, err := GetNodeName(nodelist[i])
