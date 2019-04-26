@@ -60,15 +60,14 @@ func (s *server) UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubern
 	return kubeadm.UpgradeKubernetes(in, stream)
 }
 
+func (s *server) RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) error {
+	log.Printf("Received: remove node  %v", in.NodeNames)
+	return kubeadm.RemoveNode(in, stream)
+}
+
 func (s *server) AddNode(ctx context.Context, in *pb.AddNodeRequest) (*pb.StatusReply, error) {
 	log.Printf("Received: add node  %v", in.NodeNames)
 	status, message := kubeadm.AddNode(in.NodeNames)
-	return &pb.StatusReply{Success: status, Message: message}, nil
-}
-
-func (s *server) RemoveNode(ctx context.Context, in *pb.RemoveNodeRequest) (*pb.StatusReply, error) {
-	log.Printf("Received: remove node  %v", in.NodeNames)
-	status, message := kubeadm.RemoveNode(in.NodeNames)
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 

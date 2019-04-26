@@ -14,37 +14,71 @@
 
 package kubeadm
 
-func RemoveNode(nodeName string) (bool, string) {
+import (
+	pb "github.com/thkukuk/kubic-control/api"
+)
 
+
+func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) error {
+	// XXX in.NodeNames could be a list of Nodes ...
 	// salt host names are not identical with kubernetes node name.
-	hostname, err := GetNodeName(nodeName)
-	if err != nil {
-		return false, err.Error()
+	hostname, herr := GetNodeName(in.NodeNames)
+	if herr != nil {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: herr.Error()}); err != nil {
+                        return err
+                }
+                return nil
+	}
+
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Draining node " + hostname + "..."}); err != nil {
+		return err
 	}
 
 	success, message := ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
 		"drain",  hostname, "--delete-local-data",  "--force",  "--ignore-daemonsets")
 	if success != true {
-		return success, message
+		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+                        return err
+                }
+                return nil
+	}
+
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Removing node " + hostname + "from Kubernetes"}); err != nil {
+		return err
 	}
 	success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
 		"delete",  "node",  hostname)
 	if success != true {
-		return success, message
+		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+                        return err
+                }
+                return nil
 	}
 
-	success, message = ExecuteCmd("salt", nodeName, "cmd.run",  "kubeadm reset --force")
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Cleanup node " + hostname + "..."}); err != nil {
+		return err
+	}
+	success, message = ExecuteCmd("salt", in.NodeNames, "cmd.run",  "kubeadm reset --force")
 	if success != true {
-		return success, message
+		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+                        return err
+                }
+                return nil
 	}
 	// Try some system cleanup, ignore if fails
-	ExecuteCmd("salt", nodeName, "cmd.run", "sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
-	ExecuteCmd("salt", nodeName, "grains.delkey",  "kubicd")
-	ExecuteCmd("salt", nodeName, "cmd.run",  "\"iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
-	ExecuteCmd("salt", nodeName, "cmd.run",  "\"ip link delete cni0;  ip link delete flannel.1\"")
-	ExecuteCmd("salt", nodeName, "service.disable",  "kubelet")
-	ExecuteCmd("salt", nodeName, "service.stop",  "kubelet")
-	ExecuteCmd("salt", nodeName, "service.disable",  "crio")
-	ExecuteCmd("salt", nodeName, "service.stop",  "crio")
-	return true, ""
+	ExecuteCmd("salt", in.NodeNames, "cmd.run", "sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
+	ExecuteCmd("salt", in.NodeNames, "grains.delkey",  "kubicd")
+	success, message = ExecuteCmd("salt", in.NodeNames, "cmd.run",  "\"iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Warning: removal of iptables failed: "+message}); err != nil {
+		return err
+	}
+	success, message = ExecuteCmd("salt", in.NodeNames, "cmd.run",  "\"ip link delete cni0;  ip link delete flannel.1\"")
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Warning: removal of network interfaces failed: "+message}); err != nil {
+		return err
+	}
+	ExecuteCmd("salt", in.NodeNames, "service.disable",  "kubelet")
+	ExecuteCmd("salt", in.NodeNames, "service.stop",  "kubelet")
+	ExecuteCmd("salt", in.NodeNames, "service.disable",  "crio")
+	ExecuteCmd("salt", in.NodeNames, "service.stop",  "crio")
+	return nil
 }

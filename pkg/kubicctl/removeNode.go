@@ -18,8 +18,9 @@ import (
 	"context"
 	"time"
 	"fmt"
+	"os"
+	"io"
 
-        log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
@@ -46,7 +47,7 @@ func removeNode(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	c := pb.NewKubeadmClient(conn)
+	client := pb.NewKubeadmClient(conn)
 
 	// var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
 	// clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
@@ -54,14 +55,32 @@ func removeNode(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	r, err := c.RemoveNode(ctx, &pb.RemoveNodeRequest{NodeNames: nodes})
+	stream, err := client.RemoveNode(ctx, &pb.RemoveNodeRequest{NodeNames: nodes})
 	if err != nil {
-		log.Errorf("could not initialize: %v", err)
+		fmt.Fprintf(os.Stderr, "could not initialize: %v", err)
 		return
 	}
-	if r.Success {
-		fmt.Printf("Node %s removed\n", nodes)
-	} else {
-		log.Errorf("Removing node %s failed: %s", nodes, r.Message)
-	}
+
+	for {
+                r, err := stream.Recv()
+                if err == io.EOF {
+                        break
+                }
+                if err != nil {
+                        if r == nil {
+                                fmt.Fprintf(os.Stderr, "Removing node %s failed: %v\n", nodes, err)
+                        } else {
+                                fmt.Fprintf(os.Stderr, "Removing node %s  failed: %s\n%v\n", r.Message, err)
+                        }
+			os.Exit(1)
+                }
+		if (r.Success != true) {
+			fmt.Fprintf(os.Stderr, "%s\n", r.Message)
+			os.Exit(1)
+		} else {
+			fmt.Printf("%s\n", r.Message)
+		}
+        }
+
+	fmt.Printf("Node %s removed\n", nodes)
 }
