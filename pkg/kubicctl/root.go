@@ -25,7 +25,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"github.com/spf13/cobra"
 	homedir "github.com/mitchellh/go-homedir"
-	"github.com/thkukuk/kubic-control/pkg/certificates"
 	"github.com/thkukuk/kubic-control/pkg/rbac"
 )
 
@@ -86,7 +85,7 @@ func Execute() error {
 		NodeCmd(),
 		UpgradeKubernetesCmd(),
 		FetchKubeconfigCmd(),
-		certificates.CertificatesCmd(),
+		CertificatesCmd(),
 		rbac.RBACCmd(),
         )
 

@@ -33,6 +33,7 @@ import (
 	"github.com/spf13/cobra"
 	log "github.com/sirupsen/logrus"
 	"github.com/thkukuk/kubic-control/pkg/kubeadm"
+	"github.com/thkukuk/kubic-control/pkg/certificate_server"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
@@ -49,6 +50,7 @@ var (
 
 type server struct{}
 
+// kubeadm API
 func (s *server) InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	log.Infof("Received: Kubernetes Version=%v, POD Network=%v",
                 in.KubernetesVersion, in.PodNetworking)
@@ -82,6 +84,14 @@ func (s *server) FetchKubeconfig(ctx context.Context, in *pb.Empty) (*pb.StatusR
 	status, message := kubeadm.FetchKubeconfig()
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
+
+// Certificate API
+func (s *server) CreateCert(ctx context.Context, in *pb.CreateCertRequest) (*pb.CertificateReply, error) {
+	log.Printf("Received: create certificate")
+	status, message, key, crt := certificate.CreateCert(in)
+	return &pb.CertificateReply{Success: status, Message: message, Key: key, Crt: crt}, nil
+}
+
 
 func rbacCheck(user string, function string) bool {
 

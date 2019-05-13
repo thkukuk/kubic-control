@@ -64,3 +64,21 @@ message Version {
 }
 
 message Empty {}
+
+// Certficiate handling
+service Certificate {
+  rpc CreateCert (CreateCertRequest) returns (CertificateReply) {}
+}
+
+message CreateCertRequest {
+  string name = 1;
+}
+
+message CertificateReply {
+  bool success = 1;
+  // any kind of message, error, ...
+  string message = 2;
+  // private and public key of certificate
+  string key = 3;
+  string crt = 4;
+}

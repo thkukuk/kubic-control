@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package certificates
+package kubicctl
 
 func CreateUser (pki_dir string, cn string) error {
 	err, _ := ExecuteCmd("certstrap", "--depot-path", pki_dir, "request-cert",
