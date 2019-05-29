@@ -48,45 +48,46 @@ var (
 	cfg, cfg_err = ini.LooseLoad("/usr/share/defaults/kubicd/kubicd.conf", "/etc/kubicd/kubicd.conf")
 )
 
-type server struct{}
+type kubeadm_server struct{}
+type cert_server struct{}
 
 // kubeadm API
-func (s *server) InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
+func (s *kubeadm_server) InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	log.Infof("Received: Kubernetes Version=%v, POD Network=%v",
                 in.KubernetesVersion, in.PodNetworking)
 	return kubeadm.InitMaster(in, stream)
 }
 
-func (s *server) UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) error {
+func (s *kubeadm_server) UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) error {
 	log.Infof("Received: upgrade Kubernetes")
 	return kubeadm.UpgradeKubernetes(in, stream)
 }
 
-func (s *server) RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) error {
+func (s *kubeadm_server) RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) error {
 	log.Printf("Received: remove node  %v", in.NodeNames)
 	return kubeadm.RemoveNode(in, stream)
 }
 
-func (s *server) AddNode(ctx context.Context, in *pb.AddNodeRequest) (*pb.StatusReply, error) {
+func (s *kubeadm_server) AddNode(ctx context.Context, in *pb.AddNodeRequest) (*pb.StatusReply, error) {
 	log.Printf("Received: add node  %v", in.NodeNames)
 	status, message := kubeadm.AddNode(in.NodeNames)
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
-func (s *server) RebootNode(ctx context.Context, in *pb.RebootNodeRequest) (*pb.StatusReply, error) {
+func (s *kubeadm_server) RebootNode(ctx context.Context, in *pb.RebootNodeRequest) (*pb.StatusReply, error) {
 	log.Printf("Received: reboot node  %v", in.NodeNames)
 	status, message := kubeadm.RebootNode(in.NodeNames)
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
-func (s *server) FetchKubeconfig(ctx context.Context, in *pb.Empty) (*pb.StatusReply, error) {
+func (s *kubeadm_server) FetchKubeconfig(ctx context.Context, in *pb.Empty) (*pb.StatusReply, error) {
 	log.Printf("Received: fetch kubeconfig")
 	status, message := kubeadm.FetchKubeconfig()
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
 // Certificate API
-func (s *server) CreateCert(ctx context.Context, in *pb.CreateCertRequest) (*pb.CertificateReply, error) {
+func (s *cert_server) CreateCert(ctx context.Context, in *pb.CreateCertRequest) (*pb.CertificateReply, error) {
 	log.Printf("Received: create certificate")
 	status, message, key, crt := certificate.CreateCert(in)
 	return &pb.CertificateReply{Success: status, Message: message, Key: key, Crt: crt}, nil
@@ -262,7 +263,10 @@ func kubicd(cmd *cobra.Command, args []string) {
 	s := grpc.NewServer(grpc.Creds(creds),
 		grpc.StreamInterceptor(AuthStreamInterceptor),
 		grpc.UnaryInterceptor(AuthUnaryInterceptor))
-	pb.RegisterKubeadmServer(s, &server{})
+
+	pb.RegisterKubeadmServer(s, &kubeadm_server{})
+	pb.RegisterCertificateServer(s, &cert_server{})
+
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

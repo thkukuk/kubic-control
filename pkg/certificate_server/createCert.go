@@ -18,6 +18,7 @@ import (
         "os/exec"
         "fmt"
         "bytes"
+	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -37,7 +38,8 @@ func ExecuteCmd(command string, arg ...string) (bool,string) {
 
         if err := cmd.Run(); err != nil {
                 log.Error("Error invoking " + command + ": " + fmt.Sprint(err) + "\n" + stderr.String())
-                return false, "Error invoking " + command + ": " + err.Error()
+		// XXX remove trialing \n from stderr.String
+                return false, "Error invoking " + command + ": " + err.Error() + " \n(" + stderr.String() + ")"
         } else {
                 log.Info(out.String())
         }
@@ -69,5 +71,16 @@ func CreateCert(in *pb.CreateCertRequest) (bool, string, string, string) {
                 return success, message, "", ""
         }
 
-	return true, "Not fully implemented", "", ""
+	content_key, err := ioutil.ReadFile(PKI_dir + "/" + user + ".key")
+        if err != nil {
+                return false, err.Error(), "", ""
+        }
+
+	content_crt, err := ioutil.ReadFile(PKI_dir + "/" + user + ".crt")
+        if err != nil {
+                return false, err.Error(), "", ""
+        }
+
+
+	return true, "", string(content_key), string(content_crt)
 }

@@ -19,6 +19,7 @@ import (
         "time"
         "fmt"
 	"os"
+	"io/ioutil"
 
         "github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -56,16 +57,25 @@ func createCerts (cmd *cobra.Command, args []string) {
                 os.Exit(1)
         }
         if r.Success {
-               // if len(output) > 0 && output != "stdout" {
-               //         message:=[]byte(r.Message)
-               //         err := ioutil.WriteFile(output, message, 0600)
-               //         if err != nil {
-               //                 fmt.Fprintf(os.Stderr, "Error writing '%s': %v\n", output, err)
-               //                 os.Exit(1)
-               //         }
-              //  } else {
-                        fmt.Printf(r.Message)
-              //  }
+		if len(r.Message) > 0 {
+			fmt.Printf(r.Message + "\n")
+		}
+
+		key :=[]byte(r.Key)
+		crt :=[]byte(r.Crt)
+
+		fmt.Printf("Writing %s.key...\n", user)
+		err := ioutil.WriteFile(user + ".key", key, 0600)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing '%s.key': %v\n", user, err)
+			os.Exit(1)
+		}
+		fmt.Printf("Writing %s.crt...\n", user)
+		err = ioutil.WriteFile(user + ".crt", crt, 0600)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing '%s.crt': %v\n", user, err)
+			os.Exit(1)
+		}
         } else {
                 fmt.Fprintf(os.Stderr, "Couldn't create certificate for %s: %s\n", user, r.Message)
                 os.Exit(1)
