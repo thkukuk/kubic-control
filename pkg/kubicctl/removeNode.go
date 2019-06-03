@@ -28,7 +28,7 @@ import (
 func RemoveNodeCmd() *cobra.Command {
         var subCmd = &cobra.Command {
                 Use:   "remove <node>",
-                Short: "Remove node form cluster",
+                Short: "Remove node from cluster",
                 Run: removeNode,
 		Args: cobra.ExactArgs(1),
 	}

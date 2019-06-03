@@ -27,7 +27,7 @@ import (
 func RebootNodeCmd() *cobra.Command {
         var subCmd = &cobra.Command {
                 Use:   "reboot <node>",
-                Short: "Reboot node form cluster",
+                Short: "Reboot node from cluster",
                 Run: rebootNode,
 		Args: cobra.ExactArgs(1),
 	}
