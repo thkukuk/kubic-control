@@ -28,7 +28,7 @@ import (
 func CreateCertsCmd() *cobra.Command {
         var subCmd = &cobra.Command {
                 Use:   "create <user>",
-                Short: "Cerate certificate for an user",
+                Short: "Create certificate for an user",
                 Run: createCerts,
                 Args: cobra.ExactArgs(1),
         }

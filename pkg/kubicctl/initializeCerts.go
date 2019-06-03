@@ -24,7 +24,7 @@ import (
 func InitializeCertsCmd() *cobra.Command {
         var subCmd = &cobra.Command {
                 Use:   "initialize",
-                Short: "Cerate CA, KubicD and admin certificates",
+                Short: "Create CA, KubicD and admin certificates",
                 Run: initializeCerts,
                 Args: cobra.ExactArgs(0),
         }
