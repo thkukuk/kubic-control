@@ -15,10 +15,12 @@
 package certificate
 
 import (
+	"os"
         "os/exec"
         "fmt"
         "bytes"
 	"io/ioutil"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -37,9 +39,9 @@ func ExecuteCmd(command string, arg ...string) (bool,string) {
         //log.Info(cmd)
 
         if err := cmd.Run(); err != nil {
-                log.Error("Error invoking " + command + ": " + fmt.Sprint(err) + "\n" + stderr.String())
-		// XXX remove trialing \n from stderr.String
-                return false, "Error invoking " + command + ": " + err.Error() + " \n(" + stderr.String() + ")"
+		errorstr := strings.TrimSpace(stderr.String())
+                log.Error("Error invoking " + command + ": " + fmt.Sprint(err) + "\n" + errorstr)
+                return false, "Error invoking " + command + ": " + err.Error() + " \n(" + errorstr + ")"
         } else {
                 log.Info(out.String())
         }
@@ -81,6 +83,9 @@ func CreateCert(in *pb.CreateCertRequest) (bool, string, string, string) {
                 return false, err.Error(), "", ""
         }
 
+	os.Remove(PKI_dir + "/" + user + ".key")
+	os.Remove(PKI_dir + "/" + user + ".crt")
+	os.Remove(PKI_dir + "/" + user + ".csr")
 
 	return true, "", string(content_key), string(content_crt)
 }
