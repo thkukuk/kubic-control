@@ -90,23 +90,23 @@ rbac add <role> <user>` will add the user to the role.
 
 ## Usage
 
-*  certificates Manage certificates for kubicd/kubicctl communication
-  * create <user>	Cerate certificate for an user. The certificate will be stored in the local directory where you did call kubicctl.
-  * initialize		Cerate CA, KubicD and admin certificates. This certificates will be stored in `/etc/kubicd/pki/`
-*  help         Help about any command
-*  init         Initialize Kubernetes Master Node
+* certificates - Manage certificates for kubicd/kubicctl communication
+  * create <user> - Create certificate for an user. The certificate will be stored in the local directory where you did call kubicctl.
+  * initialize - Create CA, KubicD and admin certificates. This certificates will be stored in `/etc/kubicd/pki/`
+* help - Help about any command
+* init - Initialize Kubernetes Master Node
   * --pod-network=<flannel|cilium>	Pod network
-*  kubeconfig   Download kubeconfig
-  * --output=<file>	Where the kubeconfig file should be stored	
-* node          Manage kubernetes nodes
-  * add <node>,...        Add new nodes to cluster. Node names must be the name used by salt for that node. A comma seperated list or '[]' syntax are allowed to specify more than one new node.
-  * reboot <node>      Reboot node from cluster. Node will be drained first. Node name must be the name used by salt for that node.
-  * remove      Remove node form cluster
-*  rbac         Manage RBAC rules
-  * add <role> <user>	Add user account to a role
-  * list 	List roles and accounts
-*  upgrade      Upgrade Kubernetes Cluster to the version of the installed kubelet command
-*  version      Print version information
+*  kubeconfig - Download kubeconfig
+  * --output=<file> - Where the kubeconfig file should be stored	
+* node - Manage kubernetes nodes
+  * add <node>,... - Add new nodes to cluster. Node names must be the name used by salt for that node. A comma seperated list or '[]' syntax are allowed to specify more than one new node.
+  * reboot <node> - Reboot node from cluster. Node will be drained first. Node name must be the name used by salt for that node.
+  * remove - Remove node form cluster
+* rbac - Manage RBAC rules
+  * add <role> <user> - Add user account to a role
+  * list - List roles and accounts
+* upgrade - Upgrade Kubernetes Cluster to the version of the installed kubelet command
+* version - Print version information
 
 
 ## Notes
