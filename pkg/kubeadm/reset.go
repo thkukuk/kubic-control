@@ -14,13 +14,17 @@
 
 package kubeadm
 
+import (
+        "github.com/thkukuk/kubic-control/pkg/tools"
+)
+
 func ResetMaster() (bool, string) {
 	arg_socket := "--cri-socket=/run/crio/crio.sock"
 
-	success, message :=  ExecuteCmd("kubeadm", "reset", "-f", arg_socket)
+	success, message :=  tools.ExecuteCmd("kubeadm", "reset", "-f", arg_socket)
 
-	ExecuteCmd("systemctl", "disable", "--now", "crio")
-	ExecuteCmd("systemctl", "disable", "--now", "kubelet")
+	tools.ExecuteCmd("systemctl", "disable", "--now", "crio")
+	tools.ExecuteCmd("systemctl", "disable", "--now", "kubelet")
 
 	return success, message
 }

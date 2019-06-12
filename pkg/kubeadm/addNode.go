@@ -16,6 +16,8 @@ package kubeadm
 
 import (
 	"strings"
+
+	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 func AddNode(nodeNames string) (bool, string) {
@@ -24,7 +26,7 @@ func AddNode(nodeNames string) (bool, string) {
 	// XXX Check if node isn't already part of the kubernetes cluster
 
 	// XXX Store join command for 23 hours 30 minutes and re-use it.
-	success, joincmd := ExecuteCmd("kubeadm", "token", "create", "--print-join-command")
+	success, joincmd := tools.ExecuteCmd("kubeadm", "token", "create", "--print-join-command")
 	if success != true {
 		return success, joincmd
 	}
@@ -34,61 +36,61 @@ func AddNode(nodeNames string) (bool, string) {
 	var message string
 	// Differentiate between 'name1,name2' and 'name[1,2]'
 	if strings.Index(nodeNames, ",") >= 0 && strings.Index(nodeNames, "[") == -1 {
-		success, message = ExecuteCmd("salt", "-L", nodeNames, "service.start", "crio")
+		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "service.start", "crio")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", "-L", nodeNames, "service.enable", "crio")
+		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "service.enable", "crio")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", "-L", nodeNames, "service.start", "kubelet")
+		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "service.start", "kubelet")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", "-L", nodeNames, "service.enable", "kubelet")
+		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "service.enable", "kubelet")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", "-L", nodeNames, "cmd.run", "\"" + joincmd + " " + arg_socket + "\"")
+		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "cmd.run", "\"" + joincmd + " " + arg_socket + "\"")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", "-L", nodeNames, "grains.append", "kubicd", "kubic-worker-node")
+		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "grains.append", "kubicd", "kubic-worker-node")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", "-L", nodeNames, "cmd.run", "if [ -f /etc/transactional-update.conf ]; then grep -q ^REBOOT_METHOD= /etc/transactional-update.conf && sed -i -e 's|REBOOT_METHOD=.*|REBOOT_METHOD=kured|g' /etc/transactional-update.conf || echo REBOOT_METHOD=kured >> /etc/transactional-update.conf ; else echo REBOOT_METHOD=kured > /etc/transactional-update.conf ; fi")
+		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "cmd.run", "if [ -f /etc/transactional-update.conf ]; then grep -q ^REBOOT_METHOD= /etc/transactional-update.conf && sed -i -e 's|REBOOT_METHOD=.*|REBOOT_METHOD=kured|g' /etc/transactional-update.conf || echo REBOOT_METHOD=kured >> /etc/transactional-update.conf ; else echo REBOOT_METHOD=kured > /etc/transactional-update.conf ; fi")
 		if success != true {
 			return success, message
 		}
 	} else {
-		success, message = ExecuteCmd("salt", nodeNames, "service.start", "crio")
+		success, message = tools.ExecuteCmd("salt", nodeNames, "service.start", "crio")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", nodeNames, "service.enable", "crio")
+		success, message = tools.ExecuteCmd("salt", nodeNames, "service.enable", "crio")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", nodeNames, "service.start", "kubelet")
+		success, message = tools.ExecuteCmd("salt", nodeNames, "service.start", "kubelet")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", nodeNames, "service.enable", "kubelet")
+		success, message = tools.ExecuteCmd("salt", nodeNames, "service.enable", "kubelet")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt",  nodeNames, "cmd.run",  "\"" + joincmd + " " + arg_socket + "\"")
+		success, message = tools.ExecuteCmd("salt",  nodeNames, "cmd.run",  "\"" + joincmd + " " + arg_socket + "\"")
 		if success != true {
 			return success, message
 		}
-		success, message = ExecuteCmd("salt", nodeNames, "grains.append", "kubicd", "kubic-worker-node")
+		success, message = tools.ExecuteCmd("salt", nodeNames, "grains.append", "kubicd", "kubic-worker-node")
 		if success != true {
 			return success, message
 		}
 		// Configure transactinal-update
-		success, message = ExecuteCmd("salt", nodeNames, "cmd.run", "if [ -f /etc/transactional-update.conf ]; then grep -q ^REBOOT_METHOD= /etc/transactional-update.conf && sed -i -e 's|REBOOT_METHOD=.*|REBOOT_METHOD=kured|g' /etc/transactional-update.conf || echo REBOOT_METHOD=kured >> /etc/transactional-update.conf ; else echo REBOOT_METHOD=kured > /etc/transactional-update.conf ; fi")
+		success, message = tools.ExecuteCmd("salt", nodeNames, "cmd.run", "if [ -f /etc/transactional-update.conf ]; then grep -q ^REBOOT_METHOD= /etc/transactional-update.conf && sed -i -e 's|REBOOT_METHOD=.*|REBOOT_METHOD=kured|g' /etc/transactional-update.conf || echo REBOOT_METHOD=kured >> /etc/transactional-update.conf ; else echo REBOOT_METHOD=kured > /etc/transactional-update.conf ; fi")
 		if success != true {
 			return success, message
 		}

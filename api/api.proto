@@ -82,3 +82,18 @@ message CertificateReply {
   string key = 3;
   string crt = 4;
 }
+
+
+// Deployment handling
+service deployment {
+  rpc Deploy (DeployRequest) returns (StatusReply) {}
+  rpc Update (UpdateRequest) returns (StatusReply) {}
+}
+
+message DeployRequest {
+  string name = 1;
+}
+
+message UpdateRequest {
+  string name = 1;
+}

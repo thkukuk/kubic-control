@@ -18,11 +18,12 @@ import (
 	"strings"
 
 	pb "github.com/thkukuk/kubic-control/api"
+	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) error {
 	// find out our kubeadm version and use that to upgrade to this version
-	success, message := ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
+	success, message := tools.ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
                         return err
@@ -37,7 +38,7 @@ func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) 
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Validate whether the cluster is upgradeable..."}); err != nil {
 		return err
 	}
-	success, message = ExecuteCmd("kubeadm",  "upgrade", "plan", kubernetes_version)
+	success, message = tools.ExecuteCmd("kubeadm",  "upgrade", "plan", kubernetes_version)
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
                         return err
@@ -48,7 +49,7 @@ func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) 
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Upgrade the control plane..."}); err != nil {
 		return err
 	}
-	success, message = ExecuteCmd("kubeadm",  "upgrade", "apply", "v"+kubernetes_version, "--yes")
+	success, message = tools.ExecuteCmd("kubeadm",  "upgrade", "apply", "v"+kubernetes_version, "--yes")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
                         return err
@@ -57,7 +58,7 @@ func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) 
 	}
 
 	// Get list of all worker nodes:
-	success, message = ExecuteCmd("salt", "-G", "kubicd:kubic-worker-node", "grains.get",  "kubic-worker-node")
+	success, message = tools.ExecuteCmd("salt", "-G", "kubicd:kubic-worker-node", "grains.get",  "kubic-worker-node")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
                         return err
@@ -77,15 +78,15 @@ func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) 
 			failedNodes = failedNodes+nodelist[i]+" (uncordon), "
 		} else {
 			// if draining fails, ignore
-			ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
+			tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
 				"drain",  hostname,  "--force",  "--ignore-daemonsets")
 
-			success,message = ExecuteCmd("salt", nodelist[i], "cmd.run",
+			success,message = tools.ExecuteCmd("salt", nodelist[i], "cmd.run",
 				"\"kubeadm upgrade node config --kubelet-version " + kubernetes_version + "\"")
 			if success != true {
 				failedNodes = failedNodes+nodelist[i]+" (kubeadm), "
 			} else {
-				success,message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon",  hostname)
+				success,message = tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon",  hostname)
 				if success != true {
 					failedNodes = failedNodes+nodelist[i]+" (uncordon), "
 				}

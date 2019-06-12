@@ -12,27 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubeadm
+package deployment
 
 import (
-	"github.com/thkukuk/kubic-control/pkg/tools"
+        "github.com/thkukuk/kubic-control/pkg/tools"
 )
 
-func RebootNode(nodeName string) (bool, string) {
-
-	// salt host names are not identical with kubernetes node name.
-	hostname, err := GetNodeName(nodeName)
-	if err != nil {
-		return false, err.Error()
-	}
+func DeployFile(yamlName string) (bool, string) {
 
 	success, message := tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
-		"drain",  hostname, "--force",  "--ignore-daemonsets")
-	if success != true {
-		return success, message
-	}
-
-	success, message = tools.ExecuteCmd("salt",  nodeName, "sytem.reboot")
+		"apply", "-f", yamlName)
 	if success != true {
 		return success, message
 	}

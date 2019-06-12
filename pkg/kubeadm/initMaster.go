@@ -20,6 +20,8 @@ import (
 
 	"gopkg.in/ini.v1"
 	pb "github.com/thkukuk/kubic-control/api"
+	"github.com/thkukuk/kubic-control/pkg/tools"
+	"github.com/thkukuk/kubic-control/pkg/deployment"
 )
 
 // exists returns whether the given file or directory exists
@@ -68,16 +70,16 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
-	success, message := ExecuteCmd("systemctl", "enable", "--now", "crio")
+	success, message := tools.ExecuteCmd("systemctl", "enable", "--now", "crio")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			return err
 		}
 		return nil
 	}
-	success, message = ExecuteCmd("systemctl", "enable", "--now", "kubelet")
+	success, message = tools.ExecuteCmd("systemctl", "enable", "--now", "kubelet")
 	if success != true {
-		ExecuteCmd("systemctl", "disable", "--now", "crio")
+		tools.ExecuteCmd("systemctl", "disable", "--now", "crio")
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			return err
 		}
@@ -91,7 +93,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		arg_kubernetes_version = "--kubernetes-version=" + in.KubernetesVersion
 	} else {
 		// No version given. Try to use kubeadm RPM version number.
-		success, message := ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
+		success, message := tools.ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
 		if success == true {
 			kubernetes_version := strings.Replace(message, "'", "", -1)
 			arg_kubernetes_version = "--kubernetes-version="+kubernetes_version
@@ -102,10 +104,10 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return err
 	}
 	if len(arg_pod_network_cidr) > 0 {
-		success, message = ExecuteCmd("kubeadm", "init", arg_socket,
+		success, message = tools.ExecuteCmd("kubeadm", "init", arg_socket,
 			arg_pod_network_cidr, arg_kubernetes_version)
 	} else {
-		success, message = ExecuteCmd("kubeadm", "init", arg_socket,
+		success, message = tools.ExecuteCmd("kubeadm", "init", arg_socket,
 			arg_kubernetes_version)
 	}
 	if success != true {
@@ -121,7 +123,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy flannel"}); err != nil {
 			return err
 		}
-		success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "/usr/share/k8s-yaml/flannel/kube-flannel.yaml")
+		success, message = deployment.DeployFile("/usr/share/k8s-yaml/flannel/kube-flannel.yaml")
 		if success != true {
 			ResetMaster()
 			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
@@ -134,7 +136,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy cilium"}); err != nil {
 			return err
 		}
-		success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "/usr/share/k8s-yaml/cilium/cilium.yaml")
+		success, message = deployment.DeployFile("/usr/share/k8s-yaml/cilium/cilium.yaml")
 		if success != true {
 			ResetMaster()
 			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
@@ -148,7 +150,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy Kubernetes Reboot Daemon (kured)"}); err != nil {
 		return err
 	}
-	success, message = ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",  "apply", "-f", "/usr/share/k8s-yaml/kured/kured.yaml")
+	success, message = deployment.DeployFile("/usr/share/k8s-yaml/kured/kured.yaml")
 	if success != true {
 		ResetMaster()
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
