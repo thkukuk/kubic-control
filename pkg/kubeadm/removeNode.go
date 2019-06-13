@@ -38,10 +38,10 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 	success, message := tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
 		"drain",  hostname, "--delete-local-data",  "--force",  "--ignore-daemonsets")
 	if success != true {
-		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
                         return err
                 }
-                return nil
+		// ignore error
 	}
 
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Removing node " + hostname + " from Kubernetes"}); err != nil {
@@ -50,10 +50,10 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 	success, message = tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
 		"delete",  "node",  hostname)
 	if success != true {
-		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
                         return err
                 }
-                return nil
+                // ignore error
 	}
 
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Cleanup node " + hostname + "..."}); err != nil {
@@ -61,15 +61,15 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 	}
 	success, message = tools.ExecuteCmd("salt", in.NodeNames, "cmd.run",  "kubeadm reset --force")
 	if success != true {
-		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
                         return err
                 }
-                return nil
+		// ignore error
 	}
 	// Try some system cleanup, ignore if fails
 	tools.ExecuteCmd("salt", in.NodeNames, "cmd.run", "sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
 	tools.ExecuteCmd("salt", in.NodeNames, "grains.delkey",  "kubicd")
-	success, message = tools.ExecuteCmd("salt", in.NodeNames, "cmd.run",  "\"iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
+	success, message = tools.ExecuteCmd("salt", in.NodeNames, "cmd.run",  "\"iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Warning: removal of iptables failed."}); err != nil {
 		return err
 	}
