@@ -100,6 +100,7 @@ rbac add <role> <user>` will add the user to the role.
   * --output=<file> - Where the kubeconfig file should be stored	
 * node - Manage kubernetes nodes
   * add <node>,... - Add new nodes to cluster. Node names must be the name used by salt for that node. A comma seperated list or '[]' syntax are allowed to specify more than one new node.
+  * list - List all reacheable worker nodes
   * reboot <node> - Reboot node from cluster. Node will be drained first. Node name must be the name used by salt for that node.
   * remove - Remove node form cluster
 * rbac - Manage RBAC rules

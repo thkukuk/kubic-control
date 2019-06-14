@@ -12,24 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubicctl
+package kubeadm
 
 import (
-	"github.com/spf13/cobra"
+	"strings"
+
+	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
-func NodeCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "node",
-                Short: "Manage kubernetes nodes",
-	}
+func ListNodes() (bool, string, []string) {
 
-	subCmd.AddCommand(
-		AddNodeCmd(),
-		RemoveNodeCmd(),
-		RebootNodeCmd(),
-		ListNodesCmd(),
-	)
+	// Get list of all worker nodes:
+        success, message := tools.ExecuteCmd("salt", "-G", "kubicd:kubic-worker-node", "grains.get",  "kubic-worker-node")
+        if success != true {
+		return success, message, nil
+        }
+        message = strings.TrimSuffix(message, "\n")
+        nodelist := strings.Split (strings.Replace(message, ":", "", -1), "\n")
 
-	return subCmd
+	return true, "", nodelist
 }

@@ -25,6 +25,8 @@ service Kubeadm {
   rpc AddNode (AddNodeRequest) returns (StatusReply) {}
   rpc RemoveNode (RemoveNodeRequest) returns (stream StatusReply) {}
   rpc RebootNode (RebootNodeRequest) returns (StatusReply) {}
+  rpc ListNodes (Empty) returns (ListReply) {}
+  rpc DestroyMaster (Empty) returns (stream StatusReply) {}
   // Upgrade cluster to newest version (as of kubeadm on master)
   rpc UpgradeKubernetes (Empty) returns (stream StatusReply) {}
   // Fetch kubeconfig
@@ -36,6 +38,14 @@ message StatusReply {
   bool success = 1;
   // any kind of message, error, ...
   string message = 2;
+}
+
+// Provide List of Nodes
+message ListReply {
+  bool success = 1;
+  // any kind of message, error, ...
+  string message = 2;
+  repeated string node = 3;
 }
 
 // The init request message containing the kubernetes version number

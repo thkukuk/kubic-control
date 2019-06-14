@@ -24,6 +24,22 @@ import (
 	"github.com/thkukuk/kubic-control/pkg/deployment"
 )
 
+// update data in /var/lib/kubic-control
+func update_cfg (file string, key string, value string) (error) {
+        cfg, err := ini.LooseLoad("/var/lib/kubic-control/" + file)
+        if err != nil {
+                return err
+        }
+
+        cfg.Section("").Key(key).SetValue(value)
+        err = cfg.SaveTo("/var/lib/kubic-control/" + file)
+        if err != nil {
+                return err
+        }
+
+        return nil
+}
+
 // exists returns whether the given file or directory exists
 func exists(path string) (bool, error) {
     _, err := os.Stat(path)
@@ -91,12 +107,14 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	}
 	if len (in.KubernetesVersion) > 0 {
 		arg_kubernetes_version = "--kubernetes-version=" + in.KubernetesVersion
+		update_cfg ("control-plane.conf", "version", in.KubernetesVersion)
 	} else {
 		// No version given. Try to use kubeadm RPM version number.
 		success, message := tools.ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
 		if success == true {
 			kubernetes_version := strings.Replace(message, "'", "", -1)
 			arg_kubernetes_version = "--kubernetes-version="+kubernetes_version
+			update_cfg ("control-plane.conf", "version", kubernetes_version)
 		}
 	}
 

@@ -58,6 +58,11 @@ func (s *kubeadm_server) InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMa
 	return kubeadm.InitMaster(in, stream)
 }
 
+func (s *kubeadm_server) DestroyMaster(in *pb.Empty, stream pb.Kubeadm_DestroyMasterServer) error {
+	log.Infof("Received: Destroy Master")
+	return kubeadm.DestroyMaster(in, stream)
+}
+
 func (s *kubeadm_server) UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) error {
 	log.Infof("Received: upgrade Kubernetes")
 	return kubeadm.UpgradeKubernetes(in, stream)
@@ -78,6 +83,12 @@ func (s *kubeadm_server) RebootNode(ctx context.Context, in *pb.RebootNodeReques
 	log.Printf("Received: reboot node  %v", in.NodeNames)
 	status, message := kubeadm.RebootNode(in.NodeNames)
 	return &pb.StatusReply{Success: status, Message: message}, nil
+}
+
+func (s *kubeadm_server) ListNodes(ctx context.Context, in *pb.Empty) (*pb.ListReply, error) {
+	log.Printf("Received: list nodes")
+	status, message, nodes := kubeadm.ListNodes()
+	return &pb.ListReply{Success: status, Message: message, Node: nodes}, nil
 }
 
 func (s *kubeadm_server) FetchKubeconfig(ctx context.Context, in *pb.Empty) (*pb.StatusReply, error) {
@@ -230,27 +241,33 @@ func main() {
 func kubicd(cmd *cobra.Command, args []string) {
         log.Infof("Kubic Daemon: %s", Version)
 
+	// Create directory in /var/lib
+	err := os.MkdirAll("/var/lib/kubic-control", os.ModePerm)
+	if err != nil {
+		log.Fatalf("Could not create '/var/lib/kubic-control' directory: %s", err)
+	}
+
 	// Load the certificates from disk
 	certificate, err := tls.LoadX509KeyPair(crtFile, keyFile)
 	if err != nil {
-		log.Fatalf("could not load server key pair: %s", err)
+		log.Fatalf("Could not load server key pair: %s", err)
 	}
 
 	// Create a certificate pool from the certificate authority
 	certPool := x509.NewCertPool()
 	ca, err := ioutil.ReadFile(caFile)
 	if err != nil {
-		log.Fatalf("could not read ca certificate: %s", err)
+		log.Fatalf("Could not read ca certificate: %s", err)
 	}
 
 	// Append the client certificates from the CA
 	if ok := certPool.AppendCertsFromPEM(ca); !ok {
-		log.Fatal("failed to append client certs")
+		log.Fatal("Failed to append client certs")
 	}
 
 	lis, err := net.Listen("tcp", servername + ":" + port)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("Failed to listen: %v", err)
 	}
 
 	// Create the TLS credentials
@@ -268,6 +285,6 @@ func kubicd(cmd *cobra.Command, args []string) {
 	pb.RegisterCertificateServer(s, &cert_server{})
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Fatalf("Failed to serve: %v", err)
 	}
 }

@@ -15,8 +15,31 @@
 package deployment
 
 import (
+	"os"
+	"io"
+	"encoding/hex"
+	"crypto/sha256"
+
+        "gopkg.in/ini.v1"
         "github.com/thkukuk/kubic-control/pkg/tools"
 )
+
+func sha256sum(filePath string) (result string, err error) {
+    file, err := os.Open(filePath)
+    if err != nil {
+        return
+    }
+    defer file.Close()
+
+    hash := sha256.New()
+    _, err = io.Copy(hash, file)
+    if err != nil {
+        return
+    }
+
+    result = hex.EncodeToString(hash.Sum(nil))
+    return
+}
 
 func DeployFile(yamlName string) (bool, string) {
 
@@ -25,6 +48,19 @@ func DeployFile(yamlName string) (bool, string) {
 	if success != true {
 		return success, message
 	}
+
+	result, err := sha256sum(yamlName)
+
+	cfg, err := ini.LooseLoad("/var/lib/kubic-control/k8s-yaml.conf")
+	if err != nil {
+		return false, "Cannot load k8s-yaml.conf: " + err.Error()
+        }
+
+	cfg.Section("").Key(yamlName).SetValue(result)
+	err = cfg.SaveTo("/var/lib/kubic-control/k8s-yaml.conf")
+        if err != nil {
+		return false, "Cannot write k8s-yaml.conf: " + err.Error()
+        }
 
 	return true, ""
 }
