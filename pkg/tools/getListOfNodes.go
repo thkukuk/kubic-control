@@ -12,13 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubeadm
+package tools
 
 import (
-	"github.com/thkukuk/kubic-control/pkg/tools"
+	"strings"
 )
 
-func ListNodes() (bool, string, []string) {
+func GetListOfNodes() (bool, string, []string) {
+
 	// Get list of all worker nodes:
-	return tools.GetListOfNodes()
+        success, message := ExecuteCmd("salt", "-G", "kubicd:kubic-worker-node", "grains.get",  "kubic-worker-node")
+        if success != true {
+		return success, message, nil
+        }
+        message = strings.TrimSuffix(message, "\n")
+        nodelist := strings.Split (strings.Replace(message, ":", "", -1), "\n")
+
+	return true, "", nodelist
 }

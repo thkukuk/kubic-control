@@ -58,15 +58,13 @@ func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) 
 	}
 
 	// Get list of all worker nodes:
-	success, message = tools.ExecuteCmd("salt", "-G", "kubicd:kubic-worker-node", "grains.get",  "kubic-worker-node")
+	success, message, nodelist := tools.GetListOfNodes()
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
                         return err
                 }
                 return nil
 	}
-	message = strings.TrimSuffix(message, "\n")
-	nodelist := strings.Split (strings.Replace(message, ":", "", -1), "\n")
 
 	var failedNodes = ""
 	for i := range nodelist {
