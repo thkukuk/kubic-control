@@ -12,29 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubeadm
+package tools
 
-import (
-	"github.com/thkukuk/kubic-control/pkg/tools"
-)
+func DrainNode(hostname string, timeout string) (bool,string) {
 
-func RebootNode(nodeName string) (bool, string) {
+	var arg_timeout string
 
-	// salt host names are not identical with kubernetes node name.
-	hostname, err := GetNodeName(nodeName)
-	if err != nil {
-		return false, err.Error()
+	if len(timeout) > 0 {
+		arg_timeout = timeout
+	} else {
+		arg_timeout = "120"
 	}
 
-	success, message := tools.DrainNode(hostname, "")
-	if success != true {
-		return success, message
-	}
-
-	success, message = tools.ExecuteCmd("salt",  nodeName, "sytem.reboot")
-	if success != true {
-		return success, message
-	}
-
-	return true, ""
+	return ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
+		"drain",  hostname, "--timeout", arg_timeout, "--delete-local-data",
+		"--force",  "--ignore-daemonsets")
 }

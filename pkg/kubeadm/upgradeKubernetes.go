@@ -78,8 +78,7 @@ func UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) 
 			failedNodes = failedNodes+nodelist[i]+" (uncordon), "
 		} else {
 			// if draining fails, ignore
-			tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
-				"drain",  hostname,  "--force",  "--ignore-daemonsets")
+			tools.DrainNode(hostname, "")
 
 			success,message = tools.ExecuteCmd("salt", nodelist[i], "cmd.run",
 				"\"kubeadm upgrade node config --kubelet-version " + kubernetes_version + "\"")

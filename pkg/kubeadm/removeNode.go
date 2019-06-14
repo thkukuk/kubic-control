@@ -35,8 +35,7 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 		return err
 	}
 
-	success, message := tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
-		"drain",  hostname, "--delete-local-data",  "--force",  "--ignore-daemonsets")
+	success, message := tools.DrainNode(hostname, "")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
                         return err
