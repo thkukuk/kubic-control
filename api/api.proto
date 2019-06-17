@@ -52,6 +52,7 @@ message ListReply {
 message InitRequest {
   string kubernetes_version = 1;
   string pod_networking = 2;
+  string adv_addr = 3;
 }
 
 // The name of a new worker which should be added

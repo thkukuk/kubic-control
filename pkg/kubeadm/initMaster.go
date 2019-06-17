@@ -24,6 +24,12 @@ import (
 	"github.com/thkukuk/kubic-control/pkg/deployment"
 )
 
+var (
+	flannel_yaml = "/usr/share/k8s-yaml/flannel/kube-flannel.yaml"
+	cilium_yaml = "/usr/share/k8s-yaml/cilium/cilium.yaml"
+	kured_yaml = "/usr/share/k8s-yaml/kured/kured.yaml"
+)
+
 // update data in /var/lib/kubic-control
 func update_cfg (file string, key string, value string) (error) {
         cfg, err := ini.LooseLoad("/var/lib/kubic-control/" + file)
@@ -49,9 +55,7 @@ func exists(path string) (bool, error) {
 }
 
 func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
-	arg_socket := "--cri-socket=/run/crio/crio.sock"
 	arg_pod_network := in.PodNetworking
-	arg_pod_network_cidr := ""
 	arg_kubernetes_version := ""
 
 	found, _ := exists ("/etc/kubernetes/manifests/kube-apiserver.yaml")
@@ -79,12 +83,39 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	// verify, that we got only a supported pod network
 	if len(arg_pod_network) < 1 {
 		arg_pod_network = "flannel"
-	} else if !strings.EqualFold(arg_pod_network, "flannel") &&  !strings.EqualFold(arg_pod_network, "cilium") {
+	}
+
+	if strings.EqualFold(arg_pod_network, "flannel") {
+		found, _ = exists (flannel_yaml)
+		if found != true {
+			if err := stream.Send(&pb.StatusReply{Success: false, Message: "flannel-k8s-yaml is not installed!"}); err != nil {
+				return err
+			}
+			return nil
+		}
+	} else if strings.EqualFold(arg_pod_network, "cilium") {
+		found, _ = exists (cilium_yaml)
+		if found != true {
+			if err := stream.Send(&pb.StatusReply{Success: false, Message: "cilium-k8s-yaml is not installed!"}); err != nil {
+				return err
+			}
+			return nil
+		}
+	} else {
 		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Unsupported pod network, please use 'flannel' or 'cilium'"}); err != nil {
 			return err
 		}
 		return nil
 	}
+
+	found, _ = exists (kured_yaml)
+	if found != true {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: "kured-k8s-yaml is not installed!"}); err != nil {
+			return err
+		}
+		return nil
+	}
+
 
 	success, message := tools.ExecuteCmd("systemctl", "enable", "--now", "crio")
 	if success != true {
@@ -102,18 +133,26 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
-	if strings.EqualFold(arg_pod_network, "flannel") {
-		arg_pod_network_cidr = "--pod-network-cidr=10.244.0.0/16"
+	// build kubeadm call
+	kubeadm_args := []string{"init", arg_kubernetes_version}
+
+	if len(in.AdvAddr) > 0 {
+		kubeadm_args = append(kubeadm_args, "--apiserver-advertise-address=" + in.AdvAddr)
 	}
+
+	if strings.EqualFold(arg_pod_network, "flannel") {
+		kubeadm_args = append(kubeadm_args, "--pod-network-cidr=10.244.0.0/16")
+	}
+
 	if len (in.KubernetesVersion) > 0 {
-		arg_kubernetes_version = "--kubernetes-version=" + in.KubernetesVersion
+		kubeadm_args = append(kubeadm_args, "--kubernetes-version=" + in.KubernetesVersion)
 		update_cfg ("control-plane.conf", "version", in.KubernetesVersion)
 	} else {
 		// No version given. Try to use kubeadm RPM version number.
 		success, message := tools.ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
 		if success == true {
 			kubernetes_version := strings.Replace(message, "'", "", -1)
-			arg_kubernetes_version = "--kubernetes-version="+kubernetes_version
+			kubeadm_args = append(kubeadm_args, "--kubernetes-version=" + in.KubernetesVersion)
 			update_cfg ("control-plane.conf", "version", kubernetes_version)
 		}
 	}
@@ -121,13 +160,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Initialize Kubernetes control-plane"}); err != nil {
 		return err
 	}
-	if len(arg_pod_network_cidr) > 0 {
-		success, message = tools.ExecuteCmd("kubeadm", "init", arg_socket,
-			arg_pod_network_cidr, arg_kubernetes_version)
-	} else {
-		success, message = tools.ExecuteCmd("kubeadm", "init", arg_socket,
-			arg_kubernetes_version)
-	}
+	success, message = tools.ExecuteCmd("kubeadm", kubeadm_args...)
 	if success != true {
 		ResetMaster()
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
@@ -141,7 +174,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy flannel"}); err != nil {
 			return err
 		}
-		success, message = deployment.DeployFile("/usr/share/k8s-yaml/flannel/kube-flannel.yaml")
+		success, message = deployment.DeployFile(flannel_yaml)
 		if success != true {
 			ResetMaster()
 			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
@@ -154,7 +187,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy cilium"}); err != nil {
 			return err
 		}
-		success, message = deployment.DeployFile("/usr/share/k8s-yaml/cilium/cilium.yaml")
+		success, message = deployment.DeployFile(cilium_yaml)
 		if success != true {
 			ResetMaster()
 			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
@@ -168,7 +201,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy Kubernetes Reboot Daemon (kured)"}); err != nil {
 		return err
 	}
-	success, message = deployment.DeployFile("/usr/share/k8s-yaml/kured/kured.yaml")
+	success, message = deployment.DeployFile(kured_yaml)
 	if success != true {
 		ResetMaster()
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {

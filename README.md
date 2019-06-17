@@ -96,6 +96,7 @@ rbac add <role> <user>` will add the user to the role.
 * help - Help about any command
 * init - Initialize Kubernetes Master Node
   * --pod-network=<flannel|cilium>	Pod network
+  * --adv-addr=<IPaddr>	IP address the API Server will advertise on
 *  kubeconfig - Download kubeconfig
   * --output=<file> - Where the kubeconfig file should be stored	
 * node - Manage kubernetes nodes
