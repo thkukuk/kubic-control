@@ -44,7 +44,6 @@ var (
 	crtFile = "/etc/kubicd/pki/KubicD.crt"
 	keyFile = "/etc/kubicd/pki/KubicD.key"
 	caFile = "/etc/kubicd/pki/Kubic-Control-CA.crt"
-	rbac, rbac_err = ini.LooseLoad("/usr/share/defaults/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
 	cfg, cfg_err = ini.LooseLoad("/usr/share/defaults/kubicd/kubicd.conf", "/etc/kubicd/kubicd.conf")
 )
 
@@ -106,6 +105,8 @@ func (s *cert_server) CreateCert(ctx context.Context, in *pb.CreateCertRequest) 
 
 
 func rbacCheck(user string, function string) bool {
+
+	rbac, rbac_err := ini.LooseLoad("/usr/share/defaults/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
 
 	if rbac_err != nil {
 		log.Error ("Error opening rbac config file: %v", rbac_err)
