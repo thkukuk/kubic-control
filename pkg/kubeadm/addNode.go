@@ -20,9 +20,12 @@ import (
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
-func AddNode(nodeNames string) (bool, string) {
-	arg_socket := "--cri-socket=/run/crio/crio.sock"
+var (
+	joincmd = ""
+	token_create_time
+}
 
+func AddNode(nodeNames string) (bool, string) {
 	// XXX Check if node isn't already part of the kubernetes cluster
 
 	// XXX Store join command for 23 hours 30 minutes and re-use it.
@@ -52,7 +55,7 @@ func AddNode(nodeNames string) (bool, string) {
 		if success != true {
 			return success, message
 		}
-		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "cmd.run", "\"" + joincmd + " " + arg_socket + "\"")
+		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "cmd.run", "\"" + joincmd + "\"")
 		if success != true {
 			return success, message
 		}
@@ -81,7 +84,7 @@ func AddNode(nodeNames string) (bool, string) {
 		if success != true {
 			return success, message
 		}
-		success, message = tools.ExecuteCmd("salt",  nodeNames, "cmd.run",  "\"" + joincmd + " " + arg_socket + "\"")
+		success, message = tools.ExecuteCmd("salt",  nodeNames, "cmd.run",  "\"" + joincmd + "\"")
 		if success != true {
 			return success, message
 		}
