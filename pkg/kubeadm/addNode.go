@@ -16,30 +16,34 @@ package kubeadm
 
 import (
 	"strings"
+	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 var (
 	joincmd = ""
-	token_create_time
-}
+	token_create_time time.Time
+)
 
 func AddNode(nodeNames string) (bool, string) {
 	// XXX Check if node isn't already part of the kubernetes cluster
 
-	// XXX Store join command for 23 hours 30 minutes and re-use it.
-	success, joincmd := tools.ExecuteCmd("kubeadm", "token", "create", "--print-join-command")
-	if success != true {
-		return success, joincmd
+	// If the join command is older than 23 hours, generate a new one. Else re-use the old one.
+	if time.Since(token_create_time).Hours() > 23 {
+		log.Info("Token to join nodes too old, creating new one")
+		success, token := tools.ExecuteCmd("kubeadm", "token", "create", "--print-join-command")
+		if success != true {
+			return success, joincmd
+		}
+		joincmd = strings.TrimSuffix(token, "\n")
+		token_create_time = time.Now()
 	}
 
-	joincmd = strings.TrimSuffix(joincmd, "\n")
-
-	var message string
 	// Differentiate between 'name1,name2' and 'name[1,2]'
 	if strings.Index(nodeNames, ",") >= 0 && strings.Index(nodeNames, "[") == -1 {
-		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "service.start", "crio")
+		success, message := tools.ExecuteCmd("salt", "-L", nodeNames, "service.start", "crio")
 		if success != true {
 			return success, message
 		}
@@ -68,7 +72,7 @@ func AddNode(nodeNames string) (bool, string) {
 			return success, message
 		}
 	} else {
-		success, message = tools.ExecuteCmd("salt", nodeNames, "service.start", "crio")
+		success, message := tools.ExecuteCmd("salt", nodeNames, "service.start", "crio")
 		if success != true {
 			return success, message
 		}
