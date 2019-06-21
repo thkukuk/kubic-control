@@ -18,6 +18,7 @@ import (
 	"os"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/ini.v1"
 	pb "github.com/thkukuk/kubic-control/api"
 	"github.com/thkukuk/kubic-control/pkg/tools"
@@ -56,7 +57,6 @@ func exists(path string) (bool, error) {
 
 func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	arg_pod_network := in.PodNetworking
-	arg_kubernetes_version := ""
 
 	found, _ := exists ("/etc/kubernetes/manifests/kube-apiserver.yaml")
 	if found == true {
@@ -134,7 +134,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	}
 
 	// build kubeadm call
-	kubeadm_args := []string{"init", arg_kubernetes_version}
+	kubeadm_args := []string{"init"}
 
 	if len(in.AdvAddr) > 0 {
 		kubeadm_args = append(kubeadm_args, "--apiserver-advertise-address=" + in.AdvAddr)
@@ -152,7 +152,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		success, message := tools.ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
 		if success == true {
 			kubernetes_version := strings.Replace(message, "'", "", -1)
-			kubeadm_args = append(kubeadm_args, "--kubernetes-version=" + in.KubernetesVersion)
+			kubeadm_args = append(kubeadm_args, "--kubernetes-version=" + kubernetes_version)
 			update_cfg ("control-plane.conf", "version", kubernetes_version)
 		}
 	}
@@ -160,6 +160,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Initialize Kubernetes control-plane"}); err != nil {
 		return err
 	}
+	log.Infof ("Calling kubeadm '%v'", kubeadm_args)
 	success, message = tools.ExecuteCmd("kubeadm", kubeadm_args...)
 	if success != true {
 		ResetMaster()
