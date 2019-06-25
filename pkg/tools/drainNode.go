@@ -21,7 +21,7 @@ func DrainNode(hostname string, timeout string) (bool,string) {
 	if len(timeout) > 0 {
 		arg_timeout = timeout
 	} else {
-		arg_timeout = "120"
+		arg_timeout = "10m"
 	}
 
 	return ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
