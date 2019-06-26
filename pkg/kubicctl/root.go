@@ -86,6 +86,7 @@ func Execute() error {
 		UpgradeKubernetesCmd(),
 		FetchKubeconfigCmd(),
 		CertificatesCmd(),
+		DestroyClusterCmd(),
 		rbac.RBACCmd(),
         )
 
