@@ -53,10 +53,6 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 		nodelist = append(nodelist,in.NodeNames)
 	}
 
-	for _, entry := range nodelist {
-		stream.Send(&pb.StatusReply{Success: true, Message: entry});
-	}
-
 	// salt host names are not identical with kubernetes node name.
 	var hostnames []string
 
