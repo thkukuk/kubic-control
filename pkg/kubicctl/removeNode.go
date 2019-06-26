@@ -70,7 +70,7 @@ func removeNode(cmd *cobra.Command, args []string) {
                         if r == nil {
                                 fmt.Fprintf(os.Stderr, "Removing node %s failed: %v\n", nodes, err)
                         } else {
-                                fmt.Fprintf(os.Stderr, "Removing node %s  failed: %s\n%v\n", r.Message, err)
+                                fmt.Fprintf(os.Stderr, "Removing node %s failed: %s\n%v\n", r.Message, err)
                         }
 			os.Exit(1)
                 }
