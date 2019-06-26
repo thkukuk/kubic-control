@@ -24,8 +24,6 @@ import (
 func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) error {
 	var nodelist []string
 
-	// XXX in.NodeNames could be a list of Nodes ...
-
 	// If we have a list of Nodes, try to find the right node names which have a kubic-worker-node grain.
 	if strings.Index(in.NodeNames, ",") >= 0 || strings.Index(in.NodeNames, "[") >= 0 || strings.Compare(in.NodeNames, "*") == 0 {
 		var success bool
