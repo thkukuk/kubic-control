@@ -55,6 +55,7 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 
 	// salt host names are not identical with kubernetes node name.
 	var hostnames []string
+	var found = false
 
 	for _, entry := range nodelist {
 		hostname, herr := GetNodeName(entry)
@@ -65,6 +66,14 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 			return nil
 		}
 		hostnames = append (hostnames, hostname)
+		found = true
+	}
+
+	if !found {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "No Worker Nodes found"}); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// loop over all hostnames, drain and delete them
