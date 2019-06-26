@@ -33,7 +33,7 @@ func AddNode(nodeNames string) (bool, string) {
 	// If the join command is older than 23 hours, generate a new one. Else re-use the old one.
 	if time.Since(token_create_time).Hours() > 23 {
 		log.Info("Token to join nodes too old, creating new one")
-		success, token := tools.ExecuteCmd("kubeadm", "token", "create", "--print-join-command")
+		success, token := tools.ExecuteCmd("kubeadm", "--kubeconfig=/etc/kubernetes/admin.conf" "token", "create", "--print-join-command")
 		if success != true {
 			return success, joincmd
 		}
