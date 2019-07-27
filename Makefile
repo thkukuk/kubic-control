@@ -7,7 +7,8 @@ GO_MD2MAN ?= go-md2man
 VERSION	:= $(shell cat VERSION)
 PORT	:= $(shell cat PORT)
 USE_VENDOR =
-LOCAL_LDFLAGS = -ldflags "-X=main.Version=$(VERSION) -X=main.port=$(PORT)\
+LOCAL_LDFLAGS = -buildmode=pie -ldflags "-X=main.Version=$(VERSION) \
+	-X=main.port=$(PORT)\
 	-X=github.com/thkukuk/kubic-control/pkg/kubicctl.Version=$(VERSION) \
 	-X=github.com/thkukuk/kubic-control/pkg/kubicctl.port=$(PORT)"
 
@@ -32,8 +33,8 @@ vendor: dep ## Create vendor directory
 	@$(GO) mod vendor
 
 build: ## Build the binary files
-	$(GO) build -i -v -o $(KUBICD_BIN) $(USE_VENDOR) $(LOCAL_LDFLAGS) ./cmd/kubicd
-	$(GO) build -i -v -o $(KUBICCTL_BIN) $(USE_VENDOR) $(LOCAL_LDFLAGS) ./cmd/kubicctl
+	$(GO) build -v -o $(KUBICD_BIN) $(USE_VENDOR) $(LOCAL_LDFLAGS) ./cmd/kubicd
+	$(GO) build -v -o $(KUBICCTL_BIN) $(USE_VENDOR) $(LOCAL_LDFLAGS) ./cmd/kubicctl
 
 clean: ## Remove previous builds
 	@rm -f $(KUBICD_BIN) $(KUBICCTL_BIN) $(API_GO)
@@ -61,6 +62,6 @@ release: ## create release package from git
 #.PHONY: docs
 #docs: $(MANPAGES)
 
-.PHONY: install
-install:
-	$(GO) install $(LOCAL_LDFLAGS) ./cmd/...
+#.PHONY: install
+#install:
+#	$(GO) install $(LOCAL_LDFLAGS) ./cmd/...
