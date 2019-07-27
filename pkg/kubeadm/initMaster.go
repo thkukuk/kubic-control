@@ -26,8 +26,9 @@ import (
 )
 
 var (
-	flannel_yaml = "/usr/share/k8s-yaml/flannel/kube-flannel.yaml"
 	cilium_yaml = "/usr/share/k8s-yaml/cilium/cilium.yaml"
+	flannel_yaml = "/usr/share/k8s-yaml/flannel/kube-flannel.yaml"
+	weave_yaml = "/usr/share/k8s-yaml/weave/weave.yaml"
 	kured_yaml = "/usr/share/k8s-yaml/kured/kured.yaml"
 )
 
@@ -82,10 +83,18 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 
 	// verify, that we got only a supported pod network
 	if len(arg_pod_network) < 1 {
-		arg_pod_network = "flannel"
+		arg_pod_network = "weave"
 	}
 
-	if strings.EqualFold(arg_pod_network, "flannel") {
+	if strings.EqualFold(arg_pod_network, "weave") {
+		found, _ = exists (weave_yaml)
+		if found != true {
+			if err := stream.Send(&pb.StatusReply{Success: false, Message: "weave-k8s-yaml is not installed!"}); err != nil {
+				return err
+			}
+			return nil
+		}
+	} else if strings.EqualFold(arg_pod_network, "flannel") {
 		found, _ = exists (flannel_yaml)
 		if found != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: "flannel-k8s-yaml is not installed!"}); err != nil {
@@ -102,7 +111,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			return nil
 		}
 	} else {
-		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Unsupported pod network, please use 'flannel' or 'cilium'"}); err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Unsupported pod network, please use 'cilium', 'flannel' or 'weave'"}); err != nil {
 			return err
 		}
 		return nil
@@ -170,7 +179,20 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
-	if strings.EqualFold(arg_pod_network, "flannel") {
+	if strings.EqualFold(arg_pod_network, "weave") {
+		// Setting up weave
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy weave"}); err != nil {
+			return err
+		}
+		success, message = deployment.DeployFile(weave_yaml)
+		if success != true {
+			ResetMaster()
+			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+				return err
+			}
+			return nil
+		}
+	} else if strings.EqualFold(arg_pod_network, "flannel") {
 		// Setting up flannel
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy flannel"}); err != nil {
 			return err

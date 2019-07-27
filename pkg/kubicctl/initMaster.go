@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	podNetwork = "flannel"
+	podNetwork = "weave"
 	adv_addr = ""
 )
 
@@ -39,7 +39,7 @@ func InitMasterCmd() *cobra.Command {
 		Args: cobra.ExactArgs(0),
 	}
 
-        subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network, valid values are 'flannel' or 'cilium'")
+        subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network, valid values are 'cilium', 'flannel' or 'weave'")
         subCmd.PersistentFlags().StringVar(&adv_addr, "adv-addr", adv_addr, "IP address the API Server will advertise it's listening on")
 
 	return subCmd
