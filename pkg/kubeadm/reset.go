@@ -23,6 +23,10 @@ func ResetMaster() (bool, string) {
 
 	success, message :=  tools.ExecuteCmd("kubeadm", "reset", "-f", arg_socket)
 
+	// cleanup behind kubeadm
+	tools.ExecuteCmd("rm", "-rf", "/var/lib/etcd/*")
+	tools.ExecuteCmd("rm", "-rf", "/var/lib/cni/*")
+
 	tools.ExecuteCmd("systemctl", "disable", "--now", "crio")
 	tools.ExecuteCmd("systemctl", "disable", "--now", "kubelet")
 
