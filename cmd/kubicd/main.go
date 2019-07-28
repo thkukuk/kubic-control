@@ -74,7 +74,7 @@ func (s *kubeadm_server) RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_
 
 func (s *kubeadm_server) AddNode(ctx context.Context, in *pb.AddNodeRequest) (*pb.StatusReply, error) {
 	log.Printf("Received: add node  %v", in.NodeNames)
-	status, message := kubeadm.AddNode(in.NodeNames)
+	status, message := kubeadm.AddNode(in.NodeNames, in.Type)
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 

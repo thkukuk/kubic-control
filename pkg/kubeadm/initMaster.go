@@ -125,7 +125,6 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
-
 	success, message := tools.ExecuteCmd("systemctl", "enable", "--now", "crio")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
@@ -153,17 +152,53 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		kubeadm_args = append(kubeadm_args, "--pod-network-cidr=10.244.0.0/16")
 	}
 
+	kubernetes_version := ""
 	if len (in.KubernetesVersion) > 0 {
-		kubeadm_args = append(kubeadm_args, "--kubernetes-version=" + in.KubernetesVersion)
-		update_cfg ("control-plane.conf", "version", in.KubernetesVersion)
+		kubernetes_version = in.KubernetesVersion
 	} else {
 		// No version given. Try to use kubeadm RPM version number.
 		success, message := tools.ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
 		if success == true {
-			kubernetes_version := strings.Replace(message, "'", "", -1)
-			kubeadm_args = append(kubeadm_args, "--kubernetes-version=" + kubernetes_version)
-			update_cfg ("control-plane.conf", "version", kubernetes_version)
+			kubernetes_version = strings.Replace(message, "'", "", -1)
 		}
+	}
+	update_cfg ("control-plane.conf", "version", kubernetes_version)
+
+	if len (in.MultiMaster) > 0 {
+		os.MkdirAll("/var/lib/kubic-control/multi-master", os.ModePerm)
+
+		f, err := os.Create("/var/lib/kubic-control/multi-master/kubeadm-config.yaml")
+		if err != nil {
+			ResetMaster()
+			if err := stream.Send(&pb.StatusReply{Success: false, Message: err.Error()}); err != nil {
+				return err
+			}
+			return nil
+		}
+		defer f.Close()
+
+		_, err = f.WriteString("apiVersion: kubeadm.k8s.io/v1beta2\nkind: ClusterConfiguration\nkubernetesVersion: " + kubernetes_version + "\ncontrolPlaneEndpoint: \""+ in.MultiMaster + ":6443\"\n")
+		if err != nil {
+			ResetMaster()
+			if err := stream.Send(&pb.StatusReply{Success: false, Message: err.Error()}); err != nil {
+				return err
+			}
+			return nil
+		}
+		f.Close()
+
+		update_cfg("control-plane.conf", "MultiMaster", "True")
+		update_cfg ("control-plane.conf", "loadbalancer", in.MultiMaster)
+
+		kubeadm_args = append(kubeadm_args,
+			"--config=/var/lib/kubic-control/multi-master/kubeadm-config.yaml")
+		// No need to upload certs, we have to do it anyways if we add a new
+		// master node.
+		// kubeadm_args = append(kubeadm_args, "--upload-certs")
+	} else {
+		// kubeadm does not really like mixing config files and arguments, only use
+		// --kubernetes-version if we don't use a config file.
+		kubeadm_args = append(kubeadm_args, "--kubernetes-version=" + kubernetes_version)
 	}
 
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Initialize Kubernetes control-plane"}); err != nil {
@@ -243,8 +278,17 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		cfg.SaveTo("/etc/transactional-update.conf")
 	}
 
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Kubernetes master was succesfully setup."}); err != nil {
-		return err
+	if len (in.MultiMaster) > 0 {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "First Kubernetes master succesfully setup."}); err != nil {
+			return err
+		}
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Please add at minimum two further master nodes!"}); err != nil {
+			return err
+		}
+	} else {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Kubernetes master was succesfully setup."}); err != nil {
+			return err
+		}
 	}
 	return nil
 }

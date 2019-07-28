@@ -29,6 +29,7 @@ import (
 var (
 	podNetwork = "weave"
 	adv_addr = ""
+	multiMaster = ""
 )
 
 func InitMasterCmd() *cobra.Command {
@@ -39,6 +40,7 @@ func InitMasterCmd() *cobra.Command {
 		Args: cobra.ExactArgs(0),
 	}
 
+        subCmd.PersistentFlags().StringVar(&multiMaster, "multi-master", multiMaster, "Setup multimaster cluster, argument needs to be the DNS name of the load balancer")
         subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network, valid values are 'cilium', 'flannel' or 'weave'")
         subCmd.PersistentFlags().StringVar(&adv_addr, "adv-addr", adv_addr, "IP address the API Server will advertise it's listening on")
 
@@ -63,7 +65,7 @@ func initMaster(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")
-	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr})
+	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr, MultiMaster: multiMaster})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
 		return

@@ -23,11 +23,11 @@ import (
 )
 
 var (
-	joincmd = ""
+	joincmd_g = ""
 	token_create_time time.Time
 )
 
-func AddNode(nodeNames string) (bool, string) {
+func AddNode(nodeNames string, nodeType string) (bool, string) {
 	// XXX Check if node isn't already part of the kubernetes cluster
 
 	// If the join command is older than 23 hours, generate a new one. Else re-use the old one.
@@ -35,10 +35,29 @@ func AddNode(nodeNames string) (bool, string) {
 		log.Info("Token to join nodes too old, creating new one")
 		success, token := tools.ExecuteCmd("kubeadm", "--kubeconfig=/etc/kubernetes/admin.conf", "token", "create", "--print-join-command")
 		if success != true {
-			return success, joincmd
+			return success, token
 		}
-		joincmd = strings.TrimSuffix(token, "\n")
+		joincmd_g = strings.TrimSuffix(token, "\n")
 		token_create_time = time.Now()
+	}
+
+	joincmd := joincmd_g
+
+	// if nodeType is not set, assume worker
+	if len(nodeType) == 0 {
+		nodeType = "worker"
+	}
+
+	if strings.EqualFold(nodeType, "master") {
+		joincmd = joincmd + " --control-plane"
+
+		success, lines := tools.ExecuteCmd("kubeadm", "init", "phase", "upload-certs", "--upload-certs")
+		if success != true {
+			return success, lines
+		}
+		// the key is the third line in the output
+		cert_key := strings.Split (strings.Replace(lines, ":", "", -1), "\n")
+		joincmd = joincmd + " --certificate-key " + strings.TrimSuffix(string(cert_key[2]), "\n");
 	}
 
 	// Differentiate between 'name1,name2' and 'name[1,2]'
@@ -63,7 +82,7 @@ func AddNode(nodeNames string) (bool, string) {
 		if success != true {
 			return success, message
 		}
-		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "grains.append", "kubicd", "kubic-worker-node")
+		success, message = tools.ExecuteCmd("salt", "-L", nodeNames, "grains.append", "kubicd", "kubic-" + nodeType + "-node")
 		if success != true {
 			return success, message
 		}
@@ -92,7 +111,7 @@ func AddNode(nodeNames string) (bool, string) {
 		if success != true {
 			return success, message
 		}
-		success, message = tools.ExecuteCmd("salt", nodeNames, "grains.append", "kubicd", "kubic-worker-node")
+		success, message = tools.ExecuteCmd("salt", nodeNames, "grains.append", "kubicd", "kubic-" + nodeType + "-node")
 		if success != true {
 			return success, message
 		}

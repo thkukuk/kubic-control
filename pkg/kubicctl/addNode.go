@@ -24,6 +24,10 @@ import (
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
+var (
+	nodeType = "worker"
+)
+
 func AddNodeCmd() *cobra.Command {
         var subCmd = &cobra.Command {
                 Use:   "add <node>",
@@ -31,6 +35,8 @@ func AddNodeCmd() *cobra.Command {
                 Run: addNode,
 		Args: cobra.ExactArgs(1),
 	}
+
+	subCmd.PersistentFlags().StringVar(&nodeType, "type", nodeType, "type of node, valid values are 'worker' or 'master'")
 
 	return subCmd
 }
@@ -54,7 +60,7 @@ func addNode(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	r, err := c.AddNode(ctx, &pb.AddNodeRequest{NodeNames: nodes})
+	r, err := c.AddNode(ctx, &pb.AddNodeRequest{NodeNames: nodes, Type: nodeType})
 	if err != nil {
 		log.Errorf("could not initialize: %v", err)
 		return
