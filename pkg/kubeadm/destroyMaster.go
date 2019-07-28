@@ -15,15 +15,13 @@
 package kubeadm
 
 import (
-	"os"
-
 	pb "github.com/thkukuk/kubic-control/api"
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 
 func DestroyMaster(in *pb.Empty, stream pb.Kubeadm_DestroyMasterServer) error {
-	success, message := tools.ExecuteCmd("kubeadm", "reset", "--force")
+	success, message := ResetMaster ()
         if success != true {
                 if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
                         return err
@@ -39,10 +37,6 @@ func DestroyMaster(in *pb.Empty, stream pb.Kubeadm_DestroyMasterServer) error {
                 }
         }
         tools.ExecuteCmd("/bin/sh", "-c", "ip link delete cni0;  ip link delete flannel.1; ip link delete cilium_vxlan")
-        tools.ExecuteCmd("systemctl", "disable", "--now",  "kubelet")
-	tools.ExecuteCmd("systemctl", "disable", "--now",  "crio")
-	os.Remove("/var/lib/kubic-control/control-plane.conf")
-	os.Remove("/var/lib/kubic-control/k8s-yaml.conf")
 
 	return nil
 }

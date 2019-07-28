@@ -15,17 +15,36 @@
 package kubeadm
 
 import (
+        "os"
+	"path/filepath"
+
         "github.com/thkukuk/kubic-control/pkg/tools"
 )
 
-func ResetMaster() (bool, string) {
-	arg_socket := "--cri-socket=/run/crio/crio.sock"
+func removeContents(dir string) error {
+    files, err := filepath.Glob(filepath.Join(dir, "*"))
+    if err != nil {
+        return err
+    }
+    for _, file := range files {
+        err = os.RemoveAll(file)
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
 
-	success, message :=  tools.ExecuteCmd("kubeadm", "reset", "-f", arg_socket)
+func ResetMaster() (bool, string) {
+
+	success, message :=  tools.ExecuteCmd("kubeadm", "reset", "--force")
 
 	// cleanup behind kubeadm
-	tools.ExecuteCmd("rm", "-rf", "/var/lib/etcd/*")
-	tools.ExecuteCmd("rm", "-rf", "/var/lib/cni/*")
+	removeContents("/var/lib/etcd")
+	removeContents("/var/lib/cni")
+
+	os.Remove("/var/lib/kubic-control/control-plane.conf")
+	os.Remove("/var/lib/kubic-control/k8s-yaml.conf")
 
 	tools.ExecuteCmd("systemctl", "disable", "--now", "crio")
 	tools.ExecuteCmd("systemctl", "disable", "--now", "kubelet")
