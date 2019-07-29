@@ -9,6 +9,16 @@ kubic-control consists of two binaries:
 
 The communication is encrypted, the kubicctl command can run on any machine. The user authenticates with his certificate, using RBAC to determine if the user is allowed to call this function. kubiccd will use kubeadm and kubectl to deploy and manage the cluster. So the admin can at everytime modify the cluster with this commands, too, there is no hidden state-database.
 
+## Requirements
+
+Mainly generic requirements by kubernetes itself:
+
+- All the nodes on the cluster must be on a the same network and be able to communicate directly with each other.
+- All nodes in the cluster must be assigned static IP addresses. Using dynamically assigned IPs will break cluster functionality if the IP address changes.
+- The Kubernetes master node(s) must have valid Fully-Qualified Domain Names (FQDNs), which can be resolved both by all other nodes and from other networks which need to access the cluster.
+- Since Kubernetes mainly works with certificates and tokens, the time on all Nodes needs to be always in sync. Else communication inside the cluster will break.
+
+
 ## Installation
 
 `Kubicd`/`kubicctl` are using [salt](https://www.saltstack.com/) and [certstrap](https://github.com/square/certstrap) to manage nodes and certificates, additional kubeadm, kubectl, kubelet and crio have to be installed.
@@ -41,23 +51,53 @@ passwords to access kubicd!
 
 ## Deploy Kubernetes
 
-To deploy the control-plane on the master with flannel as POD network and
+The first qustion is: single master node or high-availability kubernetes
+masters? In the first case, there is not much to do: you need one master
+machine, which is also running `kubicd`, and that's it.
+If you want a high-availability kubernetes master, you need three machines
+which meet kubeadm's minimum requirements for masters. Additional, you need a
+load balancer. The load balancer must be able to communicate with all control
+plane nodes on the apiserver port. It must also allow incoming traffic on its
+listening port 6443. If you have none, you can use HAProxy.
+
+
+To deploy the control-plane on the master with weave as POD network and
 `kured` to manage the reboot of nodes:
 
 ```
 kubicctl init
 ```
 
-For cilium instead of flannel you have to use `kubicctl init --pod-network cilium`.
+To deploy a high-availability master, the DNS name of the load balancer needs
+to be specified. The cluster will be reacheable under this DNS name.
 
-To add additional nodes:
+```
+kubicctl init  --multi-master load.balancer.dns
+```
+
+For cilium or flannel instead of weave you have to use `kubicctl init --pod-network cilium` or `kubicctl init --pod-network cilium`.
+
+To add additional worker nodes:
 
 ```
 kubicctl node add node1,...
 ```
 
-In the same way, you can remove nodes: `kubicctl node remove` or reboot
-nodes: `kubicctl node reboot`.
+In the high-availability case, two additional masters needs to be added:
+
+```
+kubicctl node add --type master master2
+```
+```
+kubicctl node add --type master master3
+```
+
+Make sure the load balancer can reach all three master nodes.
+
+
+In the same way as new nodes were added, existing nodes can also be removed: `kubicctl node remove` or reboot
+nodes: `kubicctl node reboot`. Please make sure that you have always three
+master nodes in case of high-availbility master.
 
 To access with cluster with `kubectl`, you can get the kubeconfig with:
 `kubicctl kubeconfig`.
@@ -95,10 +135,11 @@ rbac add <role> <user>` will add the user to the role.
   * initialize - Create CA, KubicD and admin certificates. This certificates will be stored in `/etc/kubicd/pki/`
 * help - Help about any command
 * init - Initialize Kubernetes Master Node
+  * --multi-master=<DNS name>  	Setup HA masters, the argument must be the DNS name of the load balancer
   * --pod-network=<flannel|cilium>	Pod network
   * --adv-addr=<IPaddr>	IP address the API Server will advertise on
 *  kubeconfig - Download kubeconfig
-  * --output=<file> - Where the kubeconfig file should be stored	
+  * --output=<file> - Where the kubeconfig file should be stored
 * node - Manage kubernetes nodes
   * add <node>,... - Add new nodes to cluster. Node names must be the name used by salt for that node. A comma seperated list or '[]' syntax are allowed to specify more than one new node.
   * list - List all reacheable worker nodes
@@ -111,6 +152,10 @@ rbac add <role> <user>` will add the user to the role.
 * destroy-cluster - Remove all worker and master nodes
 * version - Print version information
 
+## Backup
+
+On the machine where `kubicd` is running, `/etc/kubicd` and
+`/var/lib/kubic-control` should be part of the backup.
 
 ## Notes
 
