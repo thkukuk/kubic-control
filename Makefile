@@ -1,5 +1,6 @@
 KUBICD_BIN := bin/kubicd
 KUBICCTL_BIN := bin/kubicctl
+HAPROXYCFG_BIN := bin/haproxycfg
 
 GO ?= go
 GO_MD2MAN ?= go-md2man
@@ -35,6 +36,7 @@ vendor: dep ## Create vendor directory
 build: ## Build the binary files
 	$(GO) build -v -o $(KUBICD_BIN) $(USE_VENDOR) $(LOCAL_LDFLAGS) ./cmd/kubicd
 	$(GO) build -v -o $(KUBICCTL_BIN) $(USE_VENDOR) $(LOCAL_LDFLAGS) ./cmd/kubicctl
+	$(GO) build -v -o $(HAPROXYCFG_BIN) $(USE_VENDOR) $(LOCAL_LDFLAGS) ./cmd/haproxycfg
 
 clean: ## Remove previous builds
 	@rm -f $(KUBICD_BIN) $(KUBICCTL_BIN) $(API_GO)
