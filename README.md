@@ -114,7 +114,7 @@ kubicctl upgrade
 first one is optional and contains the paths to the certificates and the server
 name with port `kubicd` should listen to. The default file can be found in
 `/usr/share/defaults/kubicd/kubicd.conf`. The variables can be overriden with
-`/etc/kubicd/conf`, which only contains the changed entries.
+`/etc/kubicd/kubicd.conf`, which only contains the changed entries.
 
 The second file, `rbac.conf`, is mandatory, else nobody can access `kubicd`,
 all requests will be rejected. The default file can be found in
