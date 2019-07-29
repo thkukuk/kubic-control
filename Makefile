@@ -20,10 +20,10 @@ api: ## Auto-generate grpc go sources
 		--go_out=plugins=grpc:api \
 		api/api.proto
 
-dep: ## Get the dependencies
+dep: api ## Get the dependencies
 	@$(GO) get -v -d ./...
 
-update: ## Get and update the dependencies
+update: api ## Get and update the dependencies
 	@$(GO) get -v -d -u ./...
 
 tidy: ## Clean up dependencies
