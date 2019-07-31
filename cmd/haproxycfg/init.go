@@ -19,6 +19,8 @@ import (
 	"strings"
 	"fmt"
 	"os"
+	"os/user"
+	"strconv"
 
         "github.com/spf13/cobra"
 )
@@ -48,6 +50,30 @@ func exists(path string) (bool, error) {
     if err == nil { return true, nil }
     if os.IsNotExist(err) { return false, nil }
     return true, err
+}
+
+func set_perm(path string) error {
+	err := os.Chmod(path, 0640)
+	if err != nil {
+		return err
+	}
+
+	if os.Getuid() != 0 {
+		// don't change ownership if we are not root
+		return nil
+	}
+
+	gr, err := user.LookupGroup("haproxy")
+	if err != nil {
+		// XXX if we don't have the group, do nothing
+		return nil
+	}
+
+	gid, err := strconv.Atoi(gr.Gid)
+	if err != nil {
+		return err
+	}
+	return os.Chown(path, 0, gid)
 }
 
 func add_k8s_entry(f *os.File, lb_dns_name string, apiserver1 string) {
@@ -138,6 +164,7 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 
+		set_perm (output_dir + "haproxy.cfg")
 		fmt.Printf("haproxy.cfg created\n")
 	} else {
 		// File exists, we don't overwrite it, so remove existing
@@ -194,6 +221,7 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 
+		set_perm (output_dir + "haproxy.cfg")
 		fmt.Printf("haproxy.cfg adjusted\n")
 	}
 }
