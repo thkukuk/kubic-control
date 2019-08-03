@@ -16,8 +16,10 @@ package kubeadm
 
 import (
 	"strings"
+	"sync"
 
 	pb "github.com/thkukuk/kubic-control/api"
+	log "github.com/sirupsen/logrus"
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
@@ -43,7 +45,7 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 
 		list := strings.Split (message, "\n")
 		for _, entry := range list {
-			if strings.Contains(entry, "'kubic-worker-node'") {
+			if strings.Contains(entry, "'kubic-worker-node'") || strings.Contains(entry, "kubic-master-node") {
 				list := strings.Split (entry, ":");
 				nodelist = append (nodelist, list[0])
 			}
@@ -53,83 +55,52 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 		nodelist = append(nodelist,in.NodeNames)
 	}
 
-	// salt host names are not identical with kubernetes node name.
-	var hostnames []string
-	var found = false
+	nodelistLength := len(nodelist)
 
-	for _, entry := range nodelist {
-		hostname, herr := GetNodeName(entry)
-		if herr != nil {
-			if err := stream.Send(&pb.StatusReply{Success: false, Message: herr.Error()}); err != nil {
-				return err
-			}
-			return nil
-		}
-		hostnames = append (hostnames, hostname)
-		found = true
-	}
-
-	if !found {
-		if err := stream.Send(&pb.StatusReply{Success: true, Message: "No Worker Nodes found"}); err != nil {
+	if nodelistLength == 0 {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "No Nodes found"}); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	// loop over all hostnames, drain and delete them
-	// XXX think about how to parallize
-	for _, hostname := range hostnames {
+        var wg sync.WaitGroup
+        wg.Add(nodelistLength)
 
-		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Draining node " + hostname + "..."}); err != nil {
-			return err
-		}
+        failed := 0
+        for i := 0; i < nodelistLength; i++ {
+                go func(i int) {
+                        defer wg.Done()
 
-		success, message := tools.DrainNode(hostname, "")
-		if success != true {
-			if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
+                        stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": removing node..."})
+			success, message := ResetNode(nodelist[i])
+			if len(message) > 0 {
+				if err := stream.Send(&pb.StatusReply{Success: false,
+					Message: nodelist[i] + ": " + message}); err != nil {
+						log.Errorf("Send message failed: %s", err)
+					}
+			}
+			if success != true {
+				failed++
+				if err := stream.Send(&pb.StatusReply{Success: false,
+					Message: nodelist[i] + ": removal not fully successful, please check logs"}); err != nil {
+						log.Errorf("Send message failed: %s", err)
+					}
+			} else {
+				if err := stream.Send(&pb.StatusReply{Success: false,
+					Message: nodelist[i] + ": successfully removed"}); err != nil {
+						log.Errorf("Send message failed: %s", err)
+					}
+			}
+		}(i)
+        }
+
+        wg.Wait()
+        if (failed > 0) {
+                if err := stream.Send(&pb.StatusReply{Success: false,
+			Message: "An error occured during removal of Nodes"}); err != nil {
 				return err
 			}
-			// ignore error
-		}
-
-		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Removing node " + hostname + " from Kubernetes"}); err != nil {
-			return err
-		}
-		success, message = tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
-			"delete",  "node",  hostname)
-		if success != true {
-			if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
-				return err
-			}
-			// ignore error
-		}
-	}
-
-
-	salt_nodelist := strings.Join(nodelist, ",")
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Cleanup node(s) " + salt_nodelist + "..."}); err != nil {
-		return err
-	}
-	success, message := tools.ExecuteCmd("salt", "-L", salt_nodelist, "cmd.run",  "kubeadm reset --force")
-	if success != true {
-		if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
-                        return err
-                }
-		// ignore error
-	}
-	// Try some system cleanup, ignore if fails
-	tools.ExecuteCmd("salt", "-L", salt_nodelist, "cmd.run", "sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
-	tools.ExecuteCmd("salt", "-L", salt_nodelist, "grains.delkey",  "kubicd")
-	success, message = tools.ExecuteCmd("salt", "-L", salt_nodelist, "cmd.run",  "\"iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
-	if success != true {
-		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Warning: removal of iptables failed."}); err != nil {
-			return err
-		}
-	}
-	tools.ExecuteCmd("salt", "-L", salt_nodelist, "cmd.run",  "\"ip link delete cni0;  ip link delete flannel.1; ip link delete cilium_vxlan\"")
-	tools.ExecuteCmd("salt", "-L", salt_nodelist, "service.disable",  "kubelet")
-	tools.ExecuteCmd("salt", "-L", salt_nodelist, "service.stop",  "kubelet")
-	tools.ExecuteCmd("salt", "-L", salt_nodelist, "service.disable",  "crio")
-	tools.ExecuteCmd("salt", "-L", salt_nodelist, "service.stop",  "crio")
-	return nil
+        }
+        return nil
 }

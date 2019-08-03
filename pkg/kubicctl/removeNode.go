@@ -76,11 +76,10 @@ func removeNode(cmd *cobra.Command, args []string) {
                 }
 		if (r.Success != true) {
 			fmt.Fprintf(os.Stderr, "%s\n", r.Message)
-			os.Exit(1)
 		} else {
 			fmt.Printf("%s\n", r.Message)
 		}
         }
 
-	fmt.Printf("Node(s) %s removed.\nPlease make sure to reboot the Nodes before re-using them.", nodes)
+	fmt.Printf("Please make sure to reboot the Nodes before re-using them.\n")
 }

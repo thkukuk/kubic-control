@@ -147,7 +147,6 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 
 			stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": joining cluster..."})
 
-
 			success, message = tools.ExecuteCmd("salt",  nodelist[i], "cmd.run",  "\"" + joincmd + "\"")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
