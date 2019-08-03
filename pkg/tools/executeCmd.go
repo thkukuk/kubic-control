@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"fmt"
 	"bytes"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -37,7 +38,11 @@ func ExecuteCmd(command string, arg ...string) (bool,string) {
 			stderr = out // salt is evil, errors are written to stdout
 		}
 		log.Error("Error invoking " + command + ": " + fmt.Sprint(err) + "\n" + stderr.String())
-		return false, "Error invoking " + command + ": " + err.Error()
+		if (command == "salt") {
+			return false, "Error invoking " + command + ": " + err.Error() + "\n(" + strings.TrimSuffix(stderr.String(), "\n") + ")"
+		} else {
+			return false, "Error invoking " + command + ": " + err.Error()
+		}
 	} else {
 		log.Info(out.String())
 	}
