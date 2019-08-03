@@ -22,7 +22,7 @@ service Kubeadm {
   // Creates a new master
   rpc InitMaster (InitRequest) returns (stream StatusReply) {}
   // Add a new worker node to the cluster
-  rpc AddNode (AddNodeRequest) returns (StatusReply) {}
+  rpc AddNode (AddNodeRequest) returns (stream StatusReply) {}
   rpc RemoveNode (RemoveNodeRequest) returns (stream StatusReply) {}
   rpc RebootNode (RebootNodeRequest) returns (StatusReply) {}
   rpc ListNodes (Empty) returns (ListReply) {}

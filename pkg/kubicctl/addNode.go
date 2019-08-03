@@ -18,6 +18,8 @@ import (
 	"context"
 	"time"
 	"fmt"
+	"io"
+	"os"
 
         log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -52,22 +54,40 @@ func addNode(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	c := pb.NewKubeadmClient(conn)
+	client := pb.NewKubeadmClient(conn)
 
 	// var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
 	// clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
 	// ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	r, err := c.AddNode(ctx, &pb.AddNodeRequest{NodeNames: nodes, Type: nodeType})
+	stream, err := client.AddNode(ctx, &pb.AddNodeRequest{NodeNames: nodes, Type: nodeType})
 	if err != nil {
 		log.Errorf("could not initialize: %v", err)
 		return
 	}
-	if r.Success {
-		fmt.Printf("Nodes %s added\n", nodes)
-	} else {
-		log.Errorf("Add nodes %s failed: %s", nodes, r.Message)
-	}
+
+	for {
+                r, err := stream.Recv()
+                if err == io.EOF {
+                        break
+                }
+                if err != nil {
+                        if r == nil {
+                                fmt.Fprintf(os.Stderr, "Adding node %s failed: %v\n", nodes, err)
+                        } else {
+                                fmt.Fprintf(os.Stderr, "Adding node %s failed: %s\n%v\n", r.Message, err)
+                        }
+                        os.Exit(1)
+                }
+                if (r.Success != true) {
+                        fmt.Fprintf(os.Stderr, "%s\n", r.Message)
+                        os.Exit(1)
+                } else {
+                        fmt.Printf("%s\n", r.Message)
+                }
+        }
+
+	fmt.Print("Node(s) successfully added\n")
 }
