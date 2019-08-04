@@ -84,7 +84,7 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
                 go func(i int) {
                         defer wg.Done()
 
-                        stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": removing node..."})
+                        stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": start node removal..."})
 			success, message := ResetNode(nodelist[i], RemoveNodeOutput)
 			if len(message) > 0 {
 				if err := stream.Send(&pb.StatusReply{Success: false,
