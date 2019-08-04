@@ -23,8 +23,20 @@ import (
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
+// output_stream types takes bool and string, returns nothing.
+type OutputStream func(bool, string)
+var output_stream pb.Kubeadm_RemoveNodeServer
+
+func RemoveNodeOutput(success bool, message string) {
+	if err := output_stream.Send(&pb.StatusReply{Success: false,
+		Message: message}); err != nil {
+			log.Errorf("Send message failed: %s", err)
+		}
+}
+
 func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) error {
 	var nodelist []string
+	output_stream = stream
 
 	// If we have a list of Nodes, try to find the right node names which have a kubic-worker-node grain.
 	if strings.Index(in.NodeNames, ",") >= 0 || strings.Index(in.NodeNames, "[") >= 0 || strings.Compare(in.NodeNames, "*") == 0 {
@@ -73,7 +85,7 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
                         defer wg.Done()
 
                         stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": removing node..."})
-			success, message := ResetNode(nodelist[i])
+			success, message := ResetNode(nodelist[i], RemoveNodeOutput)
 			if len(message) > 0 {
 				if err := stream.Send(&pb.StatusReply{Success: false,
 					Message: nodelist[i] + ": " + message}); err != nil {

@@ -53,19 +53,20 @@ func ResetMaster() (bool, string) {
 	return success, message
 }
 
-func ResetNode(nodeName string) (bool, string) {
+func ResetNode(nodeName string, send OutputStream) (bool, string) {
 
 	ret_success := true
-	ret_message := ""
 
 	hostname, err := GetNodeName(nodeName)
 	if err != nil {
 		return false, err.Error()
 	}
 
+	send(true, nodeName + ": draining node...")
 	/* ignore if we cannot drain node */
 	tools.DrainNode(hostname, "")
 
+	send(true, nodeName + ": verify etcd cluster...")
 	/* Delete the node from the etcd member list if it is on it.
              Else we will can end with a non-functional etcd cluster */
 	success, message := tools.ExecuteCmd("etcdctl",
@@ -90,7 +91,8 @@ func ResetNode(nodeName string) (bool, string) {
 					"--key-file", "/etc/kubernetes/pki/etcd/server.key",
 					"member", "remove", etcd_member_id)
 				if success != true {
-					ret_message = ret_message + nodeName + ": " + message + " (ignored)\n"
+					send(success, nodeName + ": " + message + " (ignored)")
+					ret_success = false
 				}
                         }
                 }
@@ -99,12 +101,15 @@ func ResetNode(nodeName string) (bool, string) {
 
 	/* reset the node. Even if this fails, continue cleanup, but
             report back */
+	send (true, nodeName + ": reset node...")
 	success, message = tools.ExecuteCmd("salt",  nodeName,
 		"cmd.run",  "kubeadm reset --force")
 	if success != true {
-		ret_message = ret_message + nodeName + ": " + message + " (ignored)\n"
+		send(success, nodeName + ": " + message + " (ignored)")
+		ret_success = false
 	}
 
+	send(true, nodeName + ": cleanup after kubeadm...")
 	/* Try some system cleanup, ignore if fails */
         tools.ExecuteCmd("salt", nodeName, "cmd.run",
 		"sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
@@ -120,11 +125,13 @@ func ResetNode(nodeName string) (bool, string) {
         tools.ExecuteCmd("salt", nodeName, "service.stop",  "crio")
 
 	/* ignore if we cannot delete the node*/
+	send(true, nodeName + ": final node deletion...")
 	success, message = tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
 		"delete",  "node",  hostname)
 	if success != true {
-		ret_message = ret_message + nodeName + ": " + message + " (ignored)"
+		send(success, nodeName + ": " + message + " (ignored)")
+		ret_success = false
 	}
 
-	return ret_success, ret_message
+	return ret_success, ""
 }
