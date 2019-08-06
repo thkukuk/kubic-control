@@ -28,7 +28,7 @@ type OutputStream func(bool, string)
 var output_stream pb.Kubeadm_RemoveNodeServer
 
 func RemoveNodeOutput(success bool, message string) {
-	if err := output_stream.Send(&pb.StatusReply{Success: false,
+	if err := output_stream.Send(&pb.StatusReply{Success: success,
 		Message: message}); err != nil {
 			log.Errorf("Send message failed: %s", err)
 		}
