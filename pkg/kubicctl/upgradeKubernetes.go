@@ -34,6 +34,8 @@ func UpgradeKubernetesCmd() *cobra.Command {
 		Args: cobra.ExactArgs(0),
 	}
 
+	subCmd.PersistentFlags().StringVar(&kubernetesVersion, "kubernetes-version", kubernetesVersion, "Kubernetes version of the control plane to deploy")
+
 	return subCmd
 }
 
@@ -55,7 +57,7 @@ func upgradeKubernetes(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	fmt.Print ("Upgrading kubernetes can take a very long time, please be patient.\n")
-	stream, err := client.UpgradeKubernetes(ctx, &pb.Empty{})
+	stream, err := client.UpgradeKubernetes(ctx, &pb.UpgradeRequest{KubernetesVersion: kubernetesVersion})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not upgrade: %v", err)
 		return

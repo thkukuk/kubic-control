@@ -28,7 +28,7 @@ service Kubeadm {
   rpc ListNodes (Empty) returns (ListReply) {}
   rpc DestroyMaster (Empty) returns (stream StatusReply) {}
   // Upgrade cluster to newest version (as of kubeadm on master)
-  rpc UpgradeKubernetes (Empty) returns (stream StatusReply) {}
+  rpc UpgradeKubernetes (UpgradeRequest) returns (stream StatusReply) {}
   // Fetch kubeconfig
   rpc FetchKubeconfig (Empty) returns (StatusReply) {}
 }
@@ -55,6 +55,11 @@ message InitRequest {
   string adv_addr = 3;
   // the string should the be DNS name of the loadbalancer
   string multi_master = 4;
+}
+
+// The upgrade request
+message UpgradeRequest {
+  string kubernetes_version = 1;
 }
 
 // The name of a new worker which should be added

@@ -156,11 +156,14 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	if len (in.KubernetesVersion) > 0 {
 		kubernetes_version = in.KubernetesVersion
 	} else {
-		// No version given. Try to use kubeadm RPM version number.
-		success, message := tools.ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
-		if success == true {
-			kubernetes_version = strings.Replace(message, "'", "", -1)
+	success, message := tools.GetKubeadmVersion()
+		if success != true {
+			if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
+				return err
+			}
+			return nil
 		}
+		kubernetes_version = message
 	}
 	update_cfg ("control-plane.conf", "version", kubernetes_version)
 

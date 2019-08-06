@@ -62,7 +62,7 @@ func (s *kubeadm_server) DestroyMaster(in *pb.Empty, stream pb.Kubeadm_DestroyMa
 	return kubeadm.DestroyMaster(in, stream)
 }
 
-func (s *kubeadm_server) UpgradeKubernetes(in *pb.Empty, stream pb.Kubeadm_UpgradeKubernetesServer) error {
+func (s *kubeadm_server) UpgradeKubernetes(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernetesServer) error {
 	log.Infof("Received: upgrade Kubernetes")
 	return kubeadm.UpgradeKubernetes(in, stream)
 }
