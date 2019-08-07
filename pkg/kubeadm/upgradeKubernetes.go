@@ -17,6 +17,7 @@ package kubeadm
 import (
 	pb "github.com/thkukuk/kubic-control/api"
 	"github.com/thkukuk/kubic-control/pkg/tools"
+	"github.com/thkukuk/kubic-control/pkg/deployment"
 )
 
 func UpgradeKubernetes(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernetesServer) error {
@@ -76,7 +77,7 @@ func UpgradeKubernetes(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernete
 		}
 		hostname, err := GetNodeName(nodelist[i])
 		if err != nil {
-			failedNodes = failedNodes+nodelist[i]
+			failedNodes = failedNodes+nodelist[i] + "(determine hostname), "
 		} else {
 			// if draining fails, ignore
 			tools.DrainNode(hostname, "")
@@ -94,15 +95,23 @@ func UpgradeKubernetes(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernete
 		}
 	}
 
-	if len(failedNodes) > 0 {
-		// XXX remove ", " Suffix
-		if err := stream.Send(&pb.StatusReply{Success: false, Message: failedNodes}); err != nil {
-			return err
-		}
+	// Update pod network, kured and other pods we are running:
+	success, message = deployment.UpdateAll(false)
+	if success != true {
+		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+                        return err
+                }
 	}
 
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Kubernetes cluster was successfully upgraded to version " + kubernetes_version}); err != nil {
-		return err
+	if len(failedNodes) > 0 {
+		// XXX remove ", " Suffix
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Upgrade of some Nodes failed: " + failedNodes}); err != nil {
+			return err
+		}
+	} else {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Kubernetes cluster was successfully upgraded to version " + kubernetes_version}); err != nil {
+			return err
+		}
 	}
 	return nil
 }
