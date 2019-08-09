@@ -15,8 +15,9 @@
 package deployment
 
 import (
-        "gopkg.in/ini.v1"
+	"gopkg.in/ini.v1"
 	log "github.com/sirupsen/logrus"
+	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 func UpdateAll(forced bool) (bool, string) {
@@ -36,7 +37,7 @@ func UpdateAll(forced bool) (bool, string) {
 			}
 		} else {
 			value := cfg.Section("").Key(key).String()
-			hash, _ := Sha256sum(key)
+			hash, _ := tools.Sha256sum(key)
 
 			if hash != value {
 				log.Infof("%s has changed, updating")
