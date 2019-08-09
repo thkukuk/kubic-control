@@ -161,7 +161,11 @@ On the machine where `kubicd` is running, `/etc/kubicd` and
 ## Notes
 
 `Kubicd` does not store any informations about the state of the kubernetes
-cluster. This allows to manage the cluster with `kubectl` and `kubeadm`
-yourself without `kubicctl`. There is only one important thing: a grain
-has to be set on new worker nodes: `kubicd=kubic-worker-node`. If nodes
+cluster except for the deployed daemonsets. This allows to manage the cluster
+with `kubectl` and `kubeadm` yourself without `kubicctl`. Daemonsets not
+installed via `kubicctl`/`kubicd` have to be updated by the admin themself,
+they will not be updated by `kubicctl upgrade`.
+There is only one important thing: a grain has to be set on new worker and
+master nodes: `kubicd=kubic-worker-node` for worker,
+`kubicd=kubic-master-node` for additional master nodes. If nodes
 gets manual removed, this grain has to be deleted, too.
