@@ -148,8 +148,9 @@ rbac add <role> <user>` will add the user to the role.
 * rbac - Manage RBAC rules
   * add <role> <user> - Add user account to a role
   * list - List roles and accounts
-* upgrade - Upgrade Kubernetes Cluster to the version of the installed kubelet command
+* upgrade - Upgrade Kubernetes Cluster to the version of the installed kubeadm command if not otherwise specified
 * destroy-cluster - Remove all worker and master nodes
+* status - Print status informations of KubicD
 * version - Print version information
 
 ## Backup
