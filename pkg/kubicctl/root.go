@@ -88,6 +88,7 @@ func Execute() error {
 		CertificatesCmd(),
 		DestroyClusterCmd(),
 		rbac.RBACCmd(),
+		GetStatusCmd(),
         )
 
 	var err error

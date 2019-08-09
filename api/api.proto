@@ -31,6 +31,8 @@ service Kubeadm {
   rpc UpgradeKubernetes (UpgradeRequest) returns (stream StatusReply) {}
   // Fetch kubeconfig
   rpc FetchKubeconfig (Empty) returns (StatusReply) {}
+  // Print status of cluster from kubicd view
+  rpc GetStatus (Empty) returns (stream StatusReply) {}
 }
 
 // Tell success or not

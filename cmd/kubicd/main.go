@@ -95,6 +95,11 @@ func (s *kubeadm_server) FetchKubeconfig(ctx context.Context, in *pb.Empty) (*pb
 	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
+func (s *kubeadm_server) GetStatus(in *pb.Empty, stream pb.Kubeadm_GetStatusServer) error {
+	log.Print("Received: GetStatus")
+	return kubeadm.GetStatus(in, stream, Version)
+}
+
 // Certificate API
 func (s *cert_server) CreateCert(ctx context.Context, in *pb.CreateCertRequest) (*pb.CertificateReply, error) {
 	log.Printf("Received: create certificate")
