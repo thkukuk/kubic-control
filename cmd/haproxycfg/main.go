@@ -33,6 +33,7 @@ func ServerCmd() *cobra.Command {
 
         subCmd.AddCommand(
                 ServerAddCmd(),
+		ServerRemoveCmd(),
         )
 
         return subCmd
