@@ -22,8 +22,21 @@ import (
 )
 var (
         Version = "unreleased"
+	OutputDir = "/etc/haproxy"
 )
 
+func ServerCmd() *cobra.Command {
+        var subCmd = &cobra.Command {
+                Use:   "server",
+                Short: "Manage server entry of k8s-api backend",
+        }
+
+        subCmd.AddCommand(
+                ServerAddCmd(),
+        )
+
+        return subCmd
+}
 
 func main() {
 	rootCmd := &cobra.Command{
@@ -33,6 +46,7 @@ func main() {
 	rootCmd.AddCommand(
                 VersionCmd(),
 		InitializeConfigCmd(),
+		ServerCmd(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
