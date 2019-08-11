@@ -22,6 +22,7 @@ import (
 	"os"
 
         "github.com/spf13/cobra"
+        "github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 func ServerAddCmd() *cobra.Command {
@@ -139,4 +140,11 @@ func serverAdd (cmd *cobra.Command, args []string) {
 
 	set_perm (OutputDir + "haproxy.cfg")
 	fmt.Printf("haproxy.cfg adjusted\n")
+	success, message := tools.ExecuteCmd("systemctl", "restart", "haproxy")
+	if !success {
+		fmt.Fprintf(os.Stderr, "Error restarting haproxy: %s\n",
+			message)
+	} else {
+		fmt.Print("haproxy restarted\n")
+	}
 }

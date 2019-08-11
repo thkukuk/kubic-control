@@ -23,7 +23,7 @@ import (
 	"strconv"
 
         "github.com/spf13/cobra"
-//	systemd "github.com/coreos/go-systemd/dbus"
+	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 var (
@@ -43,25 +43,6 @@ func InitializeConfigCmd() *cobra.Command {
 
         return subCmd
 }
-
-/*
-func is_enabled(service string) (bool, error) {
-
-	conn, err := systemd.New()
-	if err != nil {
-		return false, err
-	}
-
-	units, err := conn.ListUnits()
-	if err != nil {
-		return false,err
-	}
-
-	for _, u := range units {
-		fmt.Printf("%s - %s - %s\n", u.Name, u.LoadState, u.ActiveState)
-	}
-}
-*/
 
 // exists returns whether the given file or directory exists
 func Exists(path string) (bool, error) {
@@ -131,6 +112,8 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 	// given, creae new haproxy.cfg template
 	found, _ := Exists(OutputDir + "haproxy.cfg")
 	if !found || force {
+		// Stop haproxy while we create the new config
+		tools.ExecuteCmd("systemctl", "stop", "haproxy")
 		f, err := os.Create(OutputDir + "haproxy.cfg")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not create \"" + OutputDir + "haproxy.cfg\": %v", err)
@@ -185,6 +168,13 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 
 		set_perm (OutputDir + "haproxy.cfg")
 		fmt.Printf("haproxy.cfg created\n")
+		success, message := tools.ExecuteCmd("systemctl", "enable", "--now", "haproxy")
+		if !success {
+			fmt.Fprintf(os.Stderr, "Error enabling and starting haproxy: %s\n",
+				message)
+		} else {
+			fmt.Print("haproxy enabled and started\n")
+		}
 	} else {
 		// File exists, we don't overwrite it, so remove existing
 		// k8s-api frontend/backend and write them new.
@@ -242,5 +232,13 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 
 		set_perm (OutputDir + "haproxy.cfg")
 		fmt.Printf("haproxy.cfg adjusted\n")
+		// XXX check if service is enabled and running!
+		success, message := tools.ExecuteCmd("systemctl", "restart", "haproxy")
+		if !success {
+			fmt.Fprintf(os.Stderr, "Error restarting haproxy: %s\n",
+				message)
+		} else {
+			fmt.Print("haproxy restarted\n")
+		}
 	}
 }
