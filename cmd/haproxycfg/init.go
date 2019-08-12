@@ -232,13 +232,14 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 
 		set_perm (OutputDir + "haproxy.cfg")
 		fmt.Printf("haproxy.cfg adjusted\n")
-		// XXX check if service is enabled and running!
-		success, message := tools.ExecuteCmd("systemctl", "restart", "haproxy")
+		// Make sure haproxy is not running and enable it with new start
+		tools.ExecuteCmd("systemctl", "stop", "haproxy")
+		success, message := tools.ExecuteCmd("systemctl", "enable", "--now", "haproxy")
 		if !success {
-			fmt.Fprintf(os.Stderr, "Error restarting haproxy: %s\n",
+			fmt.Fprintf(os.Stderr, "Error enabling and starting haproxy: %s\n",
 				message)
 		} else {
-			fmt.Print("haproxy restarted\n")
+			fmt.Print("haproxy enabled and started\n")
 		}
 	}
 }
