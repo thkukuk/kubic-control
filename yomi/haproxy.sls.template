@@ -1,0 +1,20 @@
+# Meta pillar for Yomi
+#
+# There are some parameters that can be configured and adapted to
+# launch a basic Yomi installation:
+#
+#   * efi = {True, False}
+#   * baremetal = {True, False}
+#   * disk = {/dev/...}
+#   * repo-main = {https://download....}
+#
+# This meta-pillar can be used as a template for new installers. This
+# template is expected to be adapted for production systems.
+
+{% set efi = False %}
+{% set baremetal = False %}
+{% set disk = '/dev/vda' %}
+{% set repo_main = 'http://download.opensuse.org/tumbleweed/repo/oss' %}
+
+{% include "kubicd/_haproxy.sls" %}
+

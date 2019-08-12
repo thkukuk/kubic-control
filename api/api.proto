@@ -104,3 +104,18 @@ message CertificateReply {
   string key = 3;
   string crt = 4;
 }
+
+// Install Node with yomi
+service Yomi {
+  rpc PrepareConfig (PrepareConfigRequest) returns  (stream StatusReply) {}
+  rpc Install (InstallRequest) returns (stream StatusReply) {}
+}
+
+message PrepareConfigRequest {
+  string saltnode = 1;
+  string type = 2;
+}
+
+message InstallRequest {
+  string saltnode = 1;
+}

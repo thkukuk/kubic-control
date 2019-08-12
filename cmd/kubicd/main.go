@@ -34,6 +34,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thkukuk/kubic-control/pkg/kubeadm"
 	"github.com/thkukuk/kubic-control/pkg/certificate_server"
+	"github.com/thkukuk/kubic-control/pkg/yomi"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
@@ -49,11 +50,11 @@ var (
 
 type kubeadm_server struct{}
 type cert_server struct{}
+type yomi_server struct{}
 
 // kubeadm API
 func (s *kubeadm_server) InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
-	log.Infof("Received: Kubernetes Version=%v, POD Network=%v",
-                in.KubernetesVersion, in.PodNetworking)
+	log.Infof("Received: Init Master")
 	return kubeadm.InitMaster(in, stream)
 }
 
@@ -105,6 +106,17 @@ func (s *cert_server) CreateCert(ctx context.Context, in *pb.CreateCertRequest) 
 	log.Printf("Received: create certificate")
 	status, message, key, crt := certificate.CreateCert(in)
 	return &pb.CertificateReply{Success: status, Message: message, Key: key, Crt: crt}, nil
+}
+
+// Yomi API
+func (s *yomi_server) PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServer) error {
+	log.Infof("Received: PrepareConfig of %s for Node %s", in.Saltnode, in.Type)
+	return yomi.PrepareConfig(in, stream)
+}
+
+func (s *yomi_server) Install(in *pb.InstallRequest, stream pb.Yomi_InstallServer) error {
+	log.Infof("Received: Install Node %s", in.Saltnode)
+	return yomi.Install(in, stream)
 }
 
 
