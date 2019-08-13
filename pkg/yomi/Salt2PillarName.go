@@ -12,39 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubicctl
+package yomi
 
 import (
-	"github.com/spf13/cobra"
+	"strings"
 )
 
-func DeployNodeCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "deploy",
-                Short: "Install new nodes with yomi",
-        }
-
-	subCmd.AddCommand(
-		YomiPrepareConfigCmd(),
-		YomiInstallCmd(),
-	)
-
-        return subCmd
-}
-
-func NodeCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "node",
-                Short: "Manage kubernetes nodes",
-	}
-
-	subCmd.AddCommand(
-		AddNodeCmd(),
-		RemoveNodeCmd(),
-		RebootNodeCmd(),
-		ListNodesCmd(),
-		DeployNodeCmd(),
-	)
-
-	return subCmd
+func Salt2PillarName(name string) string {
+	// Replace all '.' with '_'
+	temp := strings.Replace(name, ".","_",-1)
+	// Replace all spaces with '-'
+	return strings.Replace(temp, " ","-",-1)
 }

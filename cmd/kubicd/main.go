@@ -300,6 +300,7 @@ func kubicd(cmd *cobra.Command, args []string) {
 
 	pb.RegisterKubeadmServer(s, &kubeadm_server{})
 	pb.RegisterCertificateServer(s, &cert_server{})
+	pb.RegisterYomiServer(s, &yomi_server{})
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)

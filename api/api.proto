@@ -114,6 +114,12 @@ service Yomi {
 message PrepareConfigRequest {
   string saltnode = 1;
   string type = 2;
+  // -1: false, 0: not set, 1: true
+  sint32 efi = 3;
+  sint32 baremetal = 4;
+  string disk = 5;
+  string repo = 6;
+  string repo_update = 7;
 }
 
 message InstallRequest {

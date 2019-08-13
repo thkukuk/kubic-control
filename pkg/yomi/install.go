@@ -26,7 +26,10 @@ func Install(in *pb.InstallRequest, stream pb.Yomi_InstallServer) error {
 			return err
 		}
 
-	exists, _ := tools.Exists("/srv/pillar/kubicd/" + in.Saltnode + ".sls")
+	pillarName := Salt2PillarName(in.Saltnode)
+        pillarFile := "/srv/pillar/kubicd/" + pillarName + ".sls"
+
+	exists, _ := tools.Exists(pillarFile)
 	if !exists {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: "No pillar data found, prepare config step not run?"}); err != nil {
