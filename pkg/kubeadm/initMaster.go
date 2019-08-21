@@ -141,6 +141,17 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
+
+	if len(in.MultiMaster) > 0 {
+		message = "Setting up multi-master kubernetes node (reacheable as '" + in.MultiMaster + "') with " + arg_pod_network
+	} else {
+		message = "Setting up single-master kubernetes node with " + arg_pod_network
+	}
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: message}); err != nil {
+		return err
+	}
+
+
 	// build kubeadm call
 	kubeadm_args := []string{"init"}
 
