@@ -37,8 +37,8 @@ func DestroyClusterCmd() *cobra.Command {
 }
 
 func destroyCluster(cmd *cobra.Command, args []string) {
-	// Set up a connection to the server.
 
+	// Set up a connection to the server.
 	conn, err := CreateConnection()
 	if err != nil {
 		return
@@ -74,7 +74,6 @@ func destroyCluster(cmd *cobra.Command, args []string) {
                 }
 		if (r.Success != true) {
 			fmt.Fprintf(os.Stderr, "%s\n", r.Message)
-			os.Exit(1)
 		} else {
 			fmt.Printf("%s\n", r.Message)
 		}
@@ -109,7 +108,6 @@ func destroyCluster(cmd *cobra.Command, args []string) {
                 }
 		if (r.Success != true) {
 			fmt.Fprintf(os.Stderr, "%s\n", r.Message)
-			os.Exit(1)
 		} else {
 			fmt.Printf("%s\n", r.Message)
 		}
