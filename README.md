@@ -138,6 +138,7 @@ rbac add <role> <user>` will add the user to the role.
   * --multi-master=<DNS name>  	Setup HA masters, the argument must be the DNS name of the load balancer
   * --pod-network=<flannel|cilium>	Pod network
   * --adv-addr=<IPaddr>	IP address the API Server will advertise on
+  * --stage=<official|devel> Specify to use the official images or from the devel project
 *  kubeconfig - Download kubeconfig
   * --output=<file> - Where the kubeconfig file should be stored
 * node - Manage kubernetes nodes

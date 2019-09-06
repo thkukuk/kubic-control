@@ -50,13 +50,15 @@ message ListReply {
   repeated string node = 3;
 }
 
-// The init request message containing the kubernetes version number
+// The init request message
 message InitRequest {
   string kubernetes_version = 1;
   string pod_networking = 2;
   string adv_addr = 3;
   // the string should the be DNS name of the loadbalancer
   string multi_master = 4;
+  // stage of testing
+  string stage = 5;
 }
 
 // The upgrade request

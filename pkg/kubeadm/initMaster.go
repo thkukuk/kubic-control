@@ -17,6 +17,7 @@ package kubeadm
 import (
 	"os"
 	"strings"
+	"runtime"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/ini.v1"
@@ -163,11 +164,29 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		kubeadm_args = append(kubeadm_args, "--pod-network-cidr=10.244.0.0/16")
 	}
 
+	if len(in.Stage) > 0 {
+		if strings.EqualFold(in.Stage, "devel") {
+			if runtime.GOARCH == "amd64" {
+				kubeadm_args = append(kubeadm_args, "--image-repository=registry.opensuse.org/devel/kubic/containers/container/kubic")
+			} else if runtime.GOARCH == "arm64" {
+				kubeadm_args = append(kubeadm_args, "--image-repository=registry.opensuse.org/devel/kubic/containers/container_arm/kubic")
+			} else {
+				message = "Unknown architecture '" + runtime.GOARCH + "', no devel project known, using standard one"
+				if err := stream.Send(&pb.StatusReply{Success: true, Message: message}); err != nil {
+					return err
+				}
+			}
+		} else if !strings.EqualFold(in.Stage, "official") {
+			/* Ugly hack, we will use the argument as pointer to a registry */
+			kubeadm_args = append(kubeadm_args, "--image-repository=" + in.Stage)
+		}
+	}
+
 	kubernetes_version := ""
 	if len (in.KubernetesVersion) > 0 {
 		kubernetes_version = in.KubernetesVersion
 	} else {
-	success, message := tools.GetKubeadmVersion()
+		success, message := tools.GetKubeadmVersion()
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
 				return err
