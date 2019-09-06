@@ -34,7 +34,7 @@ func ListRolesCmd() *cobra.Command {
 }
 
 func listRoles (cmd *cobra.Command, args []string) {
-	cfg, err := ini.LooseLoad("/usr/share/defaults/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
+	cfg, err := ini.LooseLoad("/usr/etc/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
         if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot load rbac.conf: %v\n", err)
 		os.Exit(1)

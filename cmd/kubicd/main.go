@@ -45,7 +45,7 @@ var (
 	crtFile = "/etc/kubicd/pki/KubicD.crt"
 	keyFile = "/etc/kubicd/pki/KubicD.key"
 	caFile = "/etc/kubicd/pki/Kubic-Control-CA.crt"
-	cfg, cfg_err = ini.LooseLoad("/usr/share/defaults/kubicd/kubicd.conf", "/etc/kubicd/kubicd.conf")
+	cfg, cfg_err = ini.LooseLoad("/usr/etc/kubicd/kubicd.conf", "/etc/kubicd/kubicd.conf")
 )
 
 type kubeadm_server struct{}
@@ -122,7 +122,7 @@ func (s *yomi_server) Install(in *pb.InstallRequest, stream pb.Yomi_InstallServe
 
 func rbacCheck(user string, function string) bool {
 
-	rbac, rbac_err := ini.LooseLoad("/usr/share/defaults/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
+	rbac, rbac_err := ini.LooseLoad("/usr/etc/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
 
 	if rbac_err != nil {
 		log.Error ("Error opening rbac config file: %v", rbac_err)
