@@ -39,7 +39,7 @@ func Install(in *pb.InstallRequest, stream pb.Yomi_InstallServer) error {
 	}
 
 	// make sure latest modules are used on minion
-	success, message := tools.ExecuteCmd("salt",  in.Saltnode, "saltutil.refresh_pillar")
+	success, message := tools.ExecuteCmd("salt",  in.Saltnode, "saltutil.sync_all")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: message}); err != nil {
@@ -49,7 +49,7 @@ func Install(in *pb.InstallRequest, stream pb.Yomi_InstallServer) error {
 	}
 
 	// wipe harddisk, else salt will not re-create them
-	success, message = tools.ExecuteCmd("salt",  in.Saltnode, "devices.wipe", "partitions.devices")
+	success, message = tools.ExecuteCmd("salt",  in.Saltnode, "state.apply", "yomi.storage.wipe")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: message}); err != nil {

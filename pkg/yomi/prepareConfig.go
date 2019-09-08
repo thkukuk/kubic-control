@@ -16,8 +16,12 @@ package yomi
 
 import (
 	"os"
+	"strings"
+	"encoding/json"
 
+	log "github.com/sirupsen/logrus"
 	pb "github.com/thkukuk/kubic-control/api"
+	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServer) error {
@@ -34,6 +38,23 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 			}
 		return nil
 	}
+
+	// Get the hardware information from the new node
+
+	if err := stream.Send(&pb.StatusReply{Success: true,
+		Message: "Gather hardware informations for Node " + in.Saltnode }); err != nil {
+			return err
+		}
+
+	// make sure latest modules are used on minion
+        success, message := tools.ExecuteCmd("salt", in.Saltnode, "saltutil.sync_all")
+        if success != true {
+                if err := stream.Send(&pb.StatusReply{Success: false,
+                        Message: message}); err != nil {
+                                return err
+                        }
+                return nil
+        }
 
 	pillarName := Salt2PillarName(in.Saltnode)
 	pillarFile := "/srv/pillar/kubicd/" + pillarName + ".sls"
@@ -68,8 +89,23 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 
 	useEfi := false
 	if in.Efi == 0 {
-		// XXX use salt to query node
-		useEfi = false
+		// UEFI or BIOS?
+		success, message = tools.ExecuteCmd("salt", "--out=txt", in.Saltnode, "cmd.run",
+			"test -f /sys/firmware/efi/systab && echo true || echo false")
+		if success != true {
+			if err := stream.Send(&pb.StatusReply{Success: false,
+				Message: message}); err != nil {
+					return err
+				}
+			return nil
+		}
+		uefi := strings.Replace(message, "\n","",-1)
+		i := strings.Index(uefi,":")+1
+		uefi = strings.TrimSpace(uefi[i:])
+		log.Info ("UEFI: " + uefi)
+		if strings.EqualFold(uefi, "true") {
+			useEfi = true
+		}
 	} else if in.Efi == -1 {
 		useEfi = false
 	} else {
@@ -90,8 +126,22 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 
 	useBareMetal := false
 	if in.Baremetal == 0 {
-		// XXX use salt to query node
-		useBareMetal = false
+		// bare metal or virtualisation?
+		success, message = tools.ExecuteCmd("salt", "--out=txt", in.Saltnode, "cmd.run", "systemd-detect-virt")
+		if success != true {
+			if err := stream.Send(&pb.StatusReply{Success: false,
+				Message: message}); err != nil {
+					return err
+				}
+			return nil
+		}
+		virtualisation := strings.Replace(message, "\n","",-1)
+		i := strings.Index(virtualisation,":")+1
+		virtualisation = strings.TrimSpace(virtualisation[i:])
+		log.Info ("Virtualisation: " + virtualisation)
+		if strings.EqualFold(virtualisation, "none") {
+			useBareMetal = true
+		}
 	} else if in.Baremetal == -1 {
 		useBareMetal = false
 	} else {
@@ -114,7 +164,26 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	if len(in.Disk) > 0 {
 		entry = "{% set disk = '" + in.Disk + "' %}\n"
 	} else {
-		// XXX use salt to query node or report back error to specify on the command line
+		success, message = tools.ExecuteCmd("salt", in.Saltnode, "cmd.run", "lsblk -J")
+		if success != true {
+			if err := stream.Send(&pb.StatusReply{Success: false,
+				Message: message}); err != nil {
+					return err
+				}
+			return nil
+		}
+		var lsblk map[string]interface{}
+		i := strings.Index(message,":")+1
+		lsblk_out := message[i:]
+		err = json.Unmarshal([]byte(lsblk_out), &lsblk)
+		if err != nil {
+			if err2 := stream.Send(&pb.StatusReply{Success: false,
+				Message: "Detecting disks failed: " + err.Error()}); err2 != nil {
+					return err2
+				}
+			return nil
+		}
+		// XXX
 		entry = "{% set disk = '" + "DEVICE MISSING" + "' %}\n"
 	}
 
@@ -143,7 +212,7 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 		return nil
 	}
 
-	// set_perm (OutputDir + "haproxy.cfg")
+	// XXX set_perm (OutputDir + "haproxy.cfg")
 
 	if err := stream.Send(&pb.StatusReply{Success: true,
 		Message: "Configuration created. Please check \"" + pillarFile + "\" and run install phase."}); err != nil {
