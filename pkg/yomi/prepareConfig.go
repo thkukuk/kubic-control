@@ -164,7 +164,7 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	if len(in.Disk) > 0 {
 		entry = "{% set disk = '" + in.Disk + "' %}\n"
 	} else {
-		success, message = tools.ExecuteCmd("salt", in.Saltnode, "cmd.run", "lsblk -J")
+		success, message = tools.ExecuteCmd("salt", "--out=json", in.Saltnode, "devices.hwinfo", "disk")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err != nil {
@@ -172,10 +172,8 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 				}
 			return nil
 		}
-		var lsblk map[string]interface{}
-		i := strings.Index(message,":")+1
-		lsblk_out := message[i:]
-		err = json.Unmarshal([]byte(lsblk_out), &lsblk)
+		var hwinfo_all map[string]interface{}
+		err = json.Unmarshal([]byte(message), &hwinfo_all)
 		if err != nil {
 			if err2 := stream.Send(&pb.StatusReply{Success: false,
 				Message: "Detecting disks failed: " + err.Error()}); err2 != nil {
@@ -183,8 +181,25 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 				}
 			return nil
 		}
-		// XXX
-		entry = "{% set disk = '" + "DEVICE MISSING" + "' %}\n"
+		hwinfo_node := hwinfo_all[in.Saltnode].(map[string]interface{})
+		hwinfo := hwinfo_node["hwinfo"].(map[string]interface{})
+		hwinfo_disk := hwinfo["disk"].(map[string]interface{})
+		if len (hwinfo_disk) != 1 {
+			message = "Found more than one disk:\n"
+			for key, value := range hwinfo_disk {
+				message = message + "- " + key + " (" + value.(string) +")\n"
+			}
+			if err := stream.Send(&pb.StatusReply{Success: false,
+				Message: message}); err != nil {
+					return err
+				}
+			return nil
+		}
+
+		// XXX we have exactly one key, no easier way?
+		for key, _ := range hwinfo_disk {
+			entry = "{% set disk = '" + key + "' %}\n"
+		}
 	}
 
 	if len(in.Repo) > 0 {

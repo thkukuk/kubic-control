@@ -3,6 +3,7 @@ Description=Create certificates for KubicD
 DefaultDependencies=no
 Wants=local-fs.target
 After=local-fs.target
+Wants=time-sync.target
 After=time-sync.target
 Before=kubicd.service
 ConditionPathExists=!/etc/kubicd/pki/Kubic-Control-CA.crt

@@ -27,7 +27,7 @@ import (
 
 func YomiInstallCmd() *cobra.Command {
         var subCmd = &cobra.Command {
-                Use:   "finish <name>",
+                Use:   "install <name>",
                 Short: "Install a new node with yomi",
                 Run: install,
 		Args: cobra.ExactArgs(1),
