@@ -16,13 +16,41 @@ package yomi
 
 import (
 	"os"
+	"os/user"
+	"io/ioutil"
 	"strings"
+	"strconv"
 	"encoding/json"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/thkukuk/kubic-control/api"
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
+
+func set_perm(path string) error {
+        err := os.Chmod(path, 0640)
+        if err != nil {
+                return err
+        }
+
+        if os.Getuid() != 0 {
+                // don't change ownership if we are not root
+                return nil
+        }
+
+        gr, err := user.LookupGroup("salt")
+        if err != nil {
+                // XXX if we don't have the group, do nothing
+                return nil
+        }
+
+        gid, err := strconv.Atoi(gr.Gid)
+        if err != nil {
+                return err
+        }
+        return os.Chown(path, 0, gid)
+}
+
 
 func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServer) error {
 
@@ -227,7 +255,114 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 		return nil
 	}
 
-	// XXX set_perm (OutputDir + "haproxy.cfg")
+	set_perm (pillarFile)
+
+	// Create top.sls if it does not exist, else add our entry
+	found, _ := tools.Exists("/srv/pillar/top.sls")
+	if !found {
+                f, err := os.Create("/srv/pillar/top.sls")
+                if err != nil {
+                        message = "Could not create \"/srv/pillar/top.sls\": " + err.Error()
+			if err2 := stream.Send(&pb.StatusReply{Success: false,
+				Message: message}); err2 != nil {
+					return err2
+				}
+			return nil
+                }
+
+                _, err = f.WriteString("base:\n" +
+			"  " + in.Saltnode + ":\n" +
+			"    - kubicd/" + pillarName + "\n" +
+                        "\n")
+                if err := f.Close(); err != nil {
+                        message = "Closing \"/srv/pillar/top.sls\" failed: " + err.Error()
+			if err2 := stream.Send(&pb.StatusReply{Success: false,
+				Message: message}); err2 != nil {
+					return err2
+				}
+			return nil
+                }
+	} else {
+		// File exists,
+
+		data, err := ioutil.ReadFile("/srv/pillar/top.sls")
+                if err != nil {
+                        message = "Error reading \"/srv/pillar/top.sls\": " + err.Error()
+			if err2 := stream.Send(&pb.StatusReply{Success: false,
+				Message: message}); err2 != nil {
+					return err2
+				}
+			return nil
+                }
+                file := string(data)
+                // Remove trailing \n to avoid additional new line
+                file = strings.TrimSuffix(file, "\n")
+                /* func Split(s, sep string) []string */
+                temp := strings.Split(file, "\n")
+
+		var newContent []string
+                found_node := false
+		found_pillar := false
+		write_pillar := false
+                for _, item := range temp {
+			if found_node {
+				if strings.Contains(item, "    -") {
+					if strings.Contains(item, "kubicd/" + pillarName) {
+						found_node = false
+						found_pillar = true
+					}
+				} else {
+					newContent = append (newContent, "    - kubicd/" + pillarName)
+					write_pillar = true
+				}
+			}
+			if strings.Contains(item, in.Saltnode + ":") {
+				found_node = true
+			}
+			newContent = append (newContent, item)
+		}
+
+		if !found_pillar && !write_pillar {
+			newContent = append (newContent, "  " + in.Saltnode + ":")
+			newContent = append (newContent, "    - kubicd/" + pillarName)
+			write_pillar = true
+		}
+		if write_pillar {
+			// Write back top.sls file
+			// XXX create backup of old file
+			f, err := os.Create("/srv/pillar/top.sls")
+			if err != nil {
+				message = "Could not create \"/srv/pillar/top.sls\": " + err.Error()
+				if err2 := stream.Send(&pb.StatusReply{Success: false,
+					Message: message}); err2 != nil {
+						return err2
+					}
+				return nil
+			}
+
+			for _, item := range newContent {
+				_, err = f.WriteString(item + "\n")
+				if err != nil {
+					message = "Writing to \"/srv/pillar/top.sls\" failed: " + err.Error()
+					if err2 := stream.Send(&pb.StatusReply{Success: false,
+						Message: message}); err2 != nil {
+							return err2
+						}
+					return nil
+				}
+
+			}
+			if err := f.Close(); err != nil {
+				message = "Closing \"/srv/pillar/top.sls\" failed: " + err.Error()
+				if err2 := stream.Send(&pb.StatusReply{Success: false,
+					Message: message}); err2 != nil {
+						return err2
+					}
+				return nil
+			}
+			set_perm("/srv/pillar/top.sls")
+		}
+	}
 
 	if err := stream.Send(&pb.StatusReply{Success: true,
 		Message: "Configuration created. Please check \"" + pillarFile + "\" and run install phase."}); err != nil {
