@@ -128,6 +128,18 @@ this functionality as comma seperated list. `kubicctl rbac list` will print
 out a list of current configured roles and the corresponding users. `kubicctl
 rbac add <role> <user>` will add the user to the role.
 
+## Deploy new nodes
+
+`kubicd` has support to deploy new nodes with help of
+[Yomi](https://github.com/openSUSE/yomi). This requires salt pillars for the
+new node describing what should be where installed. There is a `kubicctl node
+deploy prepare` command, which will create the required pillars based on the
+type of the new node and the hardware. After this step, the generated pillars
+should be verified, if really the right things will be deleted and installed.
+Afterwards, `kubicctl node deploy install` will erase the content of the
+harddisk, install the new node and, if this new node is of type "master" or
+"worker", will also add it to the kubernetes cluster.
+
 ## Usage
 
 * certificates - Manage certificates for kubicd/kubicctl communication
@@ -146,6 +158,9 @@ rbac add <role> <user>` will add the user to the role.
   * list - List all reacheable worker nodes
   * reboot <node> - Reboot node from cluster. Node will be drained first. Node name must be the name used by salt for that node.
   * remove - Remove node form cluster
+  * deploy - Install a new node
+    * prepare <type> <node> - Prepare configuration to install new node with Yomi
+    * install <type> <node> - Install new node with Yomi
 * rbac - Manage RBAC rules
   * add <role> <user> - Add user account to a role
   * list - List roles and accounts

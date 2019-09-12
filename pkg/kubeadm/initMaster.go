@@ -145,11 +145,37 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 
 	if len(in.MultiMaster) > 0 {
 		message = "Setting up multi-master kubernetes node (reacheable as '" + in.MultiMaster + "') with " + arg_pod_network
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: message}); err != nil {
+			return err
+		}
+		if len(in.Haproxy) > 0 {
+			message = "Configure haproxy on node " + in.Haproxy;
+			if err := stream.Send(&pb.StatusReply{Success: true, Message: message}); err != nil {
+				return err
+			}
+			hostname, err := os.Hostname();
+			if err != nil {
+				if err2 := stream.Send(&pb.StatusReply{Success: false,
+					Message: "Could not get hostname: " + err.Error() +
+						"\nPlease setup your haproxy manually before continuing"}); err2 != nil {
+						return err2
+					}
+				return nil
+			}
+			success, message = tools.ExecuteCmd("salt", in.Haproxy, "cmd.run",
+				"\"haproxy init --force " + in.MultiMaster + " " + hostname + "\"")
+			if success != true {
+				if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
+					return err
+				}
+				return nil
+			}
+		}
 	} else {
 		message = "Setting up single-master kubernetes node with " + arg_pod_network
-	}
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: message}); err != nil {
-		return err
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: message}); err != nil {
+			return err
+		}
 	}
 
 

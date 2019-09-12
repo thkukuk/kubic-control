@@ -57,8 +57,10 @@ message InitRequest {
   string adv_addr = 3;
   // the string should the be DNS name of the loadbalancer
   string multi_master = 4;
+  // salt node name of the haproxy
+  string haproxy = 5;
   // stage of testing
-  string stage = 5;
+  string stage = 6;
 }
 
 // The upgrade request
