@@ -14,7 +14,7 @@
 
 config:
   events: no
-  reboot: no
+  reboot: yes
   snapper: yes
   grub2_theme: yes
 {% if efi %}

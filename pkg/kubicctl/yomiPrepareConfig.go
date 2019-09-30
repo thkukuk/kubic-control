@@ -25,6 +25,15 @@ import (
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
+var (
+	arg_type string;
+	arg_efi bool;
+	arg_baremetal bool;
+	arg_disk string;
+	arg_repo string;
+	arg_repo_update string;
+)
+
 func YomiPrepareConfigCmd() *cobra.Command {
         var subCmd = &cobra.Command {
                 Use:   "prepare <type> <name>",
@@ -32,6 +41,13 @@ func YomiPrepareConfigCmd() *cobra.Command {
                 Run: prepareConfig,
 		Args: cobra.ExactArgs(2),
 	}
+
+        subCmd.PersistentFlags().StringVar(&arg_type, "type", "", "Type of node: haproxy, master, worker")
+	subCmd.PersistentFlags().StringVar(&arg_disk, "disk", "", "Disk device for installation")
+	subCmd.PersistentFlags().StringVar(&arg_repo, "repo", "", "Repository to install from")
+	subCmd.PersistentFlags().StringVar(&arg_repo_update, "update-repo", "", "Update repository to install from")
+	subCmd.PersistentFlags().BoolVar(&arg_efi, "efi", false, "Machine has EFI firmware")
+	subCmd.PersistentFlags().BoolVar(&arg_baremetal, "baremetal", false, "Machine is bare metal")
 
 	return subCmd
 }
@@ -54,7 +70,9 @@ func prepareConfig(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	stream, err := client.PrepareConfig(ctx, &pb.PrepareConfigRequest{Saltnode: node, Type: nodeType})
+	// XXX efi and baremetal are missing
+	stream, err := client.PrepareConfig(ctx, &pb.PrepareConfigRequest{Saltnode: node, Type: nodeType,
+	Disk: arg_disk, Repo: arg_repo, RepoUpdate: arg_repo_update})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not initialize: %v", err)
 		return
