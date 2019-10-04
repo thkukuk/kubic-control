@@ -32,6 +32,7 @@ var (
 	multiMaster = ""
 	kubernetesVersion = ""
 	stage = ""
+	haproxy = ""
 )
 
 func InitMasterCmd() *cobra.Command {
@@ -47,6 +48,7 @@ func InitMasterCmd() *cobra.Command {
         subCmd.PersistentFlags().StringVar(&adv_addr, "adv-addr", adv_addr, "IP address the API Server will advertise it's listening on")
         subCmd.PersistentFlags().StringVar(&kubernetesVersion, "kubernetes-version", kubernetesVersion, "Kubernetes version of the control plane to deploy")
 	subCmd.PersistentFlags().StringVar(&stage, "stage", stage, "Stage of development: 'official', 'devel'")
+	subCmd.PersistentFlags().StringVar(&haproxy, "haproxy", haproxy, "Name of salt minion running haproxy as loadbalancer")
 
 	return subCmd
 }
@@ -69,7 +71,7 @@ func initMaster(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")
-	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr, MultiMaster: multiMaster, KubernetesVersion: kubernetesVersion, Stage: stage})
+	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr, MultiMaster: multiMaster, KubernetesVersion: kubernetesVersion, Stage: stage, Haproxy: haproxy})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
 		return

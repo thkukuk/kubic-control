@@ -163,7 +163,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 				return nil
 			}
 			success, message = tools.ExecuteCmd("salt", in.Haproxy, "cmd.run",
-				"\"haproxy init --force " + in.MultiMaster + " " + hostname + "\"")
+				"\"haproxycfg init --force " + in.MultiMaster + " " + hostname + "\"")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
 					return err
@@ -247,7 +247,10 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		f.Close()
 
 		update_cfg("control-plane.conf", "MultiMaster", "True")
-		update_cfg ("control-plane.conf", "loadbalancer", in.MultiMaster)
+		update_cfg("control-plane.conf", "loadbalancer_dns", in.MultiMaster)
+		if len(in.Haproxy) > 0 {
+			update_cfg("control-plane.conf", "loadbalancer_salt", in.Haproxy)
+		}
 
 		kubeadm_args = append(kubeadm_args,
 			"--config=/var/lib/kubic-control/multi-master/kubeadm-config.yaml")

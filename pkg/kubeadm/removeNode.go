@@ -38,7 +38,8 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 	var nodelist []string
 	output_stream = stream
 
-	// If we have a list of Nodes, try to find the right node names which have a kubic-worker-node grain.
+	// If we have a list of Nodes, try to find the right node names which
+	// have a kubic-worker-node or kubic-master-node grain.
 	if strings.Index(in.NodeNames, ",") >= 0 || strings.Index(in.NodeNames, "[") >= 0 || strings.Compare(in.NodeNames, "*") == 0 {
 		var success bool
 		var message string
@@ -76,6 +77,7 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 		return nil
 	}
 
+	haproxy_salt := Read_Cfg("control-plane.conf", "loadbalancer_salt")
         var wg sync.WaitGroup
         wg.Add(nodelistLength)
 
@@ -85,6 +87,21 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
                         defer wg.Done()
 
                         stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": start node removal..."})
+
+			// If loadbalancer is known, remove from haproxy
+			if len(haproxy_salt) > 0 {
+				stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": removing node from haproxy loadbalancer..."})
+				success, message := tools.ExecuteCmd("salt", haproxy_salt, "cmd.run", "haproxycfg server remove " + nodelist[i])
+				if success != true {
+					if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
+						log.Errorf("Send message failed: %s", err)
+					}
+					failed++
+					return
+				}
+			}
+
+
 			success, message := ResetNode(nodelist[i], RemoveNodeOutput)
 			if len(message) > 0 {
 				if err := stream.Send(&pb.StatusReply{Success: false,

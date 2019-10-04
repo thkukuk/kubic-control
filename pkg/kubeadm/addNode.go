@@ -32,6 +32,7 @@ var (
 func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 	// XXX Check if node isn't already part of the kubernetes cluster
 
+	haproxy_salt := ""
 	nodeNames := in.NodeNames
 	nodeType := in.Type
 
@@ -71,6 +72,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 		// the key is the third line in the output
 		cert_key := strings.Split (strings.Replace(lines, ":", "", -1), "\n")
 		joincmd = joincmd + " --certificate-key " + strings.TrimSuffix(string(cert_key[2]), "\n");
+		haproxy_salt = Read_Cfg("control-plane.conf", "loadbalancer_salt")
 	}
 
 	// Ping all nodes to get an exact list of node names
@@ -171,6 +173,19 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 				}
 				failed++
 				return
+			}
+			// If master and loadbalancer is known, add to haproxy
+			if len(haproxy_salt) > 0 {
+				stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": adding node to haproxy loadbalancer..."})
+
+				success, message = tools.ExecuteCmd("salt", haproxy_salt, "cmd.run", "haproxycfg server add " + nodelist[i])
+				if success != true {
+					if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
+						log.Errorf("Send message failed: %s", err)
+					}
+					failed++
+					return
+				}
 			}
 			stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": node successful added"})
 		}(i)
