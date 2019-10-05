@@ -72,10 +72,22 @@ To deploy a high-availability master, the DNS name of the load balancer needs
 to be specified. The cluster will be reacheable under this DNS name.
 
 ```
-kubicctl init  --multi-master load.balancer.dns
+kubicctl init --multi-master load.balancer.dns
 ```
 
-For cilium or flannel instead of weave you have to use `kubicctl init --pod-network cilium` or `kubicctl init --pod-network cilium`.
+If the haproxy is also a salt-minion and should be automatically configured
+and adjusted:
+
+```
+kubicctl init --haproxy salt-minion --multi-master load.balancer.dns
+```
+
+In this case, kubicd will configure the haproxy and add or remove master nodes
+depeding on the kubernetes cluster configuration automatically, if `haproxycfg`
+is installed.
+
+For cilium or flannel instead of weave you have to use `kubicctl init
+--pod-network cilium` or `kubicctl init --pod-network cilium`.
 
 To add additional worker nodes:
 
@@ -95,9 +107,9 @@ kubicctl node add --type master master3
 Make sure the load balancer can reach all three master nodes.
 
 
-In the same way as new nodes were added, existing nodes can also be removed: `kubicctl node remove` or reboot
-nodes: `kubicctl node reboot`. Please make sure that you have always three
-master nodes in case of high-availbility master.
+In the same way as new nodes were added, existing nodes can also be removed:
+`kubicctl node remove` or reboot nodes: `kubicctl node reboot`. Please make
+sure that you have always three master nodes in case of high-availbility master.
 
 To access with cluster with `kubectl`, you can get the kubeconfig with:
 `kubicctl kubeconfig`.
@@ -148,6 +160,7 @@ harddisk, install the new node and, if this new node is of type "master" or
 * help - Help about any command
 * init - Initialize Kubernetes Master Node
   * --multi-master=<DNS name>  	Setup HA masters, the argument must be the DNS name of the load balancer
+  * --haproxy=<salt name> Adjust haproxy configuration for multi-master setup via salt
   * --pod-network=<flannel|cilium>	Pod network
   * --adv-addr=<IPaddr>	IP address the API Server will advertise on
   * --stage=<official|devel> Specify to use the official images or from the devel project
