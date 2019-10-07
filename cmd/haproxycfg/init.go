@@ -121,7 +121,6 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 		}
 
 		_, err = f.WriteString("global\n" +
-			"  log /dev/log daemon\n" +
 			"  maxconn 32768\n" +
 			"  chroot /var/lib/haproxy\n" +
 			"  user haproxy\n" +
@@ -144,9 +143,9 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 			"  retries 3\n" +
 			"  option  redispatch\n" +
 			"  maxconn 10000\n" +
-			"  timeout connect     5s\n" +
-			"  timeout client     50s\n" +
-			"  timeout server     50s\n" +
+			"  timeout connect    10s\n" +
+			"  timeout client     60s\n" +
+			"  timeout server    300s\n" +
 			"\n" +
 			"listen stats\n" +
 			"  bind localhost:80\n" +
