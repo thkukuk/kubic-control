@@ -23,6 +23,7 @@ import (
         log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"gopkg.in/ini.v1"
 	"github.com/spf13/cobra"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/thkukuk/kubic-control/pkg/rbac"
@@ -39,6 +40,8 @@ var (
 	servername = "localhost"
 	port = "7148"
 
+	usercfg = "~/.config/kubicctl/kubicctl.conf"
+
 	// Client Certificates
 	crtFile = "~/.config/kubicctl/user.crt"
         keyFile = "~/.config/kubicctl/user.key"
@@ -54,6 +57,20 @@ func exists(path string) (bool, error) {
 }
 
 func Execute() error {
+
+	homecfg, err := homedir.Expand(usercfg)
+	if err == nil {
+		cfg, cfg_err := ini.LooseLoad(homecfg);
+		if cfg_err, ok := cfg_err.(*os.PathError); ok {
+			log.Fatal(cfg_err)
+		}
+		if cfg.Section("global").HasKey("server") {
+			servername = cfg.Section("global").Key("server").String()
+		}
+		if cfg.Section("global").HasKey("port") {
+			port = cfg.Section("global").Key("port").String()
+		}
+	}
 
 	// if called as root, use admin certificates as default if local
 	// ones don't exit
@@ -89,9 +106,9 @@ func Execute() error {
 		DestroyClusterCmd(),
 		rbac.RBACCmd(),
 		GetStatusCmd(),
+		DeployCmd(),
         )
 
-	var err error
 	crtFile, err = homedir.Expand(crtFile)
 	if err != nil {
 		log.Fatal(err)
