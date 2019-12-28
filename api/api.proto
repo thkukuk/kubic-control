@@ -109,6 +109,16 @@ message CertificateReply {
   string crt = 4;
 }
 
+// Deploy services/...
+service Deploy {
+  rpc DeployKustomize (DeployKustomizeRequest) returns (StatusReply) {}
+}
+
+message DeployKustomizeRequest {
+  string service = 1;
+  string argument = 2;
+}
+
 // Install Node with yomi
 service Yomi {
   rpc PrepareConfig (PrepareConfigRequest) returns  (stream StatusReply) {}

@@ -37,7 +37,7 @@ func UpdateAll(forced bool) (bool, string) {
 			}
 		} else {
 			value := cfg.Section("").Key(key).String()
-			hash, _ := tools.Sha256sum(key)
+			hash, _ := tools.Sha256sum_f(key)
 
 			if hash != value {
 				log.Infof("%s has changed, updating")

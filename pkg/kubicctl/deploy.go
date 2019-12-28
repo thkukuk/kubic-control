@@ -12,35 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tools
+package kubicctl
 
 import (
-	"os"
-	"io"
-	"encoding/hex"
-	"crypto/sha256"
+	"github.com/spf13/cobra"
 )
 
-func Sha256sum_b(buffer string) (result string, err error) {
-	hash := sha256.New()
-	hash.Write([]byte(buffer))
-	result = hex.EncodeToString(hash.Sum(nil))
-	return result, nil
-}
+func DeployCmd() *cobra.Command {
+        var subCmd = &cobra.Command {
+                Use:   "deploy",
+                Short: "deploy new resource",
+	}
 
-func Sha256sum_f(filePath string) (result string, err error) {
-    file, err := os.Open(filePath)
-    if err != nil {
-        return "", err
-    }
-    defer file.Close()
+	subCmd.AddCommand(
+		DeployMetalLBCmd(),
+		DeployHelloKubicCmd(),
+	)
 
-    hash := sha256.New()
-    _, err = io.Copy(hash, file)
-    if err != nil {
-        return "", err
-    }
-
-    result = hex.EncodeToString(hash.Sum(nil))
-    return result, nil
+	return subCmd
 }
