@@ -64,10 +64,7 @@ func initMaster(cmd *cobra.Command, args []string) {
 
 	client := pb.NewKubeadmClient(conn)
 
-	var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
-	clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
-	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 	defer cancel()
 
 	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")

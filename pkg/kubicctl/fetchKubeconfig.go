@@ -51,7 +51,7 @@ func fetchKubeconfig(cmd *cobra.Command, args []string) {
 
 	c := pb.NewKubeadmClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	r, err := c.FetchKubeconfig(ctx, &pb.Empty{})

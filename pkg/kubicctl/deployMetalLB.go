@@ -49,7 +49,7 @@ func deployMetalLB(cmd *cobra.Command, args []string) {
 
 	c := pb.NewDeployClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	r, err := c.DeployKustomize(ctx,

@@ -47,10 +47,7 @@ func destroyCluster(cmd *cobra.Command, args []string) {
 
 	client := pb.NewKubeadmClient(conn)
 
-	// var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
-	// clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
-	// ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	stream, err := client.RemoveNode(ctx, &pb.RemoveNodeRequest{NodeNames: "*"})
@@ -81,10 +78,7 @@ func destroyCluster(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("All nodes removed, removing master...\n")
 
-	// var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
-	// clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
-	// ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	stream, err = client.DestroyMaster(ctx, &pb.Empty{})
