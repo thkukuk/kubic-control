@@ -146,8 +146,24 @@ func DeployKustomize(service string, argument string) (bool, string) {
 		os.RemoveAll(StateDir + "/kustomize/" + service)
 		return false, message
 	}
-	result, err := tools.Sha256sum_b(message);
-	retval, message = tools.ExecuteCmd("/bin/sh", "-c", "echo \"" + message + "\" | kubectl apply -f -")
+
+	f, err := os.Create(StateDir + "/kustomize/" + service + "/" + service + ".yaml")
+	if err != nil {
+		return false, err.Error()
+	}
+	defer f.Close()
+	_, err = f.WriteString(message)
+	if err != nil {
+		return false, err.Error()
+	}
+	f.Close()
+
+	result, err := tools.Sha256sum_f(StateDir + "/kustomize/" + service + "/" + service + ".yaml");
+	retval, message = tools.ExecuteCmd("kubectl", "apply", "-f",
+		StateDir + "/kustomize/" + service + "/" + service + ".yaml")
+	if retval != true {
+		return false, message
+	}
 
 	cfg, err := ini.LooseLoad(StateDir + "/k8s-kustomize.conf")
 	if err != nil {
