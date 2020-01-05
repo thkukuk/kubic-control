@@ -17,7 +17,6 @@ package kubicctl
 import (
 	"context"
 	"time"
-	"flag"
 	"fmt"
 	"os"
 	"io"

@@ -159,7 +159,8 @@ func DeployKustomize(service string, argument string) (bool, string) {
 	f.Close()
 
 	result, err := tools.Sha256sum_f(StateDir + "/kustomize/" + service + "/" + service + ".yaml");
-	retval, message = tools.ExecuteCmd("kubectl", "apply", "-f",
+	retval, message = tools.ExecuteCmd("kubectl",
+                "--kubeconfig=/etc/kubernetes/admin.conf", "apply", "-f",
 		StateDir + "/kustomize/" + service + "/" + service + ".yaml")
 	if retval != true {
 		return false, message
