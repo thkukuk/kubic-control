@@ -183,6 +183,9 @@ harddisk, install the new node and, if this new node is of type "master" or
   * deploy - Install a new node
     * prepare <type> <node> - Prepare configuration to install new node with Yomi
     * install <type> <node> - Install new node with Yomi
+* deploy - Install a new service
+  * hello-kubic - Install a hello kubic demo webservices
+  * metallb - Install the MetalLB loadbalancer
 * rbac - Manage RBAC rules
   * add <role> <user> - Add user account to a role
   * list - List roles and accounts
