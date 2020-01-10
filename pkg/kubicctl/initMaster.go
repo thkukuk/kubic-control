@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ var (
 	kubernetesVersion = ""
 	stage = ""
 	haproxy = ""
+	firstMaster = ""
 )
 
 func InitMasterCmd() *cobra.Command {
@@ -48,6 +49,7 @@ func InitMasterCmd() *cobra.Command {
         subCmd.PersistentFlags().StringVar(&kubernetesVersion, "kubernetes-version", kubernetesVersion, "Kubernetes version of the control plane to deploy")
 	subCmd.PersistentFlags().StringVar(&stage, "stage", stage, "Stage of development: 'official', 'devel'")
 	subCmd.PersistentFlags().StringVar(&haproxy, "haproxy", haproxy, "Name of salt minion running haproxy as loadbalancer")
+	subCmd.PersistentFlags().StringVar(&firstMaster, "salt", firstMaster, "Name of salt minion of first master")
 
 	return subCmd
 }
@@ -67,7 +69,7 @@ func initMaster(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")
-	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr, MultiMaster: multiMaster, KubernetesVersion: kubernetesVersion, Stage: stage, Haproxy: haproxy})
+	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr, MultiMaster: multiMaster, KubernetesVersion: kubernetesVersion, Stage: stage, Haproxy: haproxy, FirstMaster: firstMaster})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
 		return

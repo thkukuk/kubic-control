@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,6 +61,8 @@ message InitRequest {
   string haproxy = 5;
   // stage of testing
   string stage = 6;
+  // salt name of first master
+  string first_master = 7;
 }
 
 // The upgrade request
