@@ -1,4 +1,10 @@
 RBAC: - kubicctl rbac interface to manage it
 Exit code: make sure in error case we always exit with an error code
-kubicctl: use always fmt, not log
-Replace homedir with os call
+
+Cleanup:
+- /etc/kubernetes/manifests
+/etc/kubernetes/kubelet.conf
+
+Remove all container images:
+crictl rm -a -f
+crictl rmi -a
