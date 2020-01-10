@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,11 +37,48 @@ func UpdateAll(forced bool) (bool, string) {
 			}
 		} else {
 			value := cfg.Section("").Key(key).String()
-			hash, _ := tools.Sha256sum(key)
+			hash, _ := tools.Sha256sum_f(key)
 
 			if hash != value {
 				log.Infof("%s has changed, updating")
 				success, message := UpdateFile(key)
+				if success != true {
+					return success, message
+				}
+			} else {
+				log.Infof("%s has not changed, ignoring")
+			}
+		}
+	}
+
+
+	// Update kustomize installed services
+	cfg, err = ini.Load("/var/lib/kubic-control/k8s-kustomize.conf")
+	if err != nil {
+		return false, "Cannot load k8s-kustomize.conf: " + err.Error()
+        }
+
+	keys = cfg.Section("").KeyStrings()
+	for _, key := range keys {
+		if forced {
+			// force, so always update even if not changed
+			success, message := UpdateKustomize(key)
+			if success != true {
+				return success, message
+			}
+		} else {
+			retval, message := tools.ExecuteCmd("kustomize", "build",
+				StateDir + "/kustomize/" + key + "/overlay")
+			if retval != true {
+				return retval, message
+			}
+
+			value := cfg.Section("").Key(key).String()
+			hash, _ := tools.Sha256sum_f(message)
+
+			if hash != value {
+				log.Infof("%s has changed, updating")
+				success, message := UpdateKustomize(key)
 				if success != true {
 					return success, message
 				}

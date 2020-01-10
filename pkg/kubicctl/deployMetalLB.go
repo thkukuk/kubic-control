@@ -18,24 +18,28 @@ import (
 	"context"
 	"time"
 	"fmt"
+	"os"
+	"io/ioutil"
 
-        log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
-func ListNodesCmd() *cobra.Command {
+func DeployMetalLBCmd() *cobra.Command {
         var subCmd = &cobra.Command {
-                Use:   "list",
-                Short: "List all reachable worker nodes",
-                Run: listNodes,
-		Args: cobra.ExactArgs(0),
+                Use:   "metallb <ip range>",
+                Short: "Deploy MetalLB",
+                Run: deployMetalLB,
+		Args: cobra.ExactArgs(1),
 	}
 
 	return subCmd
 }
 
-func listNodes(cmd *cobra.Command, args []string) {
+func deployMetalLB(cmd *cobra.Command, args []string) {
+
+	iprange := args[0]
+
 	// Set up a connection to the server.
 	conn, err := CreateConnection()
 	if err != nil {
@@ -43,27 +47,32 @@ func listNodes(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	c := pb.NewKubeadmClient(conn)
+	c := pb.NewDeployClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	r, err := c.ListNodes(ctx, &pb.Empty{})
+	r, err := c.DeployKustomize(ctx,
+		&pb.DeployKustomizeRequest{Service: "metallb", Argument: iprange})
 	if err != nil {
-		log.Errorf("could not initialize: %v", err)
-		return
+		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
+		os.Exit(1)
 	}
 	if r.Success {
-		fmt.Printf("Reacheable nodes: ")
-		for i := range r.Node {
-			if i == 0 {
-				fmt.Print(r.Node[i])
-			} else {
-				fmt.Print(", " + r.Node[i])
+		if len(output) > 0 && output != "stdout" {
+			message:=[]byte(r.Message)
+			err := ioutil.WriteFile(output, message, 0600)
+			if err != nil {
+				fmt.Fprintf(os.Stderr,
+					"Error writing '%s': %v\n", output, err)
+				os.Exit(1)
 			}
-                }
-		fmt.Print("\n")
+		} else {
+			fmt.Printf(r.Message)
+		}
 	} else {
-		log.Errorf("Getting list of nodes failed: %s", r.Message)
+		fmt.Fprintf(os.Stderr, "Couldn't deploy metallb: %s\n",
+			r.Message)
+		os.Exit(1)
 	}
 }

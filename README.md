@@ -133,6 +133,15 @@ all requests will be rejected. The default file can be found in
 `/usr/etc/kubicd/rbac.conf`. Changed entries should be written
 to `/etc/kubicd/rbac.conf`.
 
+`Kubicctl` reads optional a `~/config/kubicctl/kubicctl.conf`, which
+allows to configure to the hostname and port of a remote `kubicd` process:
+
+```
+  [global]
+  server = remote.host.name
+  port = 7148
+```
+
 ## RBAC
 
 `rbac.conf` contains the roles as key and the users, who are allowed to use
@@ -174,6 +183,9 @@ harddisk, install the new node and, if this new node is of type "master" or
   * deploy - Install a new node
     * prepare <type> <node> - Prepare configuration to install new node with Yomi
     * install <type> <node> - Install new node with Yomi
+* deploy - Install a new service
+  * hello-kubic - Install a hello kubic demo webservices
+  * metallb - Install the MetalLB loadbalancer
 * rbac - Manage RBAC rules
   * add <role> <user> - Add user account to a role
   * list - List roles and accounts

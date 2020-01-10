@@ -17,7 +17,6 @@ package kubicctl
 import (
 	"context"
 	"time"
-	"flag"
 	"fmt"
 	"os"
 	"io"
@@ -50,10 +49,7 @@ func upgradeKubernetes(cmd *cobra.Command, args []string) {
 
 	client := pb.NewKubeadmClient(conn)
 
-	var deadlineMin = flag.Int("deadline_min", 20, "Default deadline in minutes.")
-	clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
-	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 	defer cancel()
 
 	fmt.Print ("Upgrading kubernetes can take a very long time, please be patient.\n")

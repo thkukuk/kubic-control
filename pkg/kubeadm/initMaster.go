@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import (
 	"os"
 	"strings"
 	"runtime"
+	"errors"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/ini.v1"
@@ -26,7 +27,7 @@ import (
 	"github.com/thkukuk/kubic-control/pkg/deployment"
 )
 
-var (
+const (
 	cilium_yaml = "/usr/share/k8s-yaml/cilium/cilium.yaml"
 	flannel_yaml = "/usr/share/k8s-yaml/flannel/kube-flannel.yaml"
 	weave_yaml = "/usr/share/k8s-yaml/weave/weave.yaml"
@@ -50,31 +51,44 @@ func update_cfg (file string, key string, value string) (error) {
 }
 
 // exists returns whether the given file or directory exists
-func exists(path string) (bool, error) {
-    _, err := os.Stat(path)
-    if err == nil { return true, nil }
-    if os.IsNotExist(err) { return false, nil }
-    return true, err
+func exists(path string, salt string) (bool, error) {
+	if len(salt) > 0 {
+		success, message := tools.ExecuteCmd("salt", "--out=txt", salt, "file.access", path, "f")
+		if success != true {
+			return false, errors.New(message)
+		}
+		if strings.HasSuffix(message, ": True") {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	} else {
+		_, err := os.Stat(path)
+		if err == nil { return true, nil }
+		if os.IsNotExist(err) { return false, nil }
+		return true, err
+	}
 }
 
 func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	arg_pod_network := in.PodNetworking
+	arg_salt := in.FirstMaster
 
-	found, _ := exists ("/etc/kubernetes/manifests/kube-apiserver.yaml")
+	found, _ := exists ("/etc/kubernetes/manifests/kube-apiserver.yaml", arg_salt)
 	if found == true {
 		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Seems like a kubernetes control-plane is already running. If not, please use \"kubeadm reset\" to clean up the system."}); err != nil {
 			return err
 		}
 		return nil
 	}
-	found, _ = exists ("/etc/kubernetes/manifests/kube-scheduler.yaml")
+	found, _ = exists ("/etc/kubernetes/manifests/kube-scheduler.yaml", arg_salt)
 	if found == true {
 		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Seems like a kubernetes control-plane is already running. If not, please use \"kubeadm reset\" to clean up the system"}); err != nil {
 			return err
 		}
 		return nil
 	}
-	found, _ = exists ("/etc/kubernetes/manifests/etcd.yaml")
+	found, _ = exists ("/etc/kubernetes/manifests/etcd.yaml", arg_salt)
 	if found == true {
 		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Seems like a kubernetes control-plane is already running. If not, please use \"kubeadm reset\" to clean up the system"}); err != nil {
 			return err
@@ -88,7 +102,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	}
 
 	if strings.EqualFold(arg_pod_network, "weave") {
-		found, _ = exists (weave_yaml)
+		found, _ = exists (weave_yaml, arg_salt)
 		if found != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: "weave-k8s-yaml is not installed!"}); err != nil {
 				return err
@@ -96,7 +110,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			return nil
 		}
 	} else if strings.EqualFold(arg_pod_network, "flannel") {
-		found, _ = exists (flannel_yaml)
+		found, _ = exists (flannel_yaml, arg_salt)
 		if found != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: "flannel-k8s-yaml is not installed!"}); err != nil {
 				return err
@@ -104,7 +118,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			return nil
 		}
 	} else if strings.EqualFold(arg_pod_network, "cilium") {
-		found, _ = exists (cilium_yaml)
+		found, _ = exists (cilium_yaml, arg_salt)
 		if found != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: "cilium-k8s-yaml is not installed!"}); err != nil {
 				return err
@@ -118,7 +132,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
-	found, _ = exists (kured_yaml)
+	found, _ = exists (kured_yaml, arg_salt)
 	if found != true {
 		if err := stream.Send(&pb.StatusReply{Success: false, Message: "kured-k8s-yaml is not installed!"}); err != nil {
 			return err

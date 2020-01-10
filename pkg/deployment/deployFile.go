@@ -27,7 +27,7 @@ func DeployFile(yamlName string) (bool, string) {
 		return success, message
 	}
 
-	result, err := tools.Sha256sum(yamlName)
+	result, err := tools.Sha256sum_f(yamlName)
 
 	cfg, err := ini.LooseLoad("/var/lib/kubic-control/k8s-yaml.conf")
 	if err != nil {

@@ -48,7 +48,7 @@ func createCerts (cmd *cobra.Command, args []string) {
 
         c := pb.NewCertificateClient(conn)
 
-        ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+        ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
         defer cancel()
 
 	r, err := c.CreateCert(ctx, &pb.CreateCertRequest{Name: user})

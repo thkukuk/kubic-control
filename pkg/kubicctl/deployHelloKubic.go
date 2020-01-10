@@ -16,6 +16,7 @@ package kubicctl
 
 import (
 	"context"
+	"strings"
 	"time"
 	"fmt"
 	"os"
@@ -25,36 +26,49 @@ import (
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
-var output = ""
+var (
+	service_type = "NodePort"
+	arg_lbip = ""
+)
 
-func FetchKubeconfigCmd() *cobra.Command {
+func DeployHelloKubicCmd() *cobra.Command {
         var subCmd = &cobra.Command {
-                Use:   "kubeconfig",
-                Short: "Download kubeconfig",
-                Run: fetchKubeconfig,
+                Use:   "hello-kubic",
+                Short: "Deploy hello-kubic",
+                Run: deployHelloKubic,
 		Args: cobra.ExactArgs(0),
 	}
 
-        subCmd.PersistentFlags().StringVarP(&output, "output", "o",  "stdout", "File kubeconfig should be stored")
+	subCmd.PersistentFlags().StringVarP(&service_type, "type", "t", service_type, "Type for this service: NodePort or LoadBalancer")
+	subCmd.PersistentFlags().StringVarP(&arg_lbip, "ip", "i", arg_lbip, "LoadBalancer IP")
 
 	return subCmd
 }
 
-func fetchKubeconfig(cmd *cobra.Command, args []string) {
-	// Set up a connection to the server.
+func deployHelloKubic(cmd *cobra.Command, args []string) {
 
+	// Set up a connection to the server.
 	conn, err := CreateConnection()
 	if err != nil {
 		return
 	}
 	defer conn.Close()
 
-	c := pb.NewKubeadmClient(conn)
+	c := pb.NewDeployClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	r, err := c.FetchKubeconfig(ctx, &pb.Empty{})
+	var arg string
+
+	if strings.EqualFold(service_type, "NodePort") {
+		arg = "NodePort"
+	} else if strings.EqualFold(service_type, "LoadBalancer") {
+		arg = "LoadBalancer"
+	}
+
+	r, err := c.DeployKustomize(ctx,
+		&pb.DeployKustomizeRequest{Service: "hello-kubic", Argument: arg})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
 		os.Exit(1)
@@ -64,14 +78,16 @@ func fetchKubeconfig(cmd *cobra.Command, args []string) {
 			message:=[]byte(r.Message)
 			err := ioutil.WriteFile(output, message, 0600)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error writing '%s': %v\n", output, err)
+				fmt.Fprintf(os.Stderr,
+					"Error writing '%s': %v\n", output, err)
 				os.Exit(1)
 			}
 		} else {
 			fmt.Printf(r.Message)
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "Couldn't get kubeconfig: %s\n", r.Message)
+		fmt.Fprintf(os.Stderr, "Couldn't deploy hello-kubic: %s\n",
+			r.Message)
 		os.Exit(1)
 	}
 }

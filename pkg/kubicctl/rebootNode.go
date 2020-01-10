@@ -48,10 +48,7 @@ func rebootNode(cmd *cobra.Command, args []string) {
 
 	c := pb.NewKubeadmClient(conn)
 
-	// var deadlineMin = flag.Int("deadline_min", 10, "Default deadline in minutes.")
-	// clientDeadline := time.Now().Add(time.Duration(*deadlineMin) * time.Minute)
-	// ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	r, err := c.RebootNode(ctx, &pb.RebootNodeRequest{NodeNames: nodes})

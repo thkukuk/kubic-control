@@ -33,6 +33,7 @@ import (
 	"github.com/spf13/cobra"
 	log "github.com/sirupsen/logrus"
 	"github.com/thkukuk/kubic-control/pkg/kubeadm"
+	"github.com/thkukuk/kubic-control/pkg/deployment"
 	"github.com/thkukuk/kubic-control/pkg/certificate_server"
 	"github.com/thkukuk/kubic-control/pkg/yomi"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -49,6 +50,7 @@ var (
 )
 
 type kubeadm_server struct{}
+type deploy_server struct{}
 type cert_server struct{}
 type yomi_server struct{}
 
@@ -106,6 +108,13 @@ func (s *cert_server) CreateCert(ctx context.Context, in *pb.CreateCertRequest) 
 	log.Printf("Received: create certificate")
 	status, message, key, crt := certificate.CreateCert(in)
 	return &pb.CertificateReply{Success: status, Message: message, Key: key, Crt: crt}, nil
+}
+
+// Deploy API
+func (s *deploy_server) DeployKustomize(ctx context.Context, in *pb.DeployKustomizeRequest) (*pb.StatusReply, error) {
+	log.Printf("Received: deploy kustomized service %s", in.Service)
+	status, message := deployment.DeployKustomize(in.Service, in.Argument)
+	return &pb.StatusReply{Success: status, Message: message}, nil
 }
 
 // Yomi API
@@ -299,6 +308,7 @@ func kubicd(cmd *cobra.Command, args []string) {
 		grpc.UnaryInterceptor(AuthUnaryInterceptor))
 
 	pb.RegisterKubeadmServer(s, &kubeadm_server{})
+	pb.RegisterDeployServer(s, &deploy_server{})
 	pb.RegisterCertificateServer(s, &cert_server{})
 	pb.RegisterYomiServer(s, &yomi_server{})
 
