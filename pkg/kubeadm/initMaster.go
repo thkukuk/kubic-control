@@ -50,6 +50,17 @@ func update_cfg (file string, key string, value string) (error) {
         return nil
 }
 
+func executeCmdSalt(salt string, command string, arg ...string) (bool,string) {
+	if len(salt) > 0 {
+		return tools.ExecuteCmd(command, arg...)
+	} else {
+		args := append([]string{command}, arg...)
+		args = append([]string{salt}, args...)
+		return tools.ExecuteCmd("salt", args...)
+	}
+}
+
+
 // exists returns whether the given file or directory exists
 func exists(path string, salt string) (bool, error) {
 	if len(salt) > 0 {
@@ -140,16 +151,16 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
-	success, message := tools.ExecuteCmd("systemctl", "enable", "--now", "crio")
+	success, message := executeCmdSalt(arg_salt, "systemctl", "enable", "--now", "crio")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			return err
 		}
 		return nil
 	}
-	success, message = tools.ExecuteCmd("systemctl", "enable", "--now", "kubelet")
+	success, message = executeCmdSalt(arg_salt, "systemctl", "enable", "--now", "kubelet")
 	if success != true {
-		tools.ExecuteCmd("systemctl", "disable", "--now", "crio")
+		executeCmdSalt(arg_salt, "systemctl", "disable", "--now", "crio")
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			return err
 		}
@@ -281,7 +292,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return err
 	}
 	log.Infof ("Calling kubeadm '%v'", kubeadm_args)
-	success, message = tools.ExecuteCmd("kubeadm", kubeadm_args...)
+	success, message = executeCmdSalt(arg_salt, "kubeadm", kubeadm_args...)
 	if success != true {
 		ResetMaster()
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
