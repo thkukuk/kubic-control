@@ -26,18 +26,18 @@ func UpgradeKubernetes(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernete
         if len (in.KubernetesVersion) > 0 {
                 kubernetes_version = in.KubernetesVersion
         } else {
-		success, message := tools.GetKubeadmVersion()
+		success, message := tools.GetKubeadmVersion("") // XXX Upgrade needs to support remote master
                 if success != true {
                         if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
                                 return err
                         }
                         return nil
                 }
-                kubernetes_version = message
+		kubernetes_version = message
         }
 
-	// XXX Check if kuberadm and kubelet is new enough on all nodes
-	// salt '*' --out=txt pkg.version kubernetes-kubeadm kubernetes-kubelet
+	// XXX Check if kuberadm is new enough on all nodes
+	// salt '*' --out=txt pkg.version kubernetes-kubeadm
 
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Validate whether the cluster is upgradeable..."}); err != nil {
 		return err

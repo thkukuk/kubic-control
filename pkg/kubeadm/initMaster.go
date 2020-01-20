@@ -52,11 +52,9 @@ func update_cfg (file string, key string, value string) (error) {
 
 func executeCmdSalt(salt string, command string, arg ...string) (bool,string) {
 	if len(salt) > 0 {
-		return tools.ExecuteCmd(command, arg...)
+		return tools.ExecuteCmd("salt", salt, "cmd.run", command + " " + strings.Join(arg[:], " "))
 	} else {
-		args := append([]string{command}, arg...)
-		args = append([]string{salt}, args...)
-		return tools.ExecuteCmd("salt", args...)
+		return tools.ExecuteCmd(command, arg...)
 	}
 }
 
@@ -237,7 +235,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	if len (in.KubernetesVersion) > 0 {
 		kubernetes_version = in.KubernetesVersion
 	} else {
-		success, message := tools.GetKubeadmVersion()
+		success, message := tools.GetKubeadmVersion(arg_salt)
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
 				return err

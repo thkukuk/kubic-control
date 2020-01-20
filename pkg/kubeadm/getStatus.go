@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ func GetStatus(in *pb.Empty, stream pb.Kubeadm_GetStatusServer, kubicdVersion st
 			log.Errorf("Send message failed: %s", err)
 			return err
 		}
-	_, message := tools.GetKubeadmVersion()
+	_, message := tools.GetKubeadmVersion("") // XXX needs better handling, per master via salt.
 	if err := stream.Send(&pb.StatusReply{Success: true,
 		Message: "kubeadm version: " + message}); err != nil {
 			log.Errorf("Send message failed: %s", err)

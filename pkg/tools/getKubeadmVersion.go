@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,10 +18,15 @@ import (
 	"strings"
 )
 
-func GetKubeadmVersion() (bool,string) {
-
+func GetKubeadmVersion(salt string) (bool,string) {
 	// find out our kubeadm version and use that to upgrade to this version
-	success, message := ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
+	var success bool
+	var message string
+	if len(salt) > 0 {
+		success, message = ExecuteCmd("salt", salt, "cmd.run", "rpm -q --qf '%{VERSION}' kubernetes-kubeadm")
+	} else {
+		success, message = ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
+	}
 	if success != true {
 		return false, message
 	}
