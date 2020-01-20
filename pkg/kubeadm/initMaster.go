@@ -113,7 +113,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	}
 
 	if strings.EqualFold(arg_pod_network, "weave") {
-		found, _ = exists (weave_yaml, arg_salt)
+		found, _ = exists (weave_yaml, "")
 		if found != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: "weave-k8s-yaml is not installed!"}); err != nil {
 				return err
@@ -121,7 +121,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			return nil
 		}
 	} else if strings.EqualFold(arg_pod_network, "flannel") {
-		found, _ = exists (flannel_yaml, arg_salt)
+		found, _ = exists (flannel_yaml, "")
 		if found != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: "flannel-k8s-yaml is not installed!"}); err != nil {
 				return err
@@ -129,7 +129,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			return nil
 		}
 	} else if strings.EqualFold(arg_pod_network, "cilium") {
-		found, _ = exists (cilium_yaml, arg_salt)
+		found, _ = exists (cilium_yaml, "")
 		if found != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: "cilium-k8s-yaml is not installed!"}); err != nil {
 				return err
@@ -143,7 +143,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
-	found, _ = exists (kured_yaml, arg_salt)
+	found, _ = exists (kured_yaml, "")
 	if found != true {
 		if err := stream.Send(&pb.StatusReply{Success: false, Message: "kured-k8s-yaml is not installed!"}); err != nil {
 			return err
