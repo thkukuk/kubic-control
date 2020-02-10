@@ -24,9 +24,9 @@ func GetKubeadmVersion(salt string) (bool,string) {
 	var message string
 	if len(salt) > 0 {
 		success, message = ExecuteCmd("salt", "--out=txt", salt, "cmd.run", "rpm -q --qf '%{VERSION}' kubernetes-kubeadm")
-		message = strings.TrimSuffix(message, "\n")
-		pos := strings.LastIndex(message, ":") + 2
-		message = message[pos:len(message)]
+		message = strings.Replace(message, "\n","",-1)
+		i := strings.Index(message, ":")+1
+		message = strings.TrimSpace(message[i:])
 	} else {
 		success, message = ExecuteCmd("rpm", "-q", "--qf", "'%{VERSION}'",  "kubernetes-kubeadm")
 	}
