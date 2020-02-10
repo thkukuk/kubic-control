@@ -299,6 +299,24 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 
+
+	if len(arg_salt) > 0 {
+		// Get kubernetes/admin.conf for kubectl calls
+		tools.ExecuteCmd("mkdir", "/etc/kubernetes")
+		log.Infof ("Download /etc/kubernetes/admin.conf")
+		success, message = tools.ExecuteCmd("salt", "--out=newline_values_only",
+			"--out-file=/etc/kubernetes/admin.conf", arg_salt,
+			"cmd.run", "cat /etc/kubernetes/admin.conf")
+		if success != true {
+			ResetMaster()
+			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+				return err
+			}
+			return nil
+		}
+		os.Chmod("/etc/kubernetes/admin.conf", 0600) // XXX error handling
+	}
+
 	if strings.EqualFold(arg_pod_network, "weave") {
 		// Setting up weave
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy weave"}); err != nil {
