@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,17 +35,24 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 	haproxy_salt := ""
 	nodeNames := in.NodeNames
 	nodeType := in.Type
+	master_salt := Read_Cfg("control-plane.conf", "master")
 
 	// If the join command is older than 23 hours, generate a new one. Else re-use the old one.
 	if time.Since(token_create_time).Hours() > 23 {
 		stream.Send(&pb.StatusReply{Success: true, Message: "Generate new token ..."})
 		log.Info("Token to join nodes too old, creating new one")
-		success, token := tools.ExecuteCmd("kubeadm", "--kubeconfig=/etc/kubernetes/admin.conf", "token", "create", "--print-join-command")
+
+		success, token := executeCmdSalt(master_salt, "kubeadm", "token", "create", "--print-join-command", "2>/dev/null")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: token}); err != nil {
                                 return err
                         }
                         return nil
+		}
+		if len(master_salt) > 0 {
+			token = strings.Replace(token, "\n","",-1)
+			i := strings.Index(token, ":")+1
+			token = strings.TrimSpace(token[i:])
 		}
 		joincmd_g = strings.TrimSuffix(token, "\n")
 		token_create_time = time.Now()
@@ -62,7 +69,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 		joincmd = joincmd + " --control-plane"
 
 		stream.Send(&pb.StatusReply{Success: true, Message: "Upload certificates ..."})
-		success, lines := tools.ExecuteCmd("kubeadm", "init", "phase", "upload-certs", "--upload-certs")
+		success, lines := executeCmdSalt(master_salt, "kubeadm", "init", "phase", "upload-certs", "--upload-certs", "2>/dev/null")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: lines}); err != nil {
                                 return err
