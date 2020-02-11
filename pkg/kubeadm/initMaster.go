@@ -245,6 +245,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		kubernetes_version = message
 	}
 	update_cfg ("control-plane.conf", "version", kubernetes_version)
+	update_cfg ("control-plane.conf", "master", arg_salt)
 
 	if len (in.MultiMaster) > 0 {
 		os.MkdirAll("/var/lib/kubic-control/multi-master", os.ModePerm)
@@ -370,6 +371,15 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		}
 		return nil
 	}
+	if len(arg_salt) > 0 {
+		success, message = tools.ExecuteCmd("salt", arg_salt, "grains.append", "kubicd", "kubic-master-node")
+		if success != true {
+			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+				return err
+			}
+		}
+	}
+
 	// Configure transactional-update to inform kured
 	ini.PrettyFormat = false
 	ini.PrettyEqual = false
