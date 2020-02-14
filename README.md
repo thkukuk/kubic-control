@@ -58,7 +58,9 @@ If you want a high-availability kubernetes master, you need three machines
 which meet kubeadm's minimum requirements for masters. Additional, you need a
 load balancer. The load balancer must be able to communicate with all control
 plane nodes on the apiserver port. It must also allow incoming traffic on its
-listening port 6443. If you have none, you can use HAProxy.
+listening port 6443. If you have none, you can use HAProxy. This load balancer
+is only for the kubernetes control-plane. For deployments, something like
+`metallb` is still needed.
 
 
 To deploy the control-plane on the master with weave as POD network and
