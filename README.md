@@ -136,7 +136,7 @@ all requests will be rejected. The default file can be found in
 to `/etc/kubicd/rbac.conf`.
 
 `kubicctl` optionally reads a `~/config/kubicctl/kubicctl.conf`, which
-allows you to configure to the hostname and port of a remote `kubicd` process:
+allows you to configure the hostname and port of a remote `kubicd` process:
 
 ```
   [global]
