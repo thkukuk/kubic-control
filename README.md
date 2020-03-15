@@ -208,7 +208,11 @@ cluster except for the deployed daemonsets. This allows to manage the cluster
 with `kubectl` and `kubeadm` yourself without `kubicctl`. Daemonsets not
 installed via `kubicctl`/`kubicd` have to be updated by the admin themself,
 they will not be updated by `kubicctl upgrade`.
+
 There is only one important thing: a grain has to be set on new worker and
-master nodes: `kubicd=kubic-worker-node` for worker,
-`kubicd=kubic-master-node` for additional master nodes. If nodes
-gets manual removed, this grain has to be deleted, too.
+master nodes: 
+- `kubicd=kubic-worker-node` for worker nodes
+- `kubicd=kubic-master-node` for additional master nodes
+
+If a node
+gets removed manually, this grain has to be deleted, too.
