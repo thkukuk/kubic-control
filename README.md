@@ -38,7 +38,7 @@ This will create a CA and several certificates in `/etc/kubicd/pki`:
 
 For `kubicctl`, you need to create a directory `~/.config/kubicctl` which
 contains `Kubic-Control-CA.crt`, `user.key` and `user.crt`. For the admin
-role, this need to be a copy of admin.key and admin.crt. For other users,
+role, this need to be a copy of `admin.key` and `admin.crt`. For other users,
 you need to create corresponding certificates and sign them with
 `Kubic-Control-CA.crt`. If you call `kubicctl` as root and there is no
 `user.crt` in `~/.config/kubicctl`, the admin certificates from
@@ -46,7 +46,7 @@ you need to create corresponding certificates and sign them with
 Certificates for additional users can be created with `kubicctl certificates
 create <account>`.
 
-Please take care of this certificates and store them secure, this are the
+Please take care of these certificates and store them secure, these are the
 passwords to access kubicd!
 
 ## Deploy Kubernetes
@@ -58,7 +58,7 @@ If you want a high-availability kubernetes master, you need three machines
 which meet kubeadm's minimum requirements for masters. Additional, you need a
 load balancer. The load balancer must be able to communicate with all control
 plane nodes on the apiserver port. It must also allow incoming traffic on its
-listening port 6443. If you have none, you can use HAProxy. This load balancer
+listening port 6443. If you have no loadbalancer, you can use HAProxy. This load balancer
 is only for the kubernetes control-plane. For deployments, something like
 `metallb` is still needed.
 
@@ -70,15 +70,15 @@ To deploy the control-plane on the master with weave as POD network and
 kubicctl init
 ```
 
-To deploy a high-availability master, the DNS name of the load balancer needs
+To deploy a highly available master, the DNS name of the load balancer needs
 to be specified. The cluster will be reacheable under this DNS name.
 
 ```
 kubicctl init --multi-master load.balancer.dns
 ```
 
-If the haproxy is also a salt-minion and should be automatically configured
-and adjusted:
+If the haproxy is also a salt-minion and should be configured
+and adjusted automatically:
 
 ```
 kubicctl init --haproxy salt-minion --multi-master load.balancer.dns
@@ -97,7 +97,7 @@ To add additional worker nodes:
 kubicctl node add node1,...
 ```
 
-In the high-availability case, two additional masters needs to be added:
+In the high-availability case, two additional masters need to be added:
 
 ```
 kubicctl node add --type master master2
@@ -106,14 +106,14 @@ kubicctl node add --type master master2
 kubicctl node add --type master master3
 ```
 
-Make sure the load balancer can reach all three master nodes.
+Make sure the loadbalancer can reach all three master nodes.
 
 
 In the same way as new nodes were added, existing nodes can also be removed:
-`kubicctl node remove` or reboot nodes: `kubicctl node reboot`. Please make
-sure that you have always three master nodes in case of high-availbility master.
+`kubicctl node remove` or rebooted: `kubicctl node reboot`. Please make
+sure that you always have three master nodes in case of high-availbility masters.
 
-To access with cluster with `kubectl`, you can get the kubeconfig with:
+To access the cluster with `kubectl`, you can get the kubeconfig with:
 `kubicctl kubeconfig`.
 
 The kubernetes cluster can be upgraded with:
@@ -124,19 +124,19 @@ kubicctl upgrade
 
 ## Configuration Files
 
-`Kubicd` reads two configuration files: `kubicd.conf` and `rbac.conf`. The
+`kubicd` reads two configuration files: `kubicd.conf` and `rbac.conf`. The
 first one is optional and contains the paths to the certificates and the server
-name with port `kubicd` should listen to. The default file can be found in
+name and port that `kubicd` should listen to. The default file can be found in
 `/usr/etc/kubicd/kubicd.conf`. The variables can be overriden with
-`/etc/kubicd/kubicd.conf`, which only contains the changed entries.
+`/etc/kubicd/kubicd.conf`, which only needs to contain the changed entries.
 
-The second file, `rbac.conf`, is mandatory, else nobody can access `kubicd`,
+The second file, `rbac.conf`, is mandatory, else nobody can access `kubicd` and
 all requests will be rejected. The default file can be found in
 `/usr/etc/kubicd/rbac.conf`. Changed entries should be written
 to `/etc/kubicd/rbac.conf`.
 
-`Kubicctl` reads optional a `~/config/kubicctl/kubicctl.conf`, which
-allows to configure to the hostname and port of a remote `kubicd` process:
+`kubicctl` optionally reads a `~/config/kubicctl/kubicctl.conf`, which
+allows you to configure the hostname and port of a remote `kubicd` process:
 
 ```
   [global]
@@ -147,15 +147,15 @@ allows to configure to the hostname and port of a remote `kubicd` process:
 ## RBAC
 
 `rbac.conf` contains the roles as key and the users, who are allowed to use
-this functionality as comma seperated list. `kubicctl rbac list` will print
-out a list of current configured roles and the corresponding users. `kubicctl
+this functionality, as a comma separated list. `kubicctl rbac list` will print
+out a list of currently configured roles and the corresponding users. `kubicctl
 rbac add <role> <user>` will add the user to the role.
 
 ## Deploy new nodes
 
 `kubicd` has support to deploy new nodes with help of
 [Yomi](https://github.com/openSUSE/yomi). This requires salt pillars for the
-new node describing what should be where installed. There is a `kubicctl node
+new node describing what should be installed where . There is a `kubicctl node
 deploy prepare` command, which will create the required pillars based on the
 type of the new node and the hardware. After this step, the generated pillars
 should be verified, if really the right things will be deleted and installed.
@@ -208,7 +208,11 @@ cluster except for the deployed daemonsets. This allows to manage the cluster
 with `kubectl` and `kubeadm` yourself without `kubicctl`. Daemonsets not
 installed via `kubicctl`/`kubicd` have to be updated by the admin themself,
 they will not be updated by `kubicctl upgrade`.
+
 There is only one important thing: a grain has to be set on new worker and
-master nodes: `kubicd=kubic-worker-node` for worker,
-`kubicd=kubic-master-node` for additional master nodes. If nodes
-gets manual removed, this grain has to be deleted, too.
+master nodes: 
+- `kubicd=kubic-worker-node` for worker nodes
+- `kubicd=kubic-master-node` for additional master nodes
+
+If a node
+gets removed manually, this grain has to be deleted, too.
