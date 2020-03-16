@@ -78,7 +78,7 @@ func GetStatus(in *pb.Empty, stream pb.Kubeadm_GetStatusServer, kubicdVersion st
         cfg, err = ini.Load("/var/lib/kubic-control/k8s-kustomize.conf")
         if err != nil {
 		if err := stream.Send(&pb.StatusReply{Success: false,
-			Message: "Cannot load k8s-yaml.conf: " + err.Error()}); err != nil {
+			Message: "Cannot load k8s-kustomize.conf: " + err.Error()}); err != nil {
 				log.Errorf("Send message failed: %s", err)
 				return err
 		}
