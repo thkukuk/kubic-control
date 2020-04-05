@@ -51,7 +51,7 @@ passwords to access kubicd!
 
 ## Deploy Kubernetes
 
-The first qustion is: single master node or high-availability kubernetes
+The first question is: single master node or high-availability kubernetes
 masters? In the first case, there is not much to do: you need one master
 machine, which is also running `kubicd`, and that's it.
 If you want a high-availability kubernetes master, you need three machines
