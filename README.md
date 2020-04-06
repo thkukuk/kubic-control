@@ -51,7 +51,7 @@ passwords to access kubicd!
 
 ## Deploy Kubernetes
 
-The first qustion is: single master node or high-availability kubernetes
+The first question is: single master node or high-availability kubernetes
 masters? In the first case, there is not much to do: you need one master
 machine, which is also running `kubicd`, and that's it.
 If you want a high-availability kubernetes master, you need three machines
@@ -62,6 +62,11 @@ listening port 6443. If you have no loadbalancer, you can use HAProxy. This load
 is only for the kubernetes control-plane. For deployments, something like
 `metallb` is still needed.
 
+If you installed the Kubic Admin Node system role, kubicd-init and kubicd should be enabled by default. If you installed using an image, you need to manually start and enable them:
+```bash
+systemctl enable --now kubicd-init
+systemctl enable --now kubicd
+```
 
 To deploy the control-plane on the master with weave as POD network and
 `kured` to manage the reboot of nodes:
