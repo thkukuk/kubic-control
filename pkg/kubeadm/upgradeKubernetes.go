@@ -195,14 +195,13 @@ func UpgradeKubernetes(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernete
 	}
 
 	if len(failedMaster) > 0 || len(failedWorker) > 0 {
-		// XXX remove ", " Suffix
 		if len(failedMaster) > 0 {
-			if err := stream.Send(&pb.StatusReply{Success: false, Message: "Upgrade of some master nodes failed: " + failedMaster}); err != nil {
+			if err := stream.Send(&pb.StatusReply{Success: false, Message: "Upgrade of some master nodes failed: " + strings.TrimSuffix(failedMaster, ", ")}); err != nil {
 				return err
 			}
 		}
 		if len(failedWorker) > 0 {
-			if err := stream.Send(&pb.StatusReply{Success: false, Message: "Upgrade of some Nodes failed: " + failedWorker}); err != nil {
+			if err := stream.Send(&pb.StatusReply{Success: false, Message: "Upgrade of some Nodes failed: " + strings.TrimSuffix(failedWorker, ", ")}); err != nil {
 				return err
 			}
 		}
