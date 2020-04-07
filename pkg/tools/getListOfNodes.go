@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,10 +18,14 @@ import (
 	"strings"
 )
 
-func GetListOfNodes() (bool, string, []string) {
+func GetListOfNodes(role string) (bool, string, []string) {
 
-	// Get list of all worker nodes:
-        success, message := ExecuteCmd("salt", "-G", "kubicd:kubic-worker-node", "grains.get",  "kubic-worker-node")
+	if len(role) == 0 {
+		role = "worker"
+	}
+
+	// Get list of all nodes of this role
+        success, message := ExecuteCmd("salt", "-G", "kubicd:kubic-" + role + "-node", "grains.get",  "kubic-" + role + "-node")
         if success != true {
 		return success, message, nil
         }

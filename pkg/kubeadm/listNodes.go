@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,5 +20,5 @@ import (
 
 func ListNodes() (bool, string, []string) {
 	// Get list of all worker nodes:
-	return tools.GetListOfNodes()
+	return tools.GetListOfNodes("worker")
 }
