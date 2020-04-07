@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -113,6 +113,11 @@ func setupHelloKubic(arg string) (bool, string) {
 
 func DeployKustomize(service string, argument string) (bool, string) {
 
+	yamlDidExist := false
+	if _, err := os.Stat(StateDir + "/kustomize/" + service + "/" + service + ".yaml"); err == nil {
+		yamlDidExist = true
+	}
+
 	os.RemoveAll(StateDir + "/kustomize/" + service)
 	err := os.MkdirAll(StateDir + "/kustomize/" + service + "/overlay",
 		os.ModePerm)
@@ -164,6 +169,16 @@ func DeployKustomize(service string, argument string) (bool, string) {
 		StateDir + "/kustomize/" + service + "/" + service + ".yaml")
 	if retval != true {
 		return false, message
+	}
+
+	if strings.EqualFold(service, "metallb") && !yamlDidExist {
+		retval, message = tools.ExecuteCmd("kubectl",
+			"--kubeconfig=/etc/kubernetes/admin.conf", "create",
+			"secret", "generic", "-n",  "metallb-system",
+			"memberlist", "--from-literal=secretkey=\"$(openssl rand -base64 128)\"")
+		if retval != true {
+			return false, message
+		}
 	}
 
 	cfg, err := ini.LooseLoad(StateDir + "/k8s-kustomize.conf")
