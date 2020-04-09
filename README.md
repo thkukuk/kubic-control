@@ -22,11 +22,9 @@ Mainly generic requirements by kubernetes itself:
 ## Installation
 
 `Kubicd`/`kubicctl` are using [salt](https://www.saltstack.com/) and [certstrap](https://github.com/square/certstrap) to manage nodes and certificates, additional kubeadm, kubectl, kubelet and crio have to be installed.
-`Kubicd` has to run on the future kubernetes master node, `kubicctl` can run anywhere on the network. This requires only that `kubicd` is configured to listen on all interfaces, not only `localhost`. The salt minions have to be already accepted on the salt master. Before `kubicd` can be started, certificates have to be generated:
+`Kubicd` has to run on the future kubernetes master node, `kubicctl` can run anywhere on the network. This requires only that `kubicd` is configured to listen on all interfaces, not only `localhost`. The salt minions have to be already accepted on the salt master.
 
-```
-  kubicctl certificates initialize
-```
+Before `kubicd` can be started, certificates have to be generated. Starting and enabling the service `kubicd-init` takes care of that.
 
 This will create a CA and several certificates in `/etc/kubicd/pki`:
 - Kubic-Control-CA.key - the private CA key
@@ -40,8 +38,9 @@ For `kubicctl`, you need to create a directory `~/.config/kubicctl` which
 contains `Kubic-Control-CA.crt`, `user.key` and `user.crt`. For the admin
 role, this need to be a copy of `admin.key` and `admin.crt`. For other users,
 you need to create corresponding certificates and sign them with
-`Kubic-Control-CA.crt`. If you call `kubicctl` as root and there is no
-`user.crt` in `~/.config/kubicctl`, the admin certificates from
+`Kubic-Control-CA.crt`.
+If you call `kubicctl` as root and there is no
+`user.crt` in `/root/.config/kubicctl`, the admin certificates from
 `/etc/kubicd/pki` are used if they exist.
 Certificates for additional users can be created with `kubicctl certificates
 create <account>`.
