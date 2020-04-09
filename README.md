@@ -7,7 +7,7 @@ kubic-control consists of two binaries:
 - kubicd, a daemon which communicates via gRPC with clients. It's setting up kubernetes on openSUSE Kubic, including pod network, kured, transactional-update, ...
 - kubicctl, a cli interface
 
-The communication is encrypted, the kubicctl command can run on any machine. The user authenticates with his certificate, using RBAC to determine if the user is allowed to call this function. kubiccd will use kubeadm and kubectl to deploy and manage the cluster. So the admin can at everytime modify the cluster with this commands, too, there is no hidden state-database except for the informations necessary for a kubernetes multi-master/HA setup.
+The communication is encrypted, the kubicctl command can run on any machine. The user authenticates with his certificate, using RBAC to determine if the user is allowed to call this function. kubiccd will use kubeadm and kubectl to deploy and manage the cluster. So the admin can modify the cluster with this command, too. There is no hidden state-database except for the informations necessary for a kubernetes multi-master/HA setup.
 
 ## Requirements
 
@@ -16,13 +16,13 @@ Mainly generic requirements by kubernetes itself:
 - All the nodes on the cluster must be on a the same network and be able to communicate directly with each other.
 - All nodes in the cluster must be assigned static IP addresses. Using dynamically assigned IPs will break cluster functionality if the IP address changes.
 - The Kubernetes master node(s) must have valid Fully-Qualified Domain Names (FQDNs), which can be resolved both by all other nodes and from other networks which need to access the cluster.
-- Since Kubernetes mainly works with certificates and tokens, the time on all Nodes needs to be always in sync. Else communication inside the cluster will break.
+- Since Kubernetes mainly works with certificates and tokens, the time on all nodes needs to be in sync. Otherwise communication inside the cluster will break.
 
 
 ## Installation
 
-`Kubicd`/`kubicctl` are using [salt](https://www.saltstack.com/) and [certstrap](https://github.com/square/certstrap) to manage nodes and certificates, additional kubeadm, kubectl, kubelet and crio have to be installed.
-`Kubicd` has to run on the future kubernetes master node, `kubicctl` can run anywhere on the network. This requires only that `kubicd` is configured to listen on all interfaces, not only `localhost`. The salt minions have to be already accepted on the salt master. Before `kubicd` can be started, certificates have to be generated:
+`Kubicd`/`kubicctl` are using [salt](https://www.saltstack.com/) and [certstrap](https://github.com/square/certstrap) to manage nodes and certificates. Additionally kubeadm, kubectl, kubelet and crio have to be installed.
+`Kubicd` has to run on the future kubernetes master node, `kubicctl` can run anywhere on the network. This requires only that `kubicd` is configured to listen on all interfaces, not only `localhost`. The salt minions have to be accepted already on the salt master. Before `kubicd` can be started, certificates have to be generated:
 
 ```
   kubicctl certificates initialize
@@ -183,7 +183,7 @@ harddisk, install the new node and, if this new node is of type "master" or
 *  kubeconfig - Download kubeconfig
   * --output=<file> - Where the kubeconfig file should be stored
 * node - Manage kubernetes nodes
-  * add <node>,... - Add new nodes to cluster. Node names must be the name used by salt for that node. A comma seperated list or '[]' syntax are allowed to specify more than one new node.
+  * add <node>,... - Add new nodes to cluster. Node names must be the name used by salt for that node. A comma separated list or '[]' syntax are allowed to specify more than one new node.
   * list - List all reacheable worker nodes
   * reboot <node> - Reboot node from cluster. Node will be drained first. Node name must be the name used by salt for that node.
   * remove - Remove node form cluster
