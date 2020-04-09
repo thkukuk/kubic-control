@@ -180,7 +180,7 @@ harddisk, install the new node and, if this new node is of type "master" or
   * --pod-network=<flannel|cilium>	Pod network
   * --adv-addr=<IPaddr>	IP address the API Server will advertise on
   * --stage=<official|devel> Specify to use the official images or from the devel project
-*  kubeconfig - Download kubeconfig
+* kubeconfig - Download kubeconfig
   * --output=<file> - Where the kubeconfig file should be stored
 * node - Manage kubernetes nodes
   * add <node>,... - Add new nodes to cluster. Node names must be the name used by salt for that node. A comma separated list or '[]' syntax are allowed to specify more than one new node.
