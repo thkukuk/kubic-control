@@ -48,7 +48,7 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
 	}
 	success, message := tools.ExecuteCmd("kubeadm",  "upgrade", "plan", kubernetes_version)
 	if success != true {
-		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
                         return err
                 }
                 return nil

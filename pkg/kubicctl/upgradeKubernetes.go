@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,21 +56,26 @@ func upgradeKubernetes(cmd *cobra.Command, args []string) {
 	stream, err := client.UpgradeKubernetes(ctx, &pb.UpgradeRequest{KubernetesVersion: kubernetesVersion})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not upgrade: %v", err)
-		return
+		os.Exit(1)
 	}
 	for {
                 r, err := stream.Recv()
                 if err == io.EOF {
                         break
                 }
-                if err != nil {
+                if err != nil  {
                         if r == nil {
                                 fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %v\n",  err)
                         } else {
                                 fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %s\n%v\n", r.Message, err)
                         }
-                        return
+                        os.Exit(1)
                 }
-                fmt.Printf("%s\n", r.Message)
+		if r.Success != true {
+			fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %s\n", r.Message)
+			os.Exit(1)
+		} else {
+			fmt.Printf("%s\n", r.Message)
+		}
         }
 }
