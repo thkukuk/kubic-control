@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -64,7 +64,13 @@ func deployHelloKubic(cmd *cobra.Command, args []string) {
 	if strings.EqualFold(service_type, "NodePort") {
 		arg = "NodePort"
 	} else if strings.EqualFold(service_type, "LoadBalancer") {
-		arg = "LoadBalancer"
+		// If we use loadbalancer with a prefered IP, only
+		// transfer the IP, we have no second argument.
+		if len(arg_lbip) > 0 {
+			arg = arg_lbip
+		} else {
+			arg = "LoadBalancer"
+		}
 	}
 
 	r, err := c.DeployKustomize(ctx,

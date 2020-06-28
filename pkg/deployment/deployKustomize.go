@@ -75,6 +75,8 @@ func setupHelloKubic(arg string) (bool, string) {
 		if err != nil {
 			return false, err.Error()
 		}
+		defer f.Close()
+
 		_, err = f.WriteString("apiVersion: v1\nkind: Service\nmetadata:\n  name: hello-kubic\nspec:\n  type: NodePort")
 		if err != nil {
 			return false, err.Error()
@@ -95,13 +97,13 @@ func setupHelloKubic(arg string) (bool, string) {
 		}
 		f.Close()
 
-		f, err = os.Create(StateDir + "/kustomize/hello-kubic/overlay/patch_loadBalancerIP.yaml")
+		f, err = os.Create(StateDir + "/kustomize/hello-kubic/overlay/patch_LoadBalancerIP.yaml")
 		if err != nil {
 			return false, err.Error()
 		}
 		defer f.Close()
 
-		_, err = f.WriteString("apiVersion: v1\nkind: Service\nmetadata:\n  name: hello-kubic\nspec:\n  loadBalancerIP: " + arg)
+		_, err = f.WriteString("apiVersion: v1\nkind: Service\nmetadata:\n  name: hello-kubic\nspec:\n  type: LoadBalancer\n  loadBalancerIP: " + arg)
 		if err != nil {
 			return false, err.Error()
 		}
