@@ -27,7 +27,8 @@ func uncordon(stream pb.Kubeadm_UpgradeKubernetesServer, hostname string) error 
 	// uncordon
 	success, message := tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon",  hostname)
 	if success != true {
-		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
+		// Report error, but don't fail
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: message}); err != nil {
                         return err
                 }
 	}
@@ -35,18 +36,27 @@ func uncordon(stream pb.Kubeadm_UpgradeKubernetesServer, hostname string) error 
 }
 
 func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernetesServer, kubernetes_version string) error {
-	hostname, err := os.Hostname();
-	if err != nil {
-		if err2 := stream.Send(&pb.StatusReply{Success: false,
-			Message: "Could not get hostname: " + err.Error()}); err2 != nil {
-				return err2
-			}
-		return nil
+	var hostname string
+	var err error
+
+	firstMaster := Read_Cfg("control-plane.conf", "master")
+	if len(firstMaster) > 0 {
+		hostname, err = tools.GetNodeName(firstMaster)
+	} else {
+		hostname, err = os.Hostname()
+		if err != nil {
+			if err2 := stream.Send(&pb.StatusReply{Success: false,
+				Message: "Could not get hostname: " + err.Error()}); err2 != nil {
+					return err2
+				}
+			return nil
+		}
 	}
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Validate whether the cluster is upgradeable..."}); err != nil {
+
+	if err = stream.Send(&pb.StatusReply{Success: true, Message: "Validate whether the cluster is upgradeable..."}); err != nil {
 		return err
 	}
-	success, message := tools.ExecuteCmd("kubeadm",  "upgrade", "plan", kubernetes_version)
+	success, message := executeCmdSalt(firstMaster, "kubeadm",  "upgrade", "plan", kubernetes_version)
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
                         return err
@@ -54,7 +64,7 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
                 return nil
 	}
 
-	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Drain first control plane master..."}); err != nil {
+	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Drain first control plane master (" + hostname + ")..."}); err != nil {
 		return err
 	}
 	// if draining fails, ignore
@@ -64,7 +74,7 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
 		uncordon(stream, hostname)
 		return err
 	}
-	success, message = tools.ExecuteCmd("kubeadm",  "upgrade", "apply", kubernetes_version, "--yes")
+	success, message = executeCmdSalt(firstMaster, "kubeadm",  "upgrade", "apply", kubernetes_version, "--yes")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			uncordon(stream, hostname)
@@ -74,7 +84,7 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
                 return nil
 	}
 	// Update kubelet
-	success, message = tools.ExecuteCmd("sed", "-i",  "'s/KUBELET_VER=1.17/KUBELET_VER=1.18/'", "/etc/sysconfig/kubelet")
+	success, message = executeCmdSalt(firstMaster, "sed", "-i",  "'s/KUBELET_VER=1.17/KUBELET_VER=1.18/'", "/etc/sysconfig/kubelet")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			uncordon(stream, hostname)
@@ -83,7 +93,7 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
 		uncordon(stream, hostname)
                 return nil
 	}
-	success, message = tools.ExecuteCmd("systemctl", "restart", "kubelet")
+	success, message = executeCmdSalt(firstMaster, "systemctl", "restart", "kubelet")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			uncordon(stream, hostname)
@@ -112,7 +122,7 @@ func upgradeNodes(in *pb.UpgradeRequest,
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Upgrade "+nodelist[i]+"..."}); err != nil {
 			return "", err
 		}
-		hostname, err := GetNodeName(nodelist[i])
+		hostname, err := tools.GetNodeName(nodelist[i])
 		if err != nil {
 			failedNodes = failedNodes+nodelist[i] + "(determine hostname), "
 		} else {
@@ -180,7 +190,7 @@ func UpgradeKubernetes(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernete
 	var failedWorker string
 	{
 		var err error
-		if failedWorker, err = upgradeNodes(in, stream, "role", kubernetes_version); err != nil {
+		if failedWorker, err = upgradeNodes(in, stream, "worker", kubernetes_version); err != nil {
 			return err
 		}
 	}

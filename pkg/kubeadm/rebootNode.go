@@ -21,7 +21,7 @@ import (
 func RebootNode(nodeName string) (bool, string) {
 
 	// salt host names are not identical with kubernetes node name.
-	hostname, err := GetNodeName(nodeName)
+	hostname, err := tools.GetNodeName(nodeName)
 	if err != nil {
 		return false, err.Error()
 	}

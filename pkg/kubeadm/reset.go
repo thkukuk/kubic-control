@@ -57,7 +57,7 @@ func ResetNode(nodeName string, send OutputStream) (bool, string) {
 
 	ret_success := true
 
-	hostname, err := GetNodeName(nodeName)
+	hostname, err := tools.GetNodeName(nodeName)
 	if err != nil {
 		return false, err.Error()
 	}

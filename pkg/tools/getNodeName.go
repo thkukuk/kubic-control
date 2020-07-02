@@ -1,4 +1,4 @@
-// Copyright 2019 Thorsten Kukuk
+// Copyright 2019, 2020 Thorsten Kukuk
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubeadm
+package tools
 
 import (
 	"errors"
 	"strings"
-
-	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 func GetNodeName(target string) (string, error) {
 
 	// salt host names are not identical with kubernetes node name.
         // Output of hostname should be identical to node name
-        success, message := tools.ExecuteCmd("salt",  target, "network.get_hostname")
+        success, message := ExecuteCmd("salt",  target, "network.get_hostname")
         if success != true {
                 return target, errors.New(message)
         }
