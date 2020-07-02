@@ -22,7 +22,7 @@ Mainly generic requirements by kubernetes itself:
 ## Installation
 
 `Kubicd`/`kubicctl` are using [salt](https://www.saltstack.com/) and [certstrap](https://github.com/square/certstrap) to manage nodes and certificates. Additionally kubeadm, kubectl, kubelet and crio have to be installed.
-`Kubicd` has to run on the future kubernetes master node, `kubicctl` can run anywhere on the network. This requires only that `kubicd` is configured to listen on all interfaces, not only `localhost`. The salt minions have to be already accepted on the salt master.
+`Kubicd` has to run on the salt master host. If there is not already a salt-master in the network, kubicd and the salt-master can run on the future kubernetes master node. `kubicctl` can run anywhere on the network. This requires only that `kubicd` is configured to listen on all interfaces, not only `localhost`. The salt minions have to be already accepted on the salt master.
 
 Before `kubicd` can be started, certificates have to be generated. Starting and enabling the service `kubicd-init` takes care of that.
 
@@ -214,7 +214,7 @@ installed via `kubicctl`/`kubicd` have to be updated by the admin themself,
 they will not be updated by `kubicctl upgrade`.
 
 There is only one important thing: a grain has to be set on new worker and
-master nodes: 
+master nodes:
 - `kubicd=kubic-worker-node` for worker nodes
 - `kubicd=kubic-master-node` for additional master nodes
 
