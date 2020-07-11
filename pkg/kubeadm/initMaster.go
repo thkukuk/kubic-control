@@ -353,7 +353,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy cilium"}); err != nil {
 			return err
 		}
-		success, message = deployment.DeployFile(cilium_yaml)
+		success, message = deployment.DeployChart(cilium_yaml,"cilium","")
 		if success != true {
 			ResetMaster()
 			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
