@@ -28,6 +28,7 @@ import (
 )
 
 const (
+	cilium_chart = "/usr/share/k8s-helm/cilium/"
 	cilium_yaml = "/usr/share/k8s-yaml/cilium/cilium.yaml"
 	flannel_yaml = "/usr/share/k8s-yaml/flannel/kube-flannel.yaml"
 	weave_yaml = "/usr/share/k8s-yaml/weave/weave.yaml"
@@ -127,7 +128,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			return nil
 		}
 	} else if strings.EqualFold(arg_pod_network, "cilium") {
-		found, _ = exists (cilium_yaml, "")
+		found, _ = exists (cilium_chart, "")
 		if found != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: "cilium-k8s-yaml is not installed!"}); err != nil {
 				return err
@@ -353,7 +354,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy cilium"}); err != nil {
 			return err
 		}
-		success, message = deployment.DeployChart(cilium_yaml,"cilium","")
+		success, message = deployment.DeployChart(cilium_chart,"cilium","")
 		if success != true {
 			ResetMaster()
 			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
