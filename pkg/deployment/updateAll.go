@@ -88,5 +88,39 @@ func UpdateAll(forced bool) (bool, string) {
 		}
 	}
 
+	// Update helm installed services
+	cfg, err = ini.Load("/var/lib/kubic-control/k8s-helm.conf")
+	if err != nil {
+		return false, "Cannot load k8s-helm.conf: " + err.Error()
+        }
+
+	keys = cfg.Section("").KeyStrings()
+	for _, chartName := range keys {
+		releaseName := cfg.Section("").Key(chartName+".releaseName").String()
+		valuesPath := cfg.Section("").Key(chartName+".valuesPath").String()
+		if forced {
+			// force, so always update even if not changed
+			err = UpdateHelm(chartName, releaseName, valuesPath)
+			if err != nil {
+				return false, err.Error()
+			}
+		} else {
+			hash := cfg.Section("").Key(chartName).String()
+			needsUpdate, err := checkHelmUpdate(chartName, releaseName, valuesPath, hash)
+			if err != nil{
+				return false, err.Error()
+			}
+			if needsUpdate {
+				log.Infof("%s has changed, updating")
+				err = UpdateHelm(chartName, releaseName, valuesPath)
+				if err != nil {
+					return false, err.Error()
+				}
+			} else {
+				log.Infof("%s has not changed, ignoring",)
+			}
+		}
+	}
+	
  	return true, ""
 }
