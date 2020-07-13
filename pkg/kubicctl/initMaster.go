@@ -28,6 +28,7 @@ import (
 var (
 	podNetwork = "weave"
 	adv_addr = ""
+	apiserver_cert_extra_sans = ""
 	multiMaster = ""
 	kubernetesVersion = ""
 	stage = ""
@@ -46,6 +47,7 @@ func InitMasterCmd() *cobra.Command {
         subCmd.PersistentFlags().StringVar(&multiMaster, "multi-master", multiMaster, "Setup multimaster cluster, argument needs to be the DNS name of the load balancer")
         subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network, valid values are 'cilium', 'flannel' or 'weave'")
         subCmd.PersistentFlags().StringVar(&adv_addr, "adv-addr", adv_addr, "IP address the API Server will advertise it's listening on")
+        subCmd.PersistentFlags().StringVar(&apiserver_cert_extra_sans, "apiserver_cert_extra_sans", apiserver_cert_extra_sans, "additional IPs to add to the APIserver certificate")
         subCmd.PersistentFlags().StringVar(&kubernetesVersion, "kubernetes-version", kubernetesVersion, "Kubernetes version of the control plane to deploy")
 	subCmd.PersistentFlags().StringVar(&stage, "stage", stage, "Stage of development: 'official', 'devel'")
 	subCmd.PersistentFlags().StringVar(&haproxy, "haproxy", haproxy, "Name of salt minion running haproxy as loadbalancer")
@@ -69,7 +71,7 @@ func initMaster(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")
-	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr, MultiMaster: multiMaster, KubernetesVersion: kubernetesVersion, Stage: stage, Haproxy: haproxy, FirstMaster: firstMaster})
+	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr, CertExtraSans: apiserver_cert_extra_sans, MultiMaster: multiMaster, KubernetesVersion: kubernetesVersion, Stage: stage, Haproxy: haproxy, FirstMaster: firstMaster})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
 		return

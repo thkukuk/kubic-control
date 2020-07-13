@@ -63,6 +63,7 @@ message InitRequest {
   string stage = 6;
   // salt name of first master
   string first_master = 7;
+  string apiserver_cert_extra_sans = 8;
 }
 
 // The upgrade request

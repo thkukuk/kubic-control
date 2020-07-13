@@ -178,6 +178,7 @@ harddisk, install the new node and, if this new node is of type "master" or
   * `--haproxy=<salt name>` Adjust haproxy configuration for multi-master setup via salt
   * `--pod-network=<flannel|cilium>`	Pod network
   * `--adv-addr=<IPaddr>`	IP address the API Server will advertise on
+  * `--apiserver_cert_extra_sans=<IPaddr>`	additional IPs to add to the APIserver certificate
   * `--stage=<official|devel>` Specify to use the official images or from the devel project
 * kubeconfig - Download kubeconfig
   * `--output=<file>` - Where the kubeconfig file should be stored
