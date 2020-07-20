@@ -83,8 +83,13 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
 		uncordon(stream, hostname)
                 return nil
 	}
+	// strip down kubernetes_version to get kubelet major version
+	// for openSUSE Kubic (from "v1.18.6" to "1.18")
+	kubelet_version := kubernetes_version[1:]
+	kubelet_version = kubelet_version[:strings.LastIndex(kubelet_version, ".")]
+
 	// Update kubelet
-	success, message = executeCmdSalt(firstMaster, "sed", "-i",  "'s/KUBELET_VER=1.17/KUBELET_VER=1.18/'", "/etc/sysconfig/kubelet")
+	success, message = executeCmdSalt(firstMaster, "sed", "-i",  "s/KUBELET_VER=.*/KUBELET_VER="+kubelet_version+"/", "/etc/sysconfig/kubelet")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			uncordon(stream, hostname)
@@ -117,6 +122,11 @@ func upgradeNodes(in *pb.UpgradeRequest,
                 return "", nil
 	}
 
+	// strip down kubernetes_version to get kubelet major version
+	// for openSUSE Kubic (from "v1.18.6" to "1.18")
+	kubelet_version := kubernetes_version[1:]
+	kubelet_version = kubelet_version[:strings.LastIndex(kubelet_version, ".")]
+
 	var failedNodes = ""
 	for i := range nodelist {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Upgrade "+nodelist[i]+"..."}); err != nil {
@@ -136,7 +146,7 @@ func upgradeNodes(in *pb.UpgradeRequest,
 			} else {
 				// Update kubelet
 				success, message = tools.ExecuteCmd("salt", nodelist[i], "cmd.run",
-					"\"sed -i 's/KUBELET_VER=1.17/KUBELET_VER=1.18/' /etc/sysconfig/kubelet\"")
+					"\"sed -i s/KUBELET_VER=.*/KUBELET_VER="+kubelet_version+"/ /etc/sysconfig/kubelet\"")
 				if success != true {
 					failedNodes = failedNodes+nodelist[i]+" (kubelet_ver), "
 				} else {
