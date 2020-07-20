@@ -42,7 +42,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 		stream.Send(&pb.StatusReply{Success: true, Message: "Generate new token ..."})
 		log.Info("Token to join nodes too old, creating new one")
 
-		success, token := executeCmdSalt(master_salt, "kubeadm", "token", "create", "--print-join-command", "2>/dev/null")
+		success, token := executeCmdSalt(master_salt, "kubeadm", "token", "create", "--print-join-command")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: token}); err != nil {
                                 return err
@@ -69,7 +69,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 		joincmd = joincmd + " --control-plane"
 
 		stream.Send(&pb.StatusReply{Success: true, Message: "Upload certificates ..."})
-		success, lines := executeCmdSalt(master_salt, "kubeadm", "init", "phase", "upload-certs", "--upload-certs", "2>/dev/null")
+		success, lines := executeCmdSalt(master_salt, "kubeadm", "init", "phase", "upload-certs", "--upload-certs")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: lines}); err != nil {
                                 return err
