@@ -71,7 +71,7 @@ func initMaster(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	fmt.Print ("Initializing kubernetes master can take several minutes, please be patient.\n")
-	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr, CertExtraSans: apiserver_cert_extra_sans, MultiMaster: multiMaster, KubernetesVersion: kubernetesVersion, Stage: stage, Haproxy: haproxy, FirstMaster: firstMaster})
+	stream, err := client.InitMaster(ctx, &pb.InitRequest{PodNetworking: podNetwork, AdvAddr: adv_addr, ApiserverCertExtraSans: apiserver_cert_extra_sans, MultiMaster: multiMaster, KubernetesVersion: kubernetesVersion, Stage: stage, Haproxy: haproxy, FirstMaster: firstMaster})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
 		return

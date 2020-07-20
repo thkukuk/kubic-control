@@ -209,8 +209,8 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		kubeadm_args = append(kubeadm_args, "--apiserver-advertise-address=" + in.AdvAddr)
 	}
 
-	if len(in.CertExtraSans) > 0 {
-		kubeadm_args = append(kubeadm_args, "--apiserver-cert-extra-sans=" + in.CertExtraSans)
+	if len(in.ApiserverCertExtraSans) > 0 {
+		kubeadm_args = append(kubeadm_args, "--apiserver-cert-extra-sans=" + in.ApiserverCertExtraSans)
 	}
 
 	if strings.EqualFold(arg_pod_network, "flannel") {
