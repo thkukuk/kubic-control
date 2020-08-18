@@ -29,7 +29,7 @@ import (
 
 const (
 	cilium_chart = "/usr/share/k8s-helm/cilium/"
-	cilium_yaml = "/usr/share/k8s-yaml/cilium/cilium.yaml"
+	cilium_values = "/etc/kubicd/helm/cilium.yaml"
 	flannel_yaml = "/usr/share/k8s-yaml/flannel/kube-flannel.yaml"
 	weave_yaml = "/usr/share/k8s-yaml/weave/weave.yaml"
 	kured_yaml = "/usr/share/k8s-yaml/kured/kured.yaml"
@@ -354,7 +354,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy cilium"}); err != nil {
 			return err
 		}
-		if err := deployment.DeployHelm(cilium_chart,"cilium",""); err != nil {
+		if err := deployment.DeployHelm(cilium_chart,"cilium",cilium_values); err != nil {
 			ResetMaster()
 			if err := stream.Send(&pb.StatusReply{Success: success, Message: err.Error()}); err != nil {
 				return err

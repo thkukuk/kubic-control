@@ -1,0 +1,11 @@
+registry: registry.opensuse.org/devel/kubic/containers/container/kubic
+tag: 1.7.6
+containerRuntime:
+  integration: crio
+agent:
+  cniInstallScript: cilium-cni-install
+  cniUninstallScript: cilium-cni-uninstall
+  initScript: cilium-init
+  initImage: cilium
+operator:
+  image: cilium-operator
