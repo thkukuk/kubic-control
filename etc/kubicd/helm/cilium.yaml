@@ -1,7 +1,11 @@
-registry: registry.opensuse.org/devel/kubic/containers/container/kubic
-tag: 1.7.6
-containerRuntime:
-  integration: crio
+global:
+  registry: registry.opensuse.org/kubic
+  tag: 1.7.6
+  containerRuntime:
+    integration: crio
+  etcd:
+    enabled: true
+    managed: true
 agent:
   cniInstallScript: cilium-cni-install
   cniUninstallScript: cilium-cni-uninstall
@@ -9,3 +13,5 @@ agent:
   initImage: cilium
 operator:
   image: cilium-operator
+managed-etcd:
+  tag: 2.0.5
