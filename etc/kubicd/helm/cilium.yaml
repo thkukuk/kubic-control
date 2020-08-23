@@ -1,17 +1,12 @@
 global:
-  registry: registry.opensuse.org/kubic
-  tag: 1.7.6
+  registry: docker.io/cilium
+  tag: v1.7.6
   containerRuntime:
     integration: crio
-  etcd:
-    enabled: true
-    managed: true
 agent:
-  cniInstallScript: cilium-cni-install
-  cniUninstallScript: cilium-cni-uninstall
-  initScript: cilium-init
+  cniInstallScript: /cni-install.sh
+  cniUninstallScript: /cni-uninstall.sh
+  initScript: /init-container.sh
   initImage: cilium
 operator:
-  image: cilium-operator
-managed-etcd:
-  tag: 2.0.5
+  image: operator
