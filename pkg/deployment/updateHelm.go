@@ -5,16 +5,18 @@ import (
         "github.com/thkukuk/kubic-control/pkg/tools"
 )
 
-func checkHelmUpdate(chartName, releaseName, valuesPath, hash string) (bool, error) {
+func checkHelmUpdate(chartName, releaseName, valuesPath, namespace, hash string) (bool, error) {
 	var success bool
 	var message string
 	if valuesPath == ""{
 		success, message = tools.ExecuteCmd("helm", "template", releaseName,
-			chartName, "--kubeconfig=/etc/kubernetes/admin.conf")
+			chartName, "--kubeconfig=/etc/kubernetes/admin.conf",
+			"--namespace", namespace)
 	}else{
 		success, message = tools.ExecuteCmd("helm", "template", releaseName,
 			chartName, "--kubeconfig=/etc/kubernetes/admin.conf",
-			"-f", valuesPath)
+			"-f", valuesPath,
+			"--namespace", namespace)
 	}
 	
 	if success != true {
@@ -28,17 +30,22 @@ func checkHelmUpdate(chartName, releaseName, valuesPath, hash string) (bool, err
 	return true, nil
 }
 
-func UpdateHelm(chartName, releaseName, valuesPath string) error {
+func UpdateHelm(chartName, releaseName, valuesPath, namespace string) error {
 
 	var success bool
 	var message string
+	if namespace == "" {
+		namespace = "default"
+	}
 	if valuesPath == ""{
 		success, message = tools.ExecuteCmd("helm", "upgrade", releaseName,
-			chartName, "--kubeconfig=/etc/kubernetes/admin.conf")
+			chartName, "--kubeconfig=/etc/kubernetes/admin.conf",
+			"--namespace", namespace)
 	}else{
 		success, message = tools.ExecuteCmd("helm", "upgrade", releaseName,
 			chartName, "--kubeconfig=/etc/kubernetes/admin.conf",
-			"-f", valuesPath)
+			"-f", valuesPath,
+			"--namespace", namespace)
 	}
 	
 	if success != true {
@@ -46,5 +53,5 @@ func UpdateHelm(chartName, releaseName, valuesPath string) error {
 	}
 
 
-	return setHelmConfig(chartName, releaseName, valuesPath)
+	return setHelmConfig(chartName, releaseName, valuesPath, namespace)
 }

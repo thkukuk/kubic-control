@@ -11,7 +11,7 @@ const(
 	adminKubeconfig = "/etc/kubernetes/admin.conf"
 )
 
-func setHelmConfig(chartName, releaseName, valuesPath string) error{
+func setHelmConfig(chartName, releaseName, valuesPath, namespace string) error{
 
 	var success bool
 	var message string
@@ -38,6 +38,7 @@ func setHelmConfig(chartName, releaseName, valuesPath string) error{
 	cfg.Section("").Key(chartName).SetValue(result)
 	cfg.Section("").Key(chartName+".releaseName").SetValue(releaseName)
 	cfg.Section("").Key(chartName+".valuesPath").SetValue(valuesPath)
+	cfg.Section("").Key(chartName+".namespace").SetValue(namespace)
 
 	
 	err = cfg.SaveTo(helmConfig)
@@ -47,22 +48,27 @@ func setHelmConfig(chartName, releaseName, valuesPath string) error{
 	return nil
 }
 
-func DeployHelm(chartName, releaseName, valuesPath string) error {
+func DeployHelm(chartName, releaseName, valuesPath, namespace string) error {
 
 	var success bool
 	var message string
+	if namespace == "" {
+		namespace = "default"
+	}
 	if valuesPath == ""{
 		success, message = tools.ExecuteCmd("helm", "install", releaseName,
-			chartName, "--kubeconfig=/etc/kubernetes/admin.conf")
+			chartName, "--kubeconfig=/etc/kubernetes/admin.conf",
+			"--namespace", namespace)
 	}else{
 		success, message = tools.ExecuteCmd("helm", "install", releaseName,
 			chartName, "--kubeconfig=/etc/kubernetes/admin.conf",
-			"-f", valuesPath)
+			"-f", valuesPath,
+			"--namespace", namespace)
 	}
 	
 	if success != true {
 		return errors.New(message)
 	}
 
-	return setHelmConfig(chartName, releaseName, valuesPath)
+	return setHelmConfig(chartName, releaseName, valuesPath, namespace)
 }
