@@ -205,14 +205,6 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 	// build kubeadm call
 	kubeadm_args := []string{"init"}
 
-	if len(in.AdvAddr) > 0 {
-		kubeadm_args = append(kubeadm_args, "--apiserver-advertise-address=" + in.AdvAddr)
-	}
-
-	if len(in.ApiserverCertExtraSans) > 0 {
-		kubeadm_args = append(kubeadm_args, "--apiserver-cert-extra-sans=" + in.ApiserverCertExtraSans)
-	}
-
 	if strings.EqualFold(arg_pod_network, "flannel") {
 		kubeadm_args = append(kubeadm_args, "--pod-network-cidr=10.244.0.0/16")
 	}
@@ -272,6 +264,39 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			}
 			return nil
 		}
+
+		if len(in.ApiserverCertExtraSans) > 0 || len(in.AdvAddr) > 0 {
+			_, err = f.WriteString("apiServer:\n")
+			if err != nil {
+				ResetMaster()
+				if err := stream.Send(&pb.StatusReply{Success: false, Message: err.Error()}); err != nil {
+					return err
+				}
+				return nil
+			}
+
+			if len(in.ApiserverCertExtraSans) > 0 {
+				_, err = f.WriteString("  certSANs:\n    - " + in.ApiserverCertExtraSans + "\n")
+				if err != nil {
+					ResetMaster()
+					if err := stream.Send(&pb.StatusReply{Success: false, Message: err.Error()}); err != nil {
+						return err
+					}
+					return nil
+				}
+			}
+
+			if len(in.AdvAddr) > 0 {
+				_, err = f.WriteString("  extraArgs:\n    advertise-address: " + in.AdvAddr + "\n")
+				if err != nil {
+					ResetMaster()
+					if err := stream.Send(&pb.StatusReply{Success: false, Message: err.Error()}); err != nil {
+						return err
+					}
+					return nil
+				}
+			}
+		}
 		f.Close()
 
 		update_cfg("control-plane.conf", "MultiMaster", "True")
@@ -289,6 +314,14 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		// kubeadm does not really like mixing config files and arguments, only use
 		// --kubernetes-version if we don't use a config file.
 		kubeadm_args = append(kubeadm_args, "--kubernetes-version=" + kubernetes_version)
+
+		if len(in.AdvAddr) > 0 {
+			kubeadm_args = append(kubeadm_args, "--apiserver-advertise-address=" + in.AdvAddr)
+		}
+
+		if len(in.ApiserverCertExtraSans) > 0 {
+			kubeadm_args = append(kubeadm_args, "--apiserver-cert-extra-sans=" + in.ApiserverCertExtraSans)
+		}
 	}
 
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Initialize Kubernetes control-plane"}); err != nil {
