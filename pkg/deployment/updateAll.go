@@ -40,13 +40,13 @@ func UpdateAll(forced bool) (bool, string) {
 			hash, _ := tools.Sha256sum_f(key)
 
 			if hash != value {
-				log.Infof("%s has changed, updating")
+				log.Infof("%s has changed, updating", key)
 				success, message := UpdateFile(key)
 				if success != true {
 					return success, message
 				}
 			} else {
-				log.Infof("%s has not changed, ignoring")
+				log.Infof("%s has not changed, ignoring", key)
 			}
 		}
 	}
@@ -77,13 +77,13 @@ func UpdateAll(forced bool) (bool, string) {
 			hash, _ := tools.Sha256sum_f(message)
 
 			if hash != value {
-				log.Infof("%s has changed, updating")
+				log.Infof("%s has changed, updating", key)
 				success, message := UpdateKustomize(key)
 				if success != true {
 					return success, message
 				}
 			} else {
-				log.Infof("%s has not changed, ignoring")
+				log.Infof("%s has not changed, ignoring", key)
 			}
 		}
 	}
