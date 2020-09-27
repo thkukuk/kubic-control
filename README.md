@@ -93,7 +93,7 @@ depeding on the kubernetes cluster configuration automatically, if `haproxycfg`
 is installed.
 
 For cilium or flannel instead of weave you have to use `kubicctl init
---pod-network cilium` or `kubicctl init --pod-network cilium`.
+--pod-network cilium` or `kubicctl init --pod-network flannel`.
 
 To add additional worker nodes:
 
