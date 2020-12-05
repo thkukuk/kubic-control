@@ -19,9 +19,9 @@ import (
 )
 
 func DeployCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "deploy",
-                Short: "deploy new resource",
+	var subCmd = &cobra.Command{
+		Use:   "deploy",
+		Short: "deploy new resource",
 	}
 
 	subCmd.AddCommand(

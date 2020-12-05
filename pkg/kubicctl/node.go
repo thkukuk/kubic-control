@@ -19,23 +19,23 @@ import (
 )
 
 func DeployNodeCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "deploy",
-                Short: "Install new nodes with yomi",
-        }
+	var subCmd = &cobra.Command{
+		Use:   "deploy",
+		Short: "Install new nodes with yomi",
+	}
 
 	subCmd.AddCommand(
 		YomiPrepareConfigCmd(),
 		YomiInstallCmd(),
 	)
 
-        return subCmd
+	return subCmd
 }
 
 func NodeCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "node",
-                Short: "Manage kubernetes nodes",
+	var subCmd = &cobra.Command{
+		Use:   "node",
+		Short: "Manage kubernetes nodes",
 	}
 
 	subCmd.AddCommand(

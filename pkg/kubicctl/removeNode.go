@@ -16,21 +16,21 @@ package kubicctl
 
 import (
 	"context"
-	"time"
 	"fmt"
-	"os"
 	"io"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
 func RemoveNodeCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "remove <node>",
-                Short: "Remove node from cluster",
-                Run: removeNode,
-		Args: cobra.ExactArgs(1),
+	var subCmd = &cobra.Command{
+		Use:   "remove <node>",
+		Short: "Remove node from cluster",
+		Run:   removeNode,
+		Args:  cobra.ExactArgs(1),
 	}
 
 	return subCmd
@@ -59,24 +59,24 @@ func removeNode(cmd *cobra.Command, args []string) {
 	}
 
 	for {
-                r, err := stream.Recv()
-                if err == io.EOF {
-                        break
-                }
-                if err != nil {
-                        if r == nil {
-                                fmt.Fprintf(os.Stderr, "Removing node %s failed: %v\n", nodes, err)
-                        } else {
-                                fmt.Fprintf(os.Stderr, "Removing node %s failed: %s\n%v\n", r.Message, err)
-                        }
+		r, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			if r == nil {
+				fmt.Fprintf(os.Stderr, "Removing node %s failed: %v\n", nodes, err)
+			} else {
+				fmt.Fprintf(os.Stderr, "Removing node %s failed: %s\n%v\n", r.Message, err)
+			}
 			os.Exit(1)
-                }
-		if (r.Success != true) {
+		}
+		if r.Success != true {
 			fmt.Fprintf(os.Stderr, "%s\n", r.Message)
 		} else {
 			fmt.Printf("%s\n", r.Message)
 		}
-        }
+	}
 
 	fmt.Printf("Please make sure to reboot the Nodes before re-using them.\n")
 }

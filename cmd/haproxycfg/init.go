@@ -15,14 +15,14 @@
 package main
 
 import (
-	"io/ioutil"
-	"strings"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"strconv"
+	"strings"
 
-        "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
@@ -31,25 +31,29 @@ var (
 )
 
 func InitializeConfigCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "init <loadbalancer DNS name> <first master IP>",
-                Short: "Create initial haproxy.cfg overwriting existing one",
-                Run: initializeConfig,
-                Args: cobra.ExactArgs(2),
-        }
+	var subCmd = &cobra.Command{
+		Use:   "init <loadbalancer DNS name> <first master IP>",
+		Short: "Create initial haproxy.cfg overwriting existing one",
+		Run:   initializeConfig,
+		Args:  cobra.ExactArgs(2),
+	}
 
 	subCmd.PersistentFlags().StringVar(&OutputDir, "dir", OutputDir, "Directory, in which haproxy.cfg should be written")
 	subCmd.PersistentFlags().BoolVar(&force, "force", false, "force overwriting of existing haproxy.cfg")
 
-        return subCmd
+	return subCmd
 }
 
 // exists returns whether the given file or directory exists
 func Exists(path string) (bool, error) {
-    _, err := os.Stat(path)
-    if err == nil { return true, nil }
-    if os.IsNotExist(err) { return false, nil }
-    return true, err
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
 }
 
 func set_perm(path string) error {
@@ -93,13 +97,12 @@ func add_k8s_entry(f *os.File, lb_dns_name string, apiserver1 string) {
 		"    default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100\n" +
 		"    server apiserver1 " + apiserver1 + ":6443 check\n\n")
 	if err != nil {
-                fmt.Fprintf(os.Stderr, "Writing to haproxy.cfg failed: %v", err)
+		fmt.Fprintf(os.Stderr, "Writing to haproxy.cfg failed: %v", err)
 		os.Exit(1)
-        }
+	}
 }
 
-
-func initializeConfig (cmd *cobra.Command, args []string) {
+func initializeConfig(cmd *cobra.Command, args []string) {
 
 	lb_dns_name := args[0]
 	apiserver1 := args[1]
@@ -116,7 +119,7 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 		tools.ExecuteCmd("systemctl", "stop", "haproxy")
 		f, err := os.Create(OutputDir + "haproxy.cfg")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Could not create \"" + OutputDir + "haproxy.cfg\": %v", err)
+			fmt.Fprintf(os.Stderr, "Could not create \""+OutputDir+"haproxy.cfg\": %v", err)
 			os.Exit(1)
 		}
 
@@ -154,18 +157,18 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 			"  stats refresh 5s\n" +
 			"\n")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Wrting to \"" + OutputDir + "haproxy.cfg\" failed: %v", err)
+			fmt.Fprintf(os.Stderr, "Wrting to \""+OutputDir+"haproxy.cfg\" failed: %v", err)
 			os.Exit(1)
 		}
 
 		add_k8s_entry(f, lb_dns_name, apiserver1)
 
 		if err := f.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Closing \"" + OutputDir + "haproxy.cfg\" failed: %v", err)
+			fmt.Fprintf(os.Stderr, "Closing \""+OutputDir+"haproxy.cfg\" failed: %v", err)
 			os.Exit(1)
 		}
 
-		set_perm (OutputDir + "haproxy.cfg")
+		set_perm(OutputDir + "haproxy.cfg")
 		fmt.Printf("haproxy.cfg created\n")
 		success, message := tools.ExecuteCmd("systemctl", "enable", "--now", "haproxy")
 		if !success {
@@ -181,7 +184,7 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 		/* ioutil.ReadFile returns []byte, error */
 		data, err := ioutil.ReadFile(OutputDir + "haproxy.cfg")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading \"" + OutputDir + "haproxy.cfg\": %v", err)
+			fmt.Fprintf(os.Stderr, "Error reading \""+OutputDir+"haproxy.cfg\": %v", err)
 			os.Exit(1)
 		}
 		file := string(data)
@@ -193,7 +196,7 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 		var newContent []string
 		remove := false
 		for _, item := range temp {
-			if len(item) == 0  && remove {
+			if len(item) == 0 && remove {
 				remove = false
 			} else {
 				if (strings.Contains(item, "frontend") ||
@@ -202,7 +205,7 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 					remove = true
 				}
 				if remove == false {
-					newContent = append (newContent, item)
+					newContent = append(newContent, item)
 				}
 			}
 		}
@@ -210,14 +213,14 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 		// XXX create backup of old file
 		f, err := os.Create(OutputDir + "haproxy.cfg")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Could not create \"" + OutputDir + "haproxy.cfg\": %v", err)
+			fmt.Fprintf(os.Stderr, "Could not create \""+OutputDir+"haproxy.cfg\": %v", err)
 			os.Exit(1)
 		}
 
 		for _, item := range newContent {
 			_, err = f.WriteString(item + "\n")
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Wrting to \"" + OutputDir + "haproxy.cfg\" failed: %v", err)
+				fmt.Fprintf(os.Stderr, "Wrting to \""+OutputDir+"haproxy.cfg\" failed: %v", err)
 				os.Exit(1)
 			}
 
@@ -225,11 +228,11 @@ func initializeConfig (cmd *cobra.Command, args []string) {
 		add_k8s_entry(f, lb_dns_name, apiserver1)
 
 		if err := f.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Closing \"" + OutputDir + "haproxy.cfg\" failed: %v", err)
+			fmt.Fprintf(os.Stderr, "Closing \""+OutputDir+"haproxy.cfg\" failed: %v", err)
 			os.Exit(1)
 		}
 
-		set_perm (OutputDir + "haproxy.cfg")
+		set_perm(OutputDir + "haproxy.cfg")
 		fmt.Printf("haproxy.cfg adjusted\n")
 		// Make sure haproxy is not running and enable it with new start
 		tools.ExecuteCmd("systemctl", "stop", "haproxy")

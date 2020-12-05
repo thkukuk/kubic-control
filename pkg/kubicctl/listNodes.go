@@ -16,20 +16,20 @@ package kubicctl
 
 import (
 	"context"
-	"time"
 	"fmt"
+	"time"
 
-        log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
 func ListNodesCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "list",
-                Short: "List all reachable worker nodes",
-                Run: listNodes,
-		Args: cobra.ExactArgs(0),
+	var subCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all reachable worker nodes",
+		Run:   listNodes,
+		Args:  cobra.ExactArgs(0),
 	}
 
 	return subCmd
@@ -61,7 +61,7 @@ func listNodes(cmd *cobra.Command, args []string) {
 			} else {
 				fmt.Print(", " + r.Node[i])
 			}
-                }
+		}
 		fmt.Print("\n")
 	} else {
 		log.Errorf("Getting list of nodes failed: %s", r.Message)

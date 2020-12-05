@@ -15,12 +15,12 @@
 package yomi
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"os"
 	"os/user"
-	"io/ioutil"
-	"strings"
 	"strconv"
-	"encoding/json"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -28,61 +28,60 @@ import (
 )
 
 func set_perm(path string) error {
-        err := os.Chmod(path, 0640)
-        if err != nil {
-                return err
-        }
+	err := os.Chmod(path, 0640)
+	if err != nil {
+		return err
+	}
 
-        if os.Getuid() != 0 {
-                // don't change ownership if we are not root
-                return nil
-        }
+	if os.Getuid() != 0 {
+		// don't change ownership if we are not root
+		return nil
+	}
 
-        gr, err := user.LookupGroup("salt")
-        if err != nil {
-                // XXX if we don't have the group, do nothing
-                return nil
-        }
+	gr, err := user.LookupGroup("salt")
+	if err != nil {
+		// XXX if we don't have the group, do nothing
+		return nil
+	}
 
-        gid, err := strconv.Atoi(gr.Gid)
-        if err != nil {
-                return err
-        }
-        return os.Chown(path, 0, gid)
+	gid, err := strconv.Atoi(gr.Gid)
+	if err != nil {
+		return err
+	}
+	return os.Chown(path, 0, gid)
 }
-
 
 func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServer) error {
 
 	if err := stream.Send(&pb.StatusReply{Success: true,
 		Message: "Prepare salt configuration for Node " + in.Saltnode + " as " + in.Type}); err != nil {
-			return err
-		}
+		return err
+	}
 
 	if in.Type != "haproxy" {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: "Invalid type '" + in.Type + "', valid types are: \"haproxy\""}); err != nil {
-				return err
-			}
+			return err
+		}
 		return nil
 	}
 
 	// Get the hardware information from the new node
 
 	if err := stream.Send(&pb.StatusReply{Success: true,
-		Message: "Gather hardware informations for Node " + in.Saltnode }); err != nil {
-			return err
-		}
+		Message: "Gather hardware informations for Node " + in.Saltnode}); err != nil {
+		return err
+	}
 
 	// make sure latest modules are used on minion
-        success, message := tools.ExecuteCmd("salt", in.Saltnode, "saltutil.sync_all")
-        if success != true {
-                if err := stream.Send(&pb.StatusReply{Success: false,
-                        Message: message}); err != nil {
-                                return err
-                        }
-                return nil
-        }
+	success, message := tools.ExecuteCmd("salt", in.Saltnode, "saltutil.sync_all")
+	if success != true {
+		if err := stream.Send(&pb.StatusReply{Success: false,
+			Message: message}); err != nil {
+			return err
+		}
+		return nil
+	}
 
 	pillarName := Salt2PillarName(in.Saltnode)
 	pillarFile := "/srv/pillar/kubicd/" + pillarName + ".sls"
@@ -91,12 +90,12 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	if err != nil {
 		if err2 := stream.Send(&pb.StatusReply{Success: false,
 			Message: "Could not create \"" + pillarFile + "\": " + err.Error()}); err2 != nil {
-				return err2
-			}
+			return err2
+		}
 		return nil
 	}
 
-	_, err = f.WriteString( "# Meta pillar for Yomi\n" +
+	_, err = f.WriteString("# Meta pillar for Yomi\n" +
 		"#\n" +
 		"# There are some parameters that can be configured and adapted to\n" +
 		"# launch a basic Yomi installation:\n" +
@@ -110,8 +109,8 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	if err != nil {
 		if err2 := stream.Send(&pb.StatusReply{Success: false,
 			Message: "Writing to \"" + pillarFile + "\" failed: " + err.Error()}); err2 != nil {
-				return err2
-			}
+			return err2
+		}
 		return nil
 	}
 
@@ -123,14 +122,14 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err != nil {
-					return err
-				}
+				return err
+			}
 			return nil
 		}
-		uefi := strings.Replace(message, "\n","",-1)
-		i := strings.Index(uefi,":")+1
+		uefi := strings.Replace(message, "\n", "", -1)
+		i := strings.Index(uefi, ":") + 1
 		uefi = strings.TrimSpace(uefi[i:])
-		log.Info ("UEFI: " + uefi)
+		log.Info("UEFI: " + uefi)
 		if strings.EqualFold(uefi, "true") {
 			useEfi = true
 		}
@@ -147,8 +146,8 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	if err != nil {
 		if err2 := stream.Send(&pb.StatusReply{Success: false,
 			Message: "Writing to \"" + pillarFile + "\" failed: " + err.Error()}); err2 != nil {
-				return err2
-			}
+			return err2
+		}
 		return nil
 	}
 
@@ -159,14 +158,14 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err != nil {
-					return err
-				}
+				return err
+			}
 			return nil
 		}
-		virtualisation := strings.Replace(message, "\n","",-1)
-		i := strings.Index(virtualisation,":")+1
+		virtualisation := strings.Replace(message, "\n", "", -1)
+		i := strings.Index(virtualisation, ":") + 1
 		virtualisation = strings.TrimSpace(virtualisation[i:])
-		log.Info ("Virtualisation: " + virtualisation)
+		log.Info("Virtualisation: " + virtualisation)
 		if strings.EqualFold(virtualisation, "none") {
 			useBareMetal = true
 		}
@@ -183,8 +182,8 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	if err != nil {
 		if err2 := stream.Send(&pb.StatusReply{Success: false,
 			Message: "Writing to \"" + pillarFile + "\" failed: " + err.Error()}); err2 != nil {
-				return err2
-			}
+			return err2
+		}
 		return nil
 	}
 
@@ -196,8 +195,8 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err != nil {
-					return err
-				}
+				return err
+			}
 			return nil
 		}
 		var hwinfo_all map[string]interface{}
@@ -205,22 +204,22 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 		if err != nil {
 			if err2 := stream.Send(&pb.StatusReply{Success: false,
 				Message: "Detecting disks failed: " + err.Error()}); err2 != nil {
-					return err2
-				}
+				return err2
+			}
 			return nil
 		}
 		hwinfo_node := hwinfo_all[in.Saltnode].(map[string]interface{})
 		hwinfo := hwinfo_node["hwinfo"].(map[string]interface{})
 		hwinfo_disk := hwinfo["disk"].(map[string]interface{})
-		if len (hwinfo_disk) != 1 {
+		if len(hwinfo_disk) != 1 {
 			message = "Found more than one disk:\n"
 			for key, value := range hwinfo_disk {
-				message = message + "- " + key + " (" + value.(string) +")\n"
+				message = message + "- " + key + " (" + value.(string) + ")\n"
 			}
 			if err := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err != nil {
-					return err
-				}
+				return err
+			}
 			return nil
 		}
 
@@ -242,89 +241,89 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	if err != nil {
 		if err2 := stream.Send(&pb.StatusReply{Success: false,
 			Message: "Writing to \"" + pillarFile + "\" failed: " + err.Error()}); err2 != nil {
-				return err2
-			}
+			return err2
+		}
 		return nil
 	}
 
 	if err := f.Close(); err != nil {
 		if err2 := stream.Send(&pb.StatusReply{Success: false,
 			Message: "Closing \"" + pillarFile + "\" failed: " + err.Error()}); err2 != nil {
-				return err2
-			}
+			return err2
+		}
 		return nil
 	}
 
-	set_perm (pillarFile)
+	set_perm(pillarFile)
 
 	// Create top.sls if it does not exist, else add our entry
 	found, _ := tools.Exists("/srv/pillar/top.sls")
 	if !found {
-                f, err := os.Create("/srv/pillar/top.sls")
-                if err != nil {
-                        message = "Could not create \"/srv/pillar/top.sls\": " + err.Error()
+		f, err := os.Create("/srv/pillar/top.sls")
+		if err != nil {
+			message = "Could not create \"/srv/pillar/top.sls\": " + err.Error()
 			if err2 := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err2 != nil {
-					return err2
-				}
+				return err2
+			}
 			return nil
-                }
+		}
 
-                _, err = f.WriteString("base:\n" +
+		_, err = f.WriteString("base:\n" +
 			"  " + in.Saltnode + ":\n" +
 			"    - kubicd/" + pillarName + "\n" +
-                        "\n")
-                if err := f.Close(); err != nil {
-                        message = "Closing \"/srv/pillar/top.sls\" failed: " + err.Error()
+			"\n")
+		if err := f.Close(); err != nil {
+			message = "Closing \"/srv/pillar/top.sls\" failed: " + err.Error()
 			if err2 := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err2 != nil {
-					return err2
-				}
+				return err2
+			}
 			return nil
-                }
+		}
 	} else {
 		// File exists,
 
 		data, err := ioutil.ReadFile("/srv/pillar/top.sls")
-                if err != nil {
-                        message = "Error reading \"/srv/pillar/top.sls\": " + err.Error()
+		if err != nil {
+			message = "Error reading \"/srv/pillar/top.sls\": " + err.Error()
 			if err2 := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err2 != nil {
-					return err2
-				}
+				return err2
+			}
 			return nil
-                }
-                file := string(data)
-                // Remove trailing \n to avoid additional new line
-                file = strings.TrimSuffix(file, "\n")
-                /* func Split(s, sep string) []string */
-                temp := strings.Split(file, "\n")
+		}
+		file := string(data)
+		// Remove trailing \n to avoid additional new line
+		file = strings.TrimSuffix(file, "\n")
+		/* func Split(s, sep string) []string */
+		temp := strings.Split(file, "\n")
 
 		var newContent []string
-                found_node := false
+		found_node := false
 		found_pillar := false
 		write_pillar := false
-                for _, item := range temp {
+		for _, item := range temp {
 			if found_node {
 				if strings.Contains(item, "    -") {
-					if strings.Contains(item, "kubicd/" + pillarName) {
+					if strings.Contains(item, "kubicd/"+pillarName) {
 						found_node = false
 						found_pillar = true
 					}
 				} else {
-					newContent = append (newContent, "    - kubicd/" + pillarName)
+					newContent = append(newContent, "    - kubicd/"+pillarName)
 					write_pillar = true
 				}
 			}
-			if strings.Contains(item, in.Saltnode + ":") {
+			if strings.Contains(item, in.Saltnode+":") {
 				found_node = true
 			}
-			newContent = append (newContent, item)
+			newContent = append(newContent, item)
 		}
 
 		if !found_pillar && !write_pillar {
-			newContent = append (newContent, "  " + in.Saltnode + ":")
-			newContent = append (newContent, "    - kubicd/" + pillarName)
+			newContent = append(newContent, "  "+in.Saltnode+":")
+			newContent = append(newContent, "    - kubicd/"+pillarName)
 			write_pillar = true
 		}
 		if write_pillar {
@@ -335,8 +334,8 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 				message = "Could not create \"/srv/pillar/top.sls\": " + err.Error()
 				if err2 := stream.Send(&pb.StatusReply{Success: false,
 					Message: message}); err2 != nil {
-						return err2
-					}
+					return err2
+				}
 				return nil
 			}
 
@@ -346,8 +345,8 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 					message = "Writing to \"/srv/pillar/top.sls\" failed: " + err.Error()
 					if err2 := stream.Send(&pb.StatusReply{Success: false,
 						Message: message}); err2 != nil {
-							return err2
-						}
+						return err2
+					}
 					return nil
 				}
 
@@ -356,8 +355,8 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 				message = "Closing \"/srv/pillar/top.sls\" failed: " + err.Error()
 				if err2 := stream.Send(&pb.StatusReply{Success: false,
 					Message: message}); err2 != nil {
-						return err2
-					}
+					return err2
+				}
 				return nil
 			}
 			set_perm("/srv/pillar/top.sls")
@@ -366,7 +365,7 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 
 	if err := stream.Send(&pb.StatusReply{Success: true,
 		Message: "Configuration created. Please check \"" + pillarFile + "\" and run install phase."}); err != nil {
-			return err
-		}
+		return err
+	}
 	return nil
 }

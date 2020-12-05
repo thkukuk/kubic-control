@@ -22,13 +22,13 @@ import (
 func GetNodeName(target string) (string, error) {
 
 	// salt host names are not identical with kubernetes node name.
-        // Output of hostname should be identical to node name
-        success, message := ExecuteCmd("salt",  target, "network.get_hostname")
-        if success != true {
-                return target, errors.New(message)
-        }
-        hostname := strings.Replace(message, "\n","",-1)
-        i := strings.Index(hostname,":")+1
-        hostname = hostname[i:]
-	return strings.TrimSpace(hostname),nil
+	// Output of hostname should be identical to node name
+	success, message := ExecuteCmd("salt", target, "network.get_hostname")
+	if success != true {
+		return target, errors.New(message)
+	}
+	hostname := strings.Replace(message, "\n", "", -1)
+	i := strings.Index(hostname, ":") + 1
+	hostname = hostname[i:]
+	return strings.TrimSpace(hostname), nil
 }

@@ -15,105 +15,105 @@
 package kubeadm
 
 import (
-	"gopkg.in/ini.v1"
-        pb "github.com/thkukuk/kubic-control/api"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/thkukuk/kubic-control/api"
 	"github.com/thkukuk/kubic-control/pkg/tools"
+	"gopkg.in/ini.v1"
 )
 
 func GetStatus(in *pb.Empty, stream pb.Kubeadm_GetStatusServer, kubicdVersion string) error {
 
 	if err := stream.Send(&pb.StatusReply{Success: true,
 		Message: "Kubicd version: " + kubicdVersion}); err != nil {
-			log.Errorf("Send message failed: %s", err)
-			return err
-		}
+		log.Errorf("Send message failed: %s", err)
+		return err
+	}
 	_, message := tools.GetKubeadmVersion("") // XXX needs better handling, per master via salt.
 	if err := stream.Send(&pb.StatusReply{Success: true,
 		Message: "kubeadm version: " + message}); err != nil {
+		log.Errorf("Send message failed: %s", err)
+		return err
+	}
+
+	// Standard yaml files
+	cfg, err := ini.Load("/var/lib/kubic-control/k8s-yaml.conf")
+	if err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: false,
+			Message: "Cannot load k8s-yaml.conf: " + err.Error()}); err != nil {
 			log.Errorf("Send message failed: %s", err)
 			return err
 		}
-
-	// Standard yaml files
-        cfg, err := ini.Load("/var/lib/kubic-control/k8s-yaml.conf")
-        if err != nil {
-		if err := stream.Send(&pb.StatusReply{Success: false,
-			Message: "Cannot load k8s-yaml.conf: " + err.Error()}); err != nil {
-				log.Errorf("Send message failed: %s", err)
-				return err
-		}
-        } else {
+	} else {
 
 		keys := cfg.Section("").KeyStrings()
 
 		if len(keys) > 0 {
 			if err := stream.Send(&pb.StatusReply{Success: true,
 				Message: "Status of deployed daemonsets (yaml):"}); err != nil {
-					log.Errorf("Send message failed: %s", err)
-					return err
-				}
+				log.Errorf("Send message failed: %s", err)
+				return err
+			}
 		}
 		for _, key := range keys {
 			value := cfg.Section("").Key(key).String()
 			hash, _ := tools.Sha256sum_f(key)
-                        if hash != value {
+			if hash != value {
 				if err := stream.Send(&pb.StatusReply{Success: true,
 					Message: "- " + key + ": newer version available"}); err != nil {
-						log.Errorf("Send message failed: %s", err)
-						return err
-					}
-                        } else {
+					log.Errorf("Send message failed: %s", err)
+					return err
+				}
+			} else {
 				if err := stream.Send(&pb.StatusReply{Success: true,
 					Message: "- " + key + ": up to date"}); err != nil {
-						log.Errorf("Send message failed: %s", err)
-						return err
-					}
+					log.Errorf("Send message failed: %s", err)
+					return err
+				}
 
-                        }
-                }
-        }
+			}
+		}
+	}
 
 	// kustomize
-        cfg, err = ini.Load("/var/lib/kubic-control/k8s-kustomize.conf")
-        if err != nil {
+	cfg, err = ini.Load("/var/lib/kubic-control/k8s-kustomize.conf")
+	if err != nil {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: "Cannot load k8s-kustomize.conf: " + err.Error()}); err != nil {
-				log.Errorf("Send message failed: %s", err)
-				return err
+			log.Errorf("Send message failed: %s", err)
+			return err
 		}
-        } else {
+	} else {
 
 		keys := cfg.Section("").KeyStrings()
 
 		if len(keys) > 0 {
 			if err := stream.Send(&pb.StatusReply{Success: true,
 				Message: "Status of deployed daemonsets (kustomize):"}); err != nil {
-					log.Errorf("Send message failed: %s", err)
-					return err
-				}
+				log.Errorf("Send message failed: %s", err)
+				return err
+			}
 		}
 		for _, key := range keys {
 			value := cfg.Section("").Key(key).String()
 			_, output := tools.ExecuteCmd("kustomize", "build",
-				"/var/lib/kubic-control/kustomize/" + key + "/overlay")
+				"/var/lib/kubic-control/kustomize/"+key+"/overlay")
 			hash, _ := tools.Sha256sum_b(output)
-                        if hash != value {
+			if hash != value {
 				if err := stream.Send(&pb.StatusReply{Success: true,
 					Message: "- " + key + ": newer version available"}); err != nil {
-						log.Errorf("Send message failed: %s", err)
-						return err
-					}
-                        } else {
+					log.Errorf("Send message failed: %s", err)
+					return err
+				}
+			} else {
 				if err := stream.Send(&pb.StatusReply{Success: true,
 					Message: "- " + key + ": up to date"}); err != nil {
-						log.Errorf("Send message failed: %s", err)
-						return err
-					}
+					log.Errorf("Send message failed: %s", err)
+					return err
+				}
 
-                        }
-                }
-        }
+			}
+		}
+	}
 
 	return nil
 }

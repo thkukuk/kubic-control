@@ -15,24 +15,24 @@
 package kubicctl
 
 import (
-	"os"
 	"fmt"
+	"os"
 
-        "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 func InitializeCertsCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "initialize",
-                Short: "Create CA, KubicD and admin certificates",
-                Run: initializeCerts,
-                Args: cobra.ExactArgs(0),
-        }
+	var subCmd = &cobra.Command{
+		Use:   "initialize",
+		Short: "Create CA, KubicD and admin certificates",
+		Run:   initializeCerts,
+		Args:  cobra.ExactArgs(0),
+	}
 
-        return subCmd
+	return subCmd
 }
 
-func initializeCerts (cmd *cobra.Command, args []string) {
+func initializeCerts(cmd *cobra.Command, args []string) {
 	err := CreateCA(PKI_dir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating CA: %v\n", err)

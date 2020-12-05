@@ -25,12 +25,12 @@ func GetListOfNodes(role string) (bool, string, []string) {
 	}
 
 	// Get list of all nodes of this role
-        success, message := ExecuteCmd("salt", "-G", "kubicd:kubic-" + role + "-node", "grains.get",  "kubic-" + role + "-node")
-        if success != true {
+	success, message := ExecuteCmd("salt", "-G", "kubicd:kubic-"+role+"-node", "grains.get", "kubic-"+role+"-node")
+	if success != true {
 		return success, message, nil
-        }
-        message = strings.TrimSuffix(message, "\n")
-        nodelist := strings.Split (strings.Replace(message, ":", "", -1), "\n")
+	}
+	message = strings.TrimSuffix(message, "\n")
+	nodelist := strings.Split(strings.Replace(message, ":", "", -1), "\n")
 
 	return true, "", nodelist
 }

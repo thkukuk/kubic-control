@@ -16,16 +16,16 @@ package kubeadm
 
 import (
 	"strings"
-	"time"
 	"sync"
+	"time"
 
-        pb "github.com/thkukuk/kubic-control/api"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/thkukuk/kubic-control/api"
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 var (
-	joincmd_g = ""
+	joincmd_g         = ""
 	token_create_time time.Time
 )
 
@@ -45,13 +45,13 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 		success, token := executeCmdSalt(master_salt, "kubeadm", "token", "create", "--print-join-command")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: token}); err != nil {
-                                return err
-                        }
-                        return nil
+				return err
+			}
+			return nil
 		}
 		if len(master_salt) > 0 {
-			token = strings.Replace(token, "\n","",-1)
-			i := strings.Index(token, ":")+1
+			token = strings.Replace(token, "\n", "", -1)
+			i := strings.Index(token, ":") + 1
 			token = strings.TrimSpace(token[i:])
 		}
 		joincmd_g = strings.TrimSuffix(token, "\n")
@@ -72,13 +72,13 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 		success, lines := executeCmdSalt(master_salt, "kubeadm", "init", "phase", "upload-certs", "--upload-certs")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: lines}); err != nil {
-                                return err
-                        }
-                        return nil
+				return err
+			}
+			return nil
 		}
 		// the key is the third line in the output
-		cert_key := strings.Split (strings.Replace(lines, ":", "", -1), "\n")
-		joincmd = joincmd + " --certificate-key " + strings.TrimSuffix(string(cert_key[2]), "\n");
+		cert_key := strings.Split(strings.Replace(lines, ":", "", -1), "\n")
+		joincmd = joincmd + " --certificate-key " + strings.TrimSuffix(string(cert_key[2]), "\n")
 		haproxy_salt = Read_Cfg("control-plane.conf", "loadbalancer_salt")
 	}
 
@@ -102,11 +102,11 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 		return nil
 	}
 	// we have a list of minions, only use the one where the line ends with "True"
-	list := strings.Split (message, "\n")
+	list := strings.Split(message, "\n")
 	for _, entry := range list {
 		if strings.HasSuffix(entry, ": True") {
-			list := strings.Split (entry, ":");
-			nodelist = append (nodelist, list[0])
+			list := strings.Split(entry, ":")
+			nodelist = append(nodelist, list[0])
 		}
 	}
 
@@ -156,7 +156,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 
 			stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": joining cluster..."})
 
-			success, message = tools.ExecuteCmd("salt",  nodelist[i], "cmd.run",  "\"" + joincmd + "\"")
+			success, message = tools.ExecuteCmd("salt", nodelist[i], "cmd.run", "\""+joincmd+"\"")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 					log.Errorf("Send message failed: %s", err)
@@ -164,7 +164,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 				failed++
 				return
 			}
-			success, message = tools.ExecuteCmd("salt", nodelist[i], "grains.append", "kubicd", "kubic-" + nodeType + "-node")
+			success, message = tools.ExecuteCmd("salt", nodelist[i], "grains.append", "kubicd", "kubic-"+nodeType+"-node")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 					log.Errorf("Send message failed: %s", err)
@@ -185,7 +185,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 			if len(haproxy_salt) > 0 {
 				stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": adding node to haproxy loadbalancer..."})
 
-				success, message = tools.ExecuteCmd("salt", haproxy_salt, "cmd.run", "haproxycfg server add " + nodelist[i])
+				success, message = tools.ExecuteCmd("salt", haproxy_salt, "cmd.run", "haproxycfg server add "+nodelist[i])
 				if success != true {
 					if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 						log.Errorf("Send message failed: %s", err)
@@ -199,7 +199,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 	}
 
 	wg.Wait()
-	if (failed > 0) {
+	if failed > 0 {
 		if err := stream.Send(&pb.StatusReply{Success: false, Message: "An error occured during adding Node(s)"}); err != nil {
 			return err
 		}

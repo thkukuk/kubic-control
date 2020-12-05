@@ -17,35 +17,36 @@ package main
 import (
 	"os"
 
-        log "github.com/sirupsen/logrus"
-        "github.com/spf13/cobra"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
+
 var (
-        Version = "unreleased"
+	Version   = "unreleased"
 	OutputDir = "/etc/haproxy"
 )
 
 func ServerCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "server",
-                Short: "Manage server entry of k8s-api backend",
-        }
+	var subCmd = &cobra.Command{
+		Use:   "server",
+		Short: "Manage server entry of k8s-api backend",
+	}
 
-        subCmd.AddCommand(
-                ServerAddCmd(),
+	subCmd.AddCommand(
+		ServerAddCmd(),
 		ServerRemoveCmd(),
-        )
+	)
 
-        return subCmd
+	return subCmd
 }
 
 func main() {
 	rootCmd := &cobra.Command{
-                Use:   "haproxycfg",
-                Short: "Kubic haproxy.cfg configurator"}
+		Use:   "haproxycfg",
+		Short: "Kubic haproxy.cfg configurator"}
 	rootCmd.Version = Version
 	rootCmd.AddCommand(
-                VersionCmd(),
+		VersionCmd(),
 		InitializeConfigCmd(),
 		ServerCmd(),
 	)
@@ -53,6 +54,6 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 		os.Exit(1)
-        }
+	}
 	os.Exit(0)
 }

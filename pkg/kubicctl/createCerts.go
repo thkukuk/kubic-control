@@ -16,68 +16,68 @@ package kubicctl
 
 import (
 	"context"
-        "time"
-        "fmt"
-	"os"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"time"
 
-        "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
 func CreateCertsCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "create <user>",
-                Short: "Create certificate for an user",
-                Run: createCerts,
-                Args: cobra.ExactArgs(1),
-        }
+	var subCmd = &cobra.Command{
+		Use:   "create <user>",
+		Short: "Create certificate for an user",
+		Run:   createCerts,
+		Args:  cobra.ExactArgs(1),
+	}
 
-        return subCmd
+	return subCmd
 }
 
-func createCerts (cmd *cobra.Command, args []string) {
+func createCerts(cmd *cobra.Command, args []string) {
 	user := args[0]
 
 	// Set up a connection to the server.
-        conn, err := CreateConnection()
-        if err != nil {
-                return
-        }
-        defer conn.Close()
+	conn, err := CreateConnection()
+	if err != nil {
+		return
+	}
+	defer conn.Close()
 
-        c := pb.NewCertificateClient(conn)
+	c := pb.NewCertificateClient(conn)
 
-        ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-        defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
 
 	r, err := c.CreateCert(ctx, &pb.CreateCertRequest{Name: user})
-        if err != nil {
-                fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
-                os.Exit(1)
-        }
-        if r.Success {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not initialize: %v\n", err)
+		os.Exit(1)
+	}
+	if r.Success {
 		if len(r.Message) > 0 {
 			fmt.Printf(r.Message + "\n")
 		}
 
-		key :=[]byte(r.Key)
-		crt :=[]byte(r.Crt)
+		key := []byte(r.Key)
+		crt := []byte(r.Crt)
 
 		fmt.Printf("Writing %s.key...\n", user)
-		err := ioutil.WriteFile(user + ".key", key, 0600)
+		err := ioutil.WriteFile(user+".key", key, 0600)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error writing '%s.key': %v\n", user, err)
 			os.Exit(1)
 		}
 		fmt.Printf("Writing %s.crt...\n", user)
-		err = ioutil.WriteFile(user + ".crt", crt, 0600)
+		err = ioutil.WriteFile(user+".crt", crt, 0600)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error writing '%s.crt': %v\n", user, err)
 			os.Exit(1)
 		}
-        } else {
-                fmt.Fprintf(os.Stderr, "Couldn't create certificate for %s: %s\n", user, r.Message)
-                os.Exit(1)
-        }
+	} else {
+		fmt.Fprintf(os.Stderr, "Couldn't create certificate for %s: %s\n", user, r.Message)
+		os.Exit(1)
+	}
 }

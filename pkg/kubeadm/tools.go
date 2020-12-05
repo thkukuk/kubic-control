@@ -19,13 +19,12 @@ import (
 )
 
 // read data /var/lib/kubic-control
-func Read_Cfg (file string, key string) string {
-        cfg, err := ini.LooseLoad("/var/lib/kubic-control/" + file)
-        if err != nil {
-                return ""
-        }
+func Read_Cfg(file string, key string) string {
+	cfg, err := ini.LooseLoad("/var/lib/kubic-control/" + file)
+	if err != nil {
+		return ""
+	}
 
-        value := cfg.Section("").Key(key).String()
+	value := cfg.Section("").Key(key).String()
 	return value
 }
-

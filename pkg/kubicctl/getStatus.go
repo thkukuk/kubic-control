@@ -16,22 +16,22 @@ package kubicctl
 
 import (
 	"context"
-	"time"
 	"fmt"
 	"io"
 	"os"
+	"time"
 
-        log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
 func GetStatusCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "status",
-                Short: "Status of current deployment",
-                Run: getStatus,
-		Args: cobra.ExactArgs(0),
+	var subCmd = &cobra.Command{
+		Use:   "status",
+		Short: "Status of current deployment",
+		Run:   getStatus,
+		Args:  cobra.ExactArgs(0),
 	}
 
 	return subCmd
@@ -58,18 +58,18 @@ func getStatus(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("Kubicctl version %s\n", Version)
 	for {
-                r, err := stream.Recv()
-                if err == io.EOF {
-                        break
-                }
-                if err != nil {
-                        if r == nil {
-                                fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-                        } else {
+		r, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			if r == nil {
+				fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+			} else {
 				fmt.Fprintf(os.Stderr, "ERROR: %s\n%v\n", r.Message, err)
 			}
-                        os.Exit(1)
-                }
+			os.Exit(1)
+		}
 		fmt.Printf("%s\n", r.Message)
-        }
+	}
 }

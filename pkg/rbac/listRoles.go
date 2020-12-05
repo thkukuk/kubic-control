@@ -15,27 +15,27 @@
 package rbac
 
 import (
-	"os"
 	"fmt"
+	"os"
 
-        "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 	"gopkg.in/ini.v1"
 )
 
 func ListRolesCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "list",
-                Short: "List roles and accounts",
-                Run: listRoles,
-                Args: cobra.ExactArgs(0),
-        }
+	var subCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List roles and accounts",
+		Run:   listRoles,
+		Args:  cobra.ExactArgs(0),
+	}
 
-        return subCmd
+	return subCmd
 }
 
-func listRoles (cmd *cobra.Command, args []string) {
+func listRoles(cmd *cobra.Command, args []string) {
 	cfg, err := ini.LooseLoad("/usr/etc/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
-        if err != nil {
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot load rbac.conf: %v\n", err)
 		os.Exit(1)
 	}

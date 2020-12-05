@@ -16,11 +16,11 @@ package kubicctl
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 	"time"
-	"fmt"
-	"os"
-	"io/ioutil"
 
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
@@ -28,15 +28,15 @@ import (
 
 var (
 	service_type = "NodePort"
-	arg_lbip = ""
+	arg_lbip     = ""
 )
 
 func DeployHelloKubicCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "hello-kubic",
-                Short: "Deploy hello-kubic",
-                Run: deployHelloKubic,
-		Args: cobra.ExactArgs(0),
+	var subCmd = &cobra.Command{
+		Use:   "hello-kubic",
+		Short: "Deploy hello-kubic",
+		Run:   deployHelloKubic,
+		Args:  cobra.ExactArgs(0),
 	}
 
 	subCmd.PersistentFlags().StringVarP(&service_type, "type", "t", service_type, "Type for this service: NodePort or LoadBalancer")
@@ -81,7 +81,7 @@ func deployHelloKubic(cmd *cobra.Command, args []string) {
 	}
 	if r.Success {
 		if len(output) > 0 && output != "stdout" {
-			message:=[]byte(r.Message)
+			message := []byte(r.Message)
 			err := ioutil.WriteFile(output, message, 0600)
 			if err != nil {
 				fmt.Fprintf(os.Stderr,

@@ -20,47 +20,51 @@ import (
 	"io/ioutil"
 	"os"
 
-        log "github.com/sirupsen/logrus"
+	homedir "github.com/mitchellh/go-homedir"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/thkukuk/kubic-control/pkg/rbac"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"gopkg.in/ini.v1"
-	"github.com/spf13/cobra"
-	homedir "github.com/mitchellh/go-homedir"
-	"github.com/thkukuk/kubic-control/pkg/rbac"
 )
 
 const (
 	root_crtFile = "/etc/kubicd/pki/admin.crt"
-        root_keyFile = "/etc/kubicd/pki/admin.key"
-        root_caFile = "/etc/kubicd/pki/Kubic-Control-CA.crt"
+	root_keyFile = "/etc/kubicd/pki/admin.key"
+	root_caFile  = "/etc/kubicd/pki/Kubic-Control-CA.crt"
 )
 
 var (
-	Version = "unreleased"
+	Version    = "unreleased"
 	servername = "localhost"
-	port = "7148"
+	port       = "7148"
 
 	usercfg = "~/.config/kubicctl/kubicctl.conf"
 
 	// Client Certificates
 	crtFile = "~/.config/kubicctl/user.crt"
-        keyFile = "~/.config/kubicctl/user.key"
-        caFile = "~/.config/kubicctl/Kubic-Control-CA.crt"
+	keyFile = "~/.config/kubicctl/user.key"
+	caFile  = "~/.config/kubicctl/Kubic-Control-CA.crt"
 )
 
 // exists returns whether the given file or directory exists
 func exists(path string) (bool, error) {
-    _, err := os.Stat(path)
-    if err == nil { return true, nil }
-    if os.IsNotExist(err) { return false, nil }
-    return true, err
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
 }
 
 func Execute() error {
 
 	homecfg, err := homedir.Expand(usercfg)
 	if err == nil {
-		cfg, cfg_err := ini.LooseLoad(homecfg);
+		cfg, cfg_err := ini.LooseLoad(homecfg)
 		if cfg_err, ok := cfg_err.(*os.PathError); ok {
 			log.Fatal(cfg_err)
 		}
@@ -77,7 +81,7 @@ func Execute() error {
 	if os.Getuid() == 0 {
 		crt, err := homedir.Expand(crtFile)
 		if err == nil {
-			found, _ := exists (crt)
+			found, _ := exists(crt)
 			if found == false {
 				crtFile = root_crtFile
 				keyFile = root_keyFile
@@ -87,8 +91,8 @@ func Execute() error {
 	}
 
 	rootCmd := &cobra.Command{
-                Use:   "kubicctl",
-                Short: "Kubic Control  Daemon Interface"}
+		Use:   "kubicctl",
+		Short: "Kubic Control  Daemon Interface"}
 
 	rootCmd.Version = Version
 	rootCmd.PersistentFlags().StringVarP(&servername, "server", "s", servername, "Name of server kubicd is running on")
@@ -96,9 +100,9 @@ func Execute() error {
 	rootCmd.PersistentFlags().StringVar(&crtFile, "crtfile", crtFile, "Certificate with the public key for the user")
 	rootCmd.PersistentFlags().StringVar(&keyFile, "keyfile", keyFile, "Private key for the user")
 	rootCmd.PersistentFlags().StringVar(&caFile, "cafile", caFile, "Certificate with the public key of the CA for the server certificate")
-        rootCmd.AddCommand(
+	rootCmd.AddCommand(
 		VersionCmd(),
-                InitMasterCmd(),
+		InitMasterCmd(),
 		NodeCmd(),
 		UpgradeKubernetesCmd(),
 		FetchKubeconfigCmd(),
@@ -107,7 +111,7 @@ func Execute() error {
 		rbac.RBACCmd(),
 		GetStatusCmd(),
 		DeployCmd(),
-        )
+	)
 
 	crtFile, err = homedir.Expand(crtFile)
 	if err != nil {
@@ -123,9 +127,9 @@ func Execute() error {
 	}
 
 	if err := rootCmd.Execute(); err != nil {
-                // log.Fatal(err)
+		// log.Fatal(err)
 		return err
-        }
+	}
 
 	return nil
 }
@@ -154,12 +158,12 @@ func CreateConnection() (*grpc.ClientConn, error) {
 
 	// Create the TLS credentials for transport
 	creds := credentials.NewTLS(&tls.Config{
-		ServerName:  "KubicD",
+		ServerName:   "KubicD",
 		Certificates: []tls.Certificate{certificate},
 		RootCAs:      certPool,
 	})
 
-	conn, err := grpc.Dial(servername + ":" + port, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(servername+":"+port, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Errorf("did not connect: %v", err)
 		return nil, err

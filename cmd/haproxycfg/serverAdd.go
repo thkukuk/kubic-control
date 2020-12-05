@@ -15,30 +15,30 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
-	"fmt"
-	"os"
 
-        "github.com/spf13/cobra"
-        "github.com/thkukuk/kubic-control/pkg/tools"
+	"github.com/spf13/cobra"
+	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 func ServerAddCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "add <server>",
-                Short: "Add new server to k8s-api backend entry",
-                Run: serverAdd,
-                Args: cobra.ExactArgs(1),
-        }
+	var subCmd = &cobra.Command{
+		Use:   "add <server>",
+		Short: "Add new server to k8s-api backend entry",
+		Run:   serverAdd,
+		Args:  cobra.ExactArgs(1),
+	}
 
 	subCmd.PersistentFlags().StringVar(&OutputDir, "dir", OutputDir, "Directory, in which haproxy.cfg should be written")
 
-        return subCmd
+	return subCmd
 }
 
-func serverAdd (cmd *cobra.Command, args []string) {
+func serverAdd(cmd *cobra.Command, args []string) {
 
 	newApiserver := args[0]
 
@@ -50,7 +50,7 @@ func serverAdd (cmd *cobra.Command, args []string) {
 	// given, creae new haproxy.cfg template
 	found, _ := Exists(OutputDir + "haproxy.cfg")
 	if !found {
-		fmt.Fprintf(os.Stderr, "File not found: \"" + OutputDir + "haproxy.cfg\"")
+		fmt.Fprintf(os.Stderr, "File not found: \""+OutputDir+"haproxy.cfg\"")
 		os.Exit(1)
 	}
 
@@ -59,7 +59,7 @@ func serverAdd (cmd *cobra.Command, args []string) {
 	/* ioutil.ReadFile returns []byte, error */
 	data, err := ioutil.ReadFile(OutputDir + "haproxy.cfg")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading \"" + OutputDir + "haproxy.cfg\": %v", err)
+		fmt.Fprintf(os.Stderr, "Error reading \""+OutputDir+"haproxy.cfg\": %v", err)
 		os.Exit(1)
 	}
 	file := string(data)
@@ -75,37 +75,37 @@ func serverAdd (cmd *cobra.Command, args []string) {
 		if found == true &&
 			strings.Contains(item, "server apiserver") {
 			/* we are in the ackend k8s.api block and have found an
-                             apiserver entry, save the server name for later */
+			   apiserver entry, save the server name for later */
 			entry := strings.Fields(item)
 			s := strings.TrimSuffix(entry[2], ":6443")
 			if s == newApiserver {
-				fmt.Printf ("Found entry for server '%s', no changes made\n", newApiserver);
+				fmt.Printf("Found entry for server '%s', no changes made\n", newApiserver)
 				os.Exit(0)
 			}
 			apiserver = append(apiserver, s)
 		} else if found == true && len(strings.TrimSpace(item)) == 0 {
 			/* we are in the backend k8s-api block and found an empty line,
-                             so are at the end of the block. Add now the server entries */
+			   so are at the end of the block. Add now the server entries */
 			found = false
 			apiserver = append(apiserver, newApiserver)
 			for i, server := range apiserver {
-				newContent = append(newContent, "    server apiserver" + strconv.Itoa(i+1) + " " + server +  ":6443 check")
+				newContent = append(newContent, "    server apiserver"+strconv.Itoa(i+1)+" "+server+":6443 check")
 			}
 			written = true
 			newContent = append(newContent, item)
-		}else {
+		} else {
 			if strings.HasPrefix(item, "backend") &&
 				strings.Contains(item, "k8s-api") {
-				found = true;
+				found = true
 			}
-			newContent = append (newContent, item)
+			newContent = append(newContent, item)
 		}
 	}
 	if found {
 		/* seems like there is no new line at the end of the file */
 		apiserver = append(apiserver, newApiserver)
 		for i, server := range apiserver {
-			newContent = append(newContent, "    server apiserver" + strconv.Itoa(i+1) + " " + server +  ":6443 check")
+			newContent = append(newContent, "    server apiserver"+strconv.Itoa(i+1)+" "+server+":6443 check")
 		}
 		written = true
 		newContent = append(newContent, "") // add newline at end of file
@@ -113,32 +113,32 @@ func serverAdd (cmd *cobra.Command, args []string) {
 
 	if !written {
 		/* we have not modified the file, something did go wrong, don't overwrite
-                     existing file */
-		fmt.Fprintf(os.Stderr, "Couldn't parse \"" + OutputDir + "haproxy.cfg\", new entry not added\n")
+		   existing file */
+		fmt.Fprintf(os.Stderr, "Couldn't parse \""+OutputDir+"haproxy.cfg\", new entry not added\n")
 		os.Exit(1)
 	}
 
 	// XXX create backup of old file
 	f, err := os.Create(OutputDir + "haproxy.cfg")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not create \"" + OutputDir + "haproxy.cfg\": %v", err)
+		fmt.Fprintf(os.Stderr, "Could not create \""+OutputDir+"haproxy.cfg\": %v", err)
 		os.Exit(1)
 	}
 
 	for _, item := range newContent {
 		_, err = f.WriteString(item + "\n")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Wrting to \"" + OutputDir + "haproxy.cfg\" failed: %v", err)
+			fmt.Fprintf(os.Stderr, "Wrting to \""+OutputDir+"haproxy.cfg\" failed: %v", err)
 			os.Exit(1)
 		}
 
 	}
 	if err := f.Close(); err != nil {
-		fmt.Fprintf(os.Stderr, "Closing \"" + OutputDir + "haproxy.cfg\" failed: %v", err)
+		fmt.Fprintf(os.Stderr, "Closing \""+OutputDir+"haproxy.cfg\" failed: %v", err)
 		os.Exit(1)
 	}
 
-	set_perm (OutputDir + "haproxy.cfg")
+	set_perm(OutputDir + "haproxy.cfg")
 	fmt.Printf("haproxy.cfg adjusted\n")
 	success, message := tools.ExecuteCmd("systemctl", "reload-or-restart", "haproxy")
 	if !success {

@@ -16,20 +16,20 @@ package kubicctl
 
 import (
 	"context"
-	"time"
 	"fmt"
+	"time"
 
-        log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
 func RebootNodeCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "reboot <node>",
-                Short: "Reboot node",
-                Run: rebootNode,
-		Args: cobra.ExactArgs(1),
+	var subCmd = &cobra.Command{
+		Use:   "reboot <node>",
+		Short: "Reboot node",
+		Run:   rebootNode,
+		Args:  cobra.ExactArgs(1),
 	}
 
 	return subCmd

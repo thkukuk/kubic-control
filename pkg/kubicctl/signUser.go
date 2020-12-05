@@ -14,7 +14,7 @@
 
 package kubicctl
 
-func SignUser (pki_dir string, cn string) error {
+func SignUser(pki_dir string, cn string) error {
 	err, _ := ExecuteCmd("certstrap", "--depot-path", pki_dir, "sign",
 		cn, "--CA", "Kubic-Control-CA")
 

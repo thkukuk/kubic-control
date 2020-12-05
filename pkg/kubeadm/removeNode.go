@@ -18,20 +18,21 @@ import (
 	"strings"
 	"sync"
 
-	pb "github.com/thkukuk/kubic-control/api"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/thkukuk/kubic-control/api"
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 // output_stream types takes bool and string, returns nothing.
 type OutputStream func(bool, string)
+
 var output_stream pb.Kubeadm_RemoveNodeServer
 
 func RemoveNodeOutput(success bool, message string) {
 	if err := output_stream.Send(&pb.StatusReply{Success: success,
 		Message: message}); err != nil {
-			log.Errorf("Send message failed: %s", err)
-		}
+		log.Errorf("Send message failed: %s", err)
+	}
 }
 
 func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) error {
@@ -44,10 +45,10 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 		var success bool
 		var message string
 
-		if strings.Index(in.NodeNames, ",") >= 0 && strings.Index(in.NodeNames, "[")  == -1 {
+		if strings.Index(in.NodeNames, ",") >= 0 && strings.Index(in.NodeNames, "[") == -1 {
 			success, message = tools.ExecuteCmd("salt", "--out=txt", "-L", in.NodeNames, "grains.get", "kubicd")
 		} else {
-			success, message = tools.ExecuteCmd("salt", "--out=txt", in.NodeNames, "grains.get",  "kubicd")
+			success, message = tools.ExecuteCmd("salt", "--out=txt", in.NodeNames, "grains.get", "kubicd")
 		}
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
@@ -56,16 +57,16 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 			return nil
 		}
 
-		list := strings.Split (message, "\n")
+		list := strings.Split(message, "\n")
 		for _, entry := range list {
 			if strings.Contains(entry, "'kubic-worker-node'") || strings.Contains(entry, "kubic-master-node") {
-				list := strings.Split (entry, ":");
-				nodelist = append (nodelist, list[0])
+				list := strings.Split(entry, ":")
+				nodelist = append(nodelist, list[0])
 			}
 		}
 	} else {
 		// only one node name to remove
-		nodelist = append(nodelist,in.NodeNames)
+		nodelist = append(nodelist, in.NodeNames)
 	}
 
 	nodelistLength := len(nodelist)
@@ -78,20 +79,20 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 	}
 
 	haproxy_salt := Read_Cfg("control-plane.conf", "loadbalancer_salt")
-        var wg sync.WaitGroup
-        wg.Add(nodelistLength)
+	var wg sync.WaitGroup
+	wg.Add(nodelistLength)
 
-        failed := 0
-        for i := 0; i < nodelistLength; i++ {
-                go func(i int) {
-                        defer wg.Done()
+	failed := 0
+	for i := 0; i < nodelistLength; i++ {
+		go func(i int) {
+			defer wg.Done()
 
-                        stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": start node removal..."})
+			stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": start node removal..."})
 
 			// If loadbalancer is known, remove from haproxy
 			if len(haproxy_salt) > 0 {
 				stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": removing node from haproxy loadbalancer..."})
-				success, message := tools.ExecuteCmd("salt", haproxy_salt, "cmd.run", "haproxycfg server remove " + nodelist[i])
+				success, message := tools.ExecuteCmd("salt", haproxy_salt, "cmd.run", "haproxycfg server remove "+nodelist[i])
 				if success != true {
 					if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 						log.Errorf("Send message failed: %s", err)
@@ -100,35 +101,34 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 				}
 			}
 
-
 			success, message := ResetNode(nodelist[i], RemoveNodeOutput)
 			if len(message) > 0 {
 				if err := stream.Send(&pb.StatusReply{Success: false,
 					Message: nodelist[i] + ": " + message}); err != nil {
-						log.Errorf("Send message failed: %s", err)
-					}
+					log.Errorf("Send message failed: %s", err)
+				}
 			}
 			if success != true {
 				failed++
 				if err := stream.Send(&pb.StatusReply{Success: false,
 					Message: nodelist[i] + ": removal not fully successful, please check logs"}); err != nil {
-						log.Errorf("Send message failed: %s", err)
-					}
+					log.Errorf("Send message failed: %s", err)
+				}
 			} else {
 				if err := stream.Send(&pb.StatusReply{Success: false,
 					Message: nodelist[i] + ": successfully removed"}); err != nil {
-						log.Errorf("Send message failed: %s", err)
-					}
+					log.Errorf("Send message failed: %s", err)
+				}
 			}
 		}(i)
-        }
+	}
 
-        wg.Wait()
-        if (failed > 0) {
-                if err := stream.Send(&pb.StatusReply{Success: false,
+	wg.Wait()
+	if failed > 0 {
+		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: "An error occured during removal of Nodes"}); err != nil {
-				return err
-			}
-        }
-        return nil
+			return err
+		}
+	}
+	return nil
 }

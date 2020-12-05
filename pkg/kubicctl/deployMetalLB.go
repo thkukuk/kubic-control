@@ -16,21 +16,21 @@ package kubicctl
 
 import (
 	"context"
-	"time"
 	"fmt"
-	"os"
 	"io/ioutil"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
 func DeployMetalLBCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "metallb <ip range>",
-                Short: "Deploy MetalLB",
-                Run: deployMetalLB,
-		Args: cobra.ExactArgs(1),
+	var subCmd = &cobra.Command{
+		Use:   "metallb <ip range>",
+		Short: "Deploy MetalLB",
+		Run:   deployMetalLB,
+		Args:  cobra.ExactArgs(1),
 	}
 
 	return subCmd
@@ -60,7 +60,7 @@ func deployMetalLB(cmd *cobra.Command, args []string) {
 	}
 	if r.Success {
 		if len(output) > 0 && output != "stdout" {
-			message:=[]byte(r.Message)
+			message := []byte(r.Message)
 			err := ioutil.WriteFile(output, message, 0600)
 			if err != nil {
 				fmt.Fprintf(os.Stderr,

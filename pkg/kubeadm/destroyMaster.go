@@ -19,24 +19,23 @@ import (
 	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
-
 func DestroyMaster(in *pb.Empty, stream pb.Kubeadm_DestroyMasterServer) error {
-	success, message := ResetMaster ()
-        if success != true {
-                if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
-                        return err
-                }
-                // ignore error
-        }
-        // Try some system cleanup, ignore if fails
-        tools.ExecuteCmd("/bin/sh", "-c", "sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
-        success, message = tools.ExecuteCmd("/bin/sh", "-c", "iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X")
-        if success != true {
-                if err := stream.Send(&pb.StatusReply{Success: true, Message: "Warning: removal of iptables failed."}); err != nil {
-                        return err
-                }
-        }
-        tools.ExecuteCmd("/bin/sh", "-c", "ip link delete cni0;  ip link delete flannel.1; ip link delete cilium_vxlan")
+	success, message := ResetMaster()
+	if success != true {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: message + " (ignored)"}); err != nil {
+			return err
+		}
+		// ignore error
+	}
+	// Try some system cleanup, ignore if fails
+	tools.ExecuteCmd("/bin/sh", "-c", "sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
+	success, message = tools.ExecuteCmd("/bin/sh", "-c", "iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X")
+	if success != true {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Warning: removal of iptables failed."}); err != nil {
+			return err
+		}
+	}
+	tools.ExecuteCmd("/bin/sh", "-c", "ip link delete cni0;  ip link delete flannel.1; ip link delete cilium_vxlan")
 
 	return nil
 }

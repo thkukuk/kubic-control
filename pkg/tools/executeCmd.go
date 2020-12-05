@@ -15,30 +15,30 @@
 package tools
 
 import (
-	"os/exec"
-	"fmt"
 	"bytes"
+	"fmt"
+	"os/exec"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func ExecuteCmd(command string, arg ...string) (bool,string) {
+func ExecuteCmd(command string, arg ...string) (bool, string) {
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 
-        cmd := exec.Command(command, arg...)
+	cmd := exec.Command(command, arg...)
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
 	log.Infof("Executing %s: %v", cmd.Path, cmd.Args)
 
 	if err := cmd.Run(); err != nil {
-		if (command == "salt") {
+		if command == "salt" {
 			stderr = out // salt is evil, errors are written to stdout
 		}
 		log.Error("Error invoking " + command + ": " + fmt.Sprint(err) + "\n" + stderr.String())
-		if (command == "salt") {
+		if command == "salt" {
 			return false, "Error invoking " + command + ": " + err.Error() + "\n(" + strings.TrimSuffix(stderr.String(), "\n") + ")"
 		} else {
 			return false, "Error invoking " + command + ": " + err.Error()

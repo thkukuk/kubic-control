@@ -15,20 +15,20 @@
 package rbac
 
 import (
-        "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 func RBACCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
+	var subCmd = &cobra.Command{
 		Use:   "rbac",
-                Short: "Manage RBAC rules",
-        }
+		Short: "Manage RBAC rules",
+	}
 
-        subCmd.AddCommand(
+	subCmd.AddCommand(
 		AddAccountCmd(),
-//                RemoveAccountCmd(),
+		//                RemoveAccountCmd(),
 		ListRolesCmd(),
-        )
+	)
 
-        return subCmd
+	return subCmd
 }

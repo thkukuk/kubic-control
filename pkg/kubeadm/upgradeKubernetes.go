@@ -19,18 +19,18 @@ import (
 	"strings"
 
 	pb "github.com/thkukuk/kubic-control/api"
-	"github.com/thkukuk/kubic-control/pkg/tools"
 	"github.com/thkukuk/kubic-control/pkg/deployment"
+	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 func uncordon(stream pb.Kubeadm_UpgradeKubernetesServer, hostname string) error {
 	// uncordon
-	success, message := tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon",  hostname)
+	success, message := tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon", hostname)
 	if success != true {
 		// Report error, but don't fail
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: message}); err != nil {
-                        return err
-                }
+			return err
+		}
 	}
 	return nil
 }
@@ -47,8 +47,8 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
 		if err != nil {
 			if err2 := stream.Send(&pb.StatusReply{Success: false,
 				Message: "Could not get hostname: " + err.Error()}); err2 != nil {
-					return err2
-				}
+				return err2
+			}
 			return nil
 		}
 	}
@@ -56,12 +56,12 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
 	if err = stream.Send(&pb.StatusReply{Success: true, Message: "Validate whether the cluster is upgradeable..."}); err != nil {
 		return err
 	}
-	success, message := executeCmdSalt(firstMaster, "kubeadm",  "upgrade", "plan", kubernetes_version)
+	success, message := executeCmdSalt(firstMaster, "kubeadm", "upgrade", "plan", kubernetes_version)
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
-                        return err
-                }
-                return nil
+			return err
+		}
+		return nil
 	}
 
 	if err := stream.Send(&pb.StatusReply{Success: true, Message: "Drain first control plane master (" + hostname + ")..."}); err != nil {
@@ -74,14 +74,14 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
 		uncordon(stream, hostname)
 		return err
 	}
-	success, message = executeCmdSalt(firstMaster, "kubeadm",  "upgrade", "apply", kubernetes_version, "--yes")
+	success, message = executeCmdSalt(firstMaster, "kubeadm", "upgrade", "apply", kubernetes_version, "--yes")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			uncordon(stream, hostname)
-                        return err
-                }
+			return err
+		}
 		uncordon(stream, hostname)
-                return nil
+		return nil
 	}
 	// strip down kubernetes_version to get kubelet major version
 	// for openSUSE Kubic (from "v1.18.6" to "1.18")
@@ -89,23 +89,23 @@ func upgradeFirstMaster(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernet
 	kubelet_version = kubelet_version[:strings.LastIndex(kubelet_version, ".")]
 
 	// Update kubelet
-	success, message = executeCmdSalt(firstMaster, "sed", "-i",  "s/KUBELET_VER=.*/KUBELET_VER="+kubelet_version+"/", "/etc/sysconfig/kubelet")
+	success, message = executeCmdSalt(firstMaster, "sed", "-i", "s/KUBELET_VER=.*/KUBELET_VER="+kubelet_version+"/", "/etc/sysconfig/kubelet")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			uncordon(stream, hostname)
-                        return err
-                }
+			return err
+		}
 		uncordon(stream, hostname)
-                return nil
+		return nil
 	}
 	success, message = executeCmdSalt(firstMaster, "systemctl", "restart", "kubelet")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 			uncordon(stream, hostname)
-                        return err
-                }
+			return err
+		}
 		uncordon(stream, hostname)
-                return nil
+		return nil
 	}
 	return uncordon(stream, hostname)
 }
@@ -117,9 +117,9 @@ func upgradeNodes(in *pb.UpgradeRequest,
 	success, message, nodelist := tools.GetListOfNodes(role)
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
-                        return "", err
-                }
-                return "", nil
+			return "", err
+		}
+		return "", nil
 	}
 
 	// strip down kubernetes_version to get kubelet major version
@@ -129,37 +129,37 @@ func upgradeNodes(in *pb.UpgradeRequest,
 
 	var failedNodes = ""
 	for i := range nodelist {
-		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Upgrade "+nodelist[i]+"..."}); err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Upgrade " + nodelist[i] + "..."}); err != nil {
 			return "", err
 		}
 		hostname, err := tools.GetNodeName(nodelist[i])
 		if err != nil {
-			failedNodes = failedNodes+nodelist[i] + "(determine hostname), "
+			failedNodes = failedNodes + nodelist[i] + "(determine hostname), "
 		} else {
 			// if draining fails, ignore
 			tools.DrainNode(hostname, "")
 
-			success,message = tools.ExecuteCmd("salt", nodelist[i], "cmd.run",
-				"\"kubeadm upgrade node --kubelet-version " + kubernetes_version + "\"")
+			success, message = tools.ExecuteCmd("salt", nodelist[i], "cmd.run",
+				"\"kubeadm upgrade node --kubelet-version "+kubernetes_version+"\"")
 			if success != true {
-				failedNodes = failedNodes+nodelist[i]+" (kubeadm), "
+				failedNodes = failedNodes + nodelist[i] + " (kubeadm), "
 			} else {
 				// Update kubelet
 				success, message = tools.ExecuteCmd("salt", nodelist[i], "cmd.run",
 					"\"sed -i s/KUBELET_VER=.*/KUBELET_VER="+kubelet_version+"/ /etc/sysconfig/kubelet\"")
 				if success != true {
-					failedNodes = failedNodes+nodelist[i]+" (kubelet_ver), "
+					failedNodes = failedNodes + nodelist[i] + " (kubelet_ver), "
 				} else {
 					success, message = tools.ExecuteCmd("salt", nodelist[i], "service.restart", "kubelet")
 					if success != true {
-						failedNodes = failedNodes+nodelist[i]+" (kubelet), "
+						failedNodes = failedNodes + nodelist[i] + " (kubelet), "
 					}
 				}
 			}
 			// uncordon, most likely node will still work, else we can run out of nodes
-			success,message = tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon",  hostname)
+			success, message = tools.ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf", "uncordon", hostname)
 			if success != true {
-				failedNodes = failedNodes+nodelist[i]+" (uncordon), "
+				failedNodes = failedNodes + nodelist[i] + " (uncordon), "
 			}
 		}
 	}
@@ -171,18 +171,18 @@ func UpgradeKubernetes(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernete
 	multiMaster := Read_Cfg("control-plane.conf", "MultiMaster")
 
 	kubernetes_version := ""
-        if len (in.KubernetesVersion) > 0 {
-                kubernetes_version = in.KubernetesVersion
-        } else {
+	if len(in.KubernetesVersion) > 0 {
+		kubernetes_version = in.KubernetesVersion
+	} else {
 		success, message := tools.GetKubeadmVersion("") // XXX Upgrade needs to support remote master
-                if success != true {
-                        if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
-                                return err
-                        }
-                        return nil
-                }
+		if success != true {
+			if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
+				return err
+			}
+			return nil
+		}
 		kubernetes_version = message
-        }
+	}
 
 	// XXX Check if kuberadm is new enough on all nodes
 	// salt '*' --out=txt pkg.version kubernetes-kubeadm
@@ -205,13 +205,12 @@ func UpgradeKubernetes(in *pb.UpgradeRequest, stream pb.Kubeadm_UpgradeKubernete
 		}
 	}
 
-
 	// Update pod network, kured and other pods we are running:
 	success, message := deployment.UpdateAll(false)
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
-                        return err
-                }
+			return err
+		}
 	}
 
 	if len(failedMaster) > 0 || len(failedWorker) > 0 {

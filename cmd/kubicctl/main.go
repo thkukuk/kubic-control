@@ -15,8 +15,8 @@
 package main
 
 import (
-	"os"
 	"github.com/thkukuk/kubic-control/pkg/kubicctl"
+	"os"
 )
 
 func main() {
