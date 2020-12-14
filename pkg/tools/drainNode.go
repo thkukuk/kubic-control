@@ -14,7 +14,7 @@
 
 package tools
 
-func DrainNode(hostname string, timeout string) (bool,string) {
+func DrainNode(hostname string, timeout string) (bool, string) {
 
 	var arg_timeout string
 
@@ -25,6 +25,6 @@ func DrainNode(hostname string, timeout string) (bool,string) {
 	}
 
 	return ExecuteCmd("kubectl", "--kubeconfig=/etc/kubernetes/admin.conf",
-		"drain",  hostname, "--timeout", arg_timeout, "--delete-local-data",
-		"--force",  "--ignore-daemonsets")
+		"drain", hostname, "--timeout", arg_timeout, "--delete-local-data",
+		"--force", "--ignore-daemonsets")
 }

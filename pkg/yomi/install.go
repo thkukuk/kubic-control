@@ -15,62 +15,62 @@
 package yomi
 
 import (
-	"github.com/thkukuk/kubic-control/pkg/tools"
 	pb "github.com/thkukuk/kubic-control/api"
+	"github.com/thkukuk/kubic-control/pkg/tools"
 )
 
 func Install(in *pb.InstallRequest, stream pb.Yomi_InstallServer) error {
 
 	if err := stream.Send(&pb.StatusReply{Success: true,
 		Message: "Starting installation of " + in.Saltnode}); err != nil {
-			return err
-		}
+		return err
+	}
 
 	pillarName := Salt2PillarName(in.Saltnode)
-        pillarFile := "/srv/pillar/kubicd/" + pillarName + ".sls"
+	pillarFile := "/srv/pillar/kubicd/" + pillarName + ".sls"
 
 	exists, _ := tools.Exists(pillarFile)
 	if !exists {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: "No pillar data found, prepare config step not run?"}); err != nil {
-				return err
-			}
-                return nil
+			return err
+		}
+		return nil
 	}
 
 	// make sure latest modules are used on minion
-	success, message := tools.ExecuteCmd("salt",  in.Saltnode, "saltutil.sync_all")
+	success, message := tools.ExecuteCmd("salt", in.Saltnode, "saltutil.sync_all")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: message}); err != nil {
-				return err
-			}
-                return nil
+			return err
+		}
+		return nil
 	}
 
 	// wipe harddisk, else salt will not re-create them
-	success, message = tools.ExecuteCmd("salt",  in.Saltnode, "state.apply", "yomi.storage.wipe")
+	success, message = tools.ExecuteCmd("salt", in.Saltnode, "state.apply", "yomi.storage.wipe")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: message}); err != nil {
-				return err
-			}
-                return nil
+			return err
+		}
+		return nil
 	}
 
 	// Do final installation
-	success, message = tools.ExecuteCmd("salt",  in.Saltnode, "state.sls", "yomi.installer")
+	success, message = tools.ExecuteCmd("salt", in.Saltnode, "state.sls", "yomi.installer")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: message}); err != nil {
-				return err
-			}
-                return nil
+			return err
+		}
+		return nil
 	}
 
 	if err := stream.Send(&pb.StatusReply{Success: true,
 		Message: "Node successful installed!"}); err != nil {
-			return err
-		}
+		return err
+	}
 	return nil
 }

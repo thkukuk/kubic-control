@@ -15,9 +15,9 @@
 package deployment
 
 import (
-	"gopkg.in/ini.v1"
 	log "github.com/sirupsen/logrus"
 	"github.com/thkukuk/kubic-control/pkg/tools"
+	"gopkg.in/ini.v1"
 )
 
 func UpdateAll(forced bool) (bool, string) {
@@ -25,7 +25,7 @@ func UpdateAll(forced bool) (bool, string) {
 	cfg, err := ini.Load("/var/lib/kubic-control/k8s-yaml.conf")
 	if err != nil {
 		return false, "Cannot load k8s-yaml.conf: " + err.Error()
-        }
+	}
 
 	keys := cfg.Section("").KeyStrings()
 	for _, key := range keys {
@@ -51,12 +51,11 @@ func UpdateAll(forced bool) (bool, string) {
 		}
 	}
 
-
 	// Update kustomize installed services
 	cfg, err = ini.Load("/var/lib/kubic-control/k8s-kustomize.conf")
 	if err != nil {
 		return false, "Cannot load k8s-kustomize.conf: " + err.Error()
-        }
+	}
 
 	keys = cfg.Section("").KeyStrings()
 	for _, key := range keys {
@@ -68,7 +67,7 @@ func UpdateAll(forced bool) (bool, string) {
 			}
 		} else {
 			retval, message := tools.ExecuteCmd("kustomize", "build",
-				StateDir + "/kustomize/" + key + "/overlay")
+				StateDir+"/kustomize/"+key+"/overlay")
 			if retval != true {
 				return retval, message
 			}
@@ -92,13 +91,13 @@ func UpdateAll(forced bool) (bool, string) {
 	cfg, err = ini.Load("/var/lib/kubic-control/k8s-helm.conf")
 	if err != nil {
 		return false, "Cannot load k8s-helm.conf: " + err.Error()
-        }
+	}
 
 	keys = cfg.Section("").KeyStrings()
 	for _, chartName := range keys {
-		releaseName := cfg.Section("").Key(chartName+".releaseName").String()
-		valuesPath := cfg.Section("").Key(chartName+".valuesPath").String()
-		namespace := cfg.Section("").Key(chartName+".namespace").String()
+		releaseName := cfg.Section("").Key(chartName + ".releaseName").String()
+		valuesPath := cfg.Section("").Key(chartName + ".valuesPath").String()
+		namespace := cfg.Section("").Key(chartName + ".namespace").String()
 		if forced {
 			// force, so always update even if not changed
 			err = UpdateHelm(chartName, releaseName, valuesPath, namespace)
@@ -108,7 +107,7 @@ func UpdateAll(forced bool) (bool, string) {
 		} else {
 			hash := cfg.Section("").Key(chartName).String()
 			needsUpdate, err := checkHelmUpdate(chartName, releaseName, valuesPath, namespace, hash)
-			if err != nil{
+			if err != nil {
 				return false, err.Error()
 			}
 			if needsUpdate {
@@ -118,10 +117,10 @@ func UpdateAll(forced bool) (bool, string) {
 					return false, err.Error()
 				}
 			} else {
-				log.Infof("%s has not changed, ignoring",)
+				log.Infof("%s has not changed, ignoring")
 			}
 		}
 	}
-	
- 	return true, ""
+
+	return true, ""
 }

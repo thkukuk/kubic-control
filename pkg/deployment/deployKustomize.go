@@ -15,11 +15,11 @@
 package deployment
 
 import (
-	"strings"
 	"os"
+	"strings"
 
-        "gopkg.in/ini.v1"
-        "github.com/thkukuk/kubic-control/pkg/tools"
+	"github.com/thkukuk/kubic-control/pkg/tools"
+	"gopkg.in/ini.v1"
 )
 
 const (
@@ -121,17 +121,17 @@ func DeployKustomize(service string, argument string) (bool, string) {
 	}
 
 	os.RemoveAll(StateDir + "/kustomize/" + service)
-	err := os.MkdirAll(StateDir + "/kustomize/" + service + "/overlay",
+	err := os.MkdirAll(StateDir+"/kustomize/"+service+"/overlay",
 		os.ModePerm)
 	if err != nil {
 		return false, "Cannot create " + StateDir + "/kustomize/" + service + "/overlay: " + err.Error()
-        }
-	err = os.Symlink("/usr/share/k8s-yaml/" +service,
-		StateDir + "/kustomize/"+ service + "/base")
+	}
+	err = os.Symlink("/usr/share/k8s-yaml/"+service,
+		StateDir+"/kustomize/"+service+"/base")
 	if err != nil {
 		return false, "Cannot link " + service +
 			" base directory: " + err.Error()
-        }
+	}
 
 	switch service {
 	case "metallb":
@@ -148,7 +148,7 @@ func DeployKustomize(service string, argument string) (bool, string) {
 		}
 	}
 	retval, message := tools.ExecuteCmd("kustomize", "build",
-		StateDir + "/kustomize/" + service + "/overlay")
+		StateDir+"/kustomize/"+service+"/overlay")
 	if retval != true {
 		os.RemoveAll(StateDir + "/kustomize/" + service)
 		return false, message
@@ -165,10 +165,10 @@ func DeployKustomize(service string, argument string) (bool, string) {
 	}
 	f.Close()
 
-	result, err := tools.Sha256sum_f(StateDir + "/kustomize/" + service + "/" + service + ".yaml");
+	result, err := tools.Sha256sum_f(StateDir + "/kustomize/" + service + "/" + service + ".yaml")
 	retval, message = tools.ExecuteCmd("kubectl",
-                "--kubeconfig=/etc/kubernetes/admin.conf", "apply", "-f",
-		StateDir + "/kustomize/" + service + "/" + service + ".yaml")
+		"--kubeconfig=/etc/kubernetes/admin.conf", "apply", "-f",
+		StateDir+"/kustomize/"+service+"/"+service+".yaml")
 	if retval != true {
 		return false, message
 	}
@@ -176,7 +176,7 @@ func DeployKustomize(service string, argument string) (bool, string) {
 	if strings.EqualFold(service, "metallb") && !yamlDidExist {
 		retval, message = tools.ExecuteCmd("kubectl",
 			"--kubeconfig=/etc/kubernetes/admin.conf", "create",
-			"secret", "generic", "-n",  "metallb-system",
+			"secret", "generic", "-n", "metallb-system",
 			"memberlist", "--from-literal=secretkey=\"$(openssl rand -base64 128)\"")
 		if retval != true {
 			return false, message
@@ -190,9 +190,9 @@ func DeployKustomize(service string, argument string) (bool, string) {
 
 	cfg.Section("").Key(service).SetValue(result)
 	err = cfg.SaveTo(StateDir + "/k8s-kustomize.conf")
-        if err != nil {
+	if err != nil {
 		return false, "Cannot write k8s-kustomize.conf: " + err.Error()
-        }
+	}
 
 	return true, ""
 }

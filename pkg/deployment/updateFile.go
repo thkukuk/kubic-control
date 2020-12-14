@@ -15,8 +15,8 @@
 package deployment
 
 import (
-        "gopkg.in/ini.v1"
-        "github.com/thkukuk/kubic-control/pkg/tools"
+	"github.com/thkukuk/kubic-control/pkg/tools"
+	"gopkg.in/ini.v1"
 )
 
 func UpdateFile(yamlName string) (bool, string) {
@@ -33,13 +33,13 @@ func UpdateFile(yamlName string) (bool, string) {
 	cfg, err := ini.LooseLoad("/var/lib/kubic-control/k8s-yaml.conf")
 	if err != nil {
 		return false, "Cannot load k8s-yaml.conf: " + err.Error()
-        }
+	}
 
 	cfg.Section("").Key(yamlName).SetValue(result)
 	err = cfg.SaveTo("/var/lib/kubic-control/k8s-yaml.conf")
-        if err != nil {
+	if err != nil {
 		return false, "Cannot write k8s-yaml.conf: " + err.Error()
-        }
+	}
 
 	return true, ""
 }

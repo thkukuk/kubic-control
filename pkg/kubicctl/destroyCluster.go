@@ -16,21 +16,21 @@ package kubicctl
 
 import (
 	"context"
-	"time"
 	"fmt"
-	"os"
 	"io"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
 func DestroyClusterCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "destroy-cluster",
-                Short: "Destroy the whole cluster",
-                Run: destroyCluster,
-		Args: cobra.ExactArgs(0),
+	var subCmd = &cobra.Command{
+		Use:   "destroy-cluster",
+		Short: "Destroy the whole cluster",
+		Run:   destroyCluster,
+		Args:  cobra.ExactArgs(0),
 	}
 
 	return subCmd
@@ -57,24 +57,24 @@ func destroyCluster(cmd *cobra.Command, args []string) {
 	}
 
 	for {
-                r, err := stream.Recv()
-                if err == io.EOF {
-                        break
-                }
-                if err != nil {
-                        if r == nil {
-                                fmt.Fprintf(os.Stderr, "Removing all nodes failed: %v\n", err)
-                        } else {
-                                fmt.Fprintf(os.Stderr, "Removing node %s failed: %s\n%v\n", r.Message, err)
-                        }
+		r, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			if r == nil {
+				fmt.Fprintf(os.Stderr, "Removing all nodes failed: %v\n", err)
+			} else {
+				fmt.Fprintf(os.Stderr, "Removing node %s failed: %s\n%v\n", r.Message, err)
+			}
 			os.Exit(1)
-                }
-		if (r.Success != true) {
+		}
+		if r.Success != true {
 			fmt.Fprintf(os.Stderr, "%s\n", r.Message)
 		} else {
 			fmt.Printf("%s\n", r.Message)
 		}
-        }
+	}
 
 	fmt.Printf("All nodes removed, removing master...\n")
 
@@ -88,24 +88,24 @@ func destroyCluster(cmd *cobra.Command, args []string) {
 	}
 
 	for {
-                r, err := stream.Recv()
-                if err == io.EOF {
-                        break
-                }
-                if err != nil {
-                        if r == nil {
-                                fmt.Fprintf(os.Stderr, "Destroying master failed: %v\n", err)
-                        } else {
-                                fmt.Fprintf(os.Stderr, "Destroying master failed: %s\n%v\n", r.Message, err)
-                        }
+		r, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			if r == nil {
+				fmt.Fprintf(os.Stderr, "Destroying master failed: %v\n", err)
+			} else {
+				fmt.Fprintf(os.Stderr, "Destroying master failed: %s\n%v\n", r.Message, err)
+			}
 			os.Exit(1)
-                }
-		if (r.Success != true) {
+		}
+		if r.Success != true {
 			fmt.Fprintf(os.Stderr, "%s\n", r.Message)
 		} else {
 			fmt.Printf("%s\n", r.Message)
 		}
-        }
+	}
 
 	fmt.Printf("Kubernetes cluster completly removed!\n")
 }

@@ -14,8 +14,8 @@
 
 package kubicctl
 
-func CreateCA (pki_dir string) error {
-	err, _ := ExecuteCmd("certstrap", "--depot-path", pki_dir, "init",  "--common-name", "Kubic-Control-CA", "--passphrase", "")
+func CreateCA(pki_dir string) error {
+	err, _ := ExecuteCmd("certstrap", "--depot-path", pki_dir, "init", "--common-name", "Kubic-Control-CA", "--passphrase", "")
 
 	return err
 }

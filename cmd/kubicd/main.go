@@ -16,36 +16,36 @@ package main
 
 import (
 	"context"
-	"net"
-	"time"
-	"strings"
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
+	"net"
 	"os"
+	"strings"
+	"time"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	pb "github.com/thkukuk/kubic-control/api"
+	"github.com/thkukuk/kubic-control/pkg/certificate_server"
+	"github.com/thkukuk/kubic-control/pkg/deployment"
+	"github.com/thkukuk/kubic-control/pkg/kubeadm"
+	"github.com/thkukuk/kubic-control/pkg/yomi"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
 	"gopkg.in/ini.v1"
-	"github.com/spf13/cobra"
-	log "github.com/sirupsen/logrus"
-	"github.com/thkukuk/kubic-control/pkg/kubeadm"
-	"github.com/thkukuk/kubic-control/pkg/deployment"
-	"github.com/thkukuk/kubic-control/pkg/certificate_server"
-	"github.com/thkukuk/kubic-control/pkg/yomi"
-	pb "github.com/thkukuk/kubic-control/api"
 )
 
 var (
-	Version = "unreleased"
-	servername = "localhost"
-	port = "7148"
-	crtFile = "/etc/kubicd/pki/KubicD.crt"
-	keyFile = "/etc/kubicd/pki/KubicD.key"
-	caFile = "/etc/kubicd/pki/Kubic-Control-CA.crt"
+	Version      = "unreleased"
+	servername   = "localhost"
+	port         = "7148"
+	crtFile      = "/etc/kubicd/pki/KubicD.crt"
+	keyFile      = "/etc/kubicd/pki/KubicD.key"
+	caFile       = "/etc/kubicd/pki/Kubic-Control-CA.crt"
 	cfg, cfg_err = ini.LooseLoad("/usr/etc/kubicd/kubicd.conf", "/etc/kubicd/kubicd.conf")
 )
 
@@ -128,20 +128,19 @@ func (s *yomi_server) Install(in *pb.InstallRequest, stream pb.Yomi_InstallServe
 	return yomi.Install(in, stream)
 }
 
-
 func rbacCheck(user string, function string) bool {
 
 	rbac, rbac_err := ini.LooseLoad("/usr/etc/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
 
 	if rbac_err != nil {
-		log.Error ("Error opening rbac config file: %v", rbac_err)
+		log.Error("Error opening rbac config file: %v", rbac_err)
 		return false
 	}
 
 	api := strings.TrimPrefix(function, "/api.")
 
 	if !rbac.Section("").HasKey(api) {
-		log.Errorf ("RBAC: no entry for '%s'", api)
+		log.Errorf("RBAC: no entry for '%s'", api)
 		return false
 	}
 	value := rbac.Section("").Key(api).String()
@@ -219,26 +218,25 @@ func AuthStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.Str
 	return err
 }
 
-
 func loadConfigFile() {
 	if cfg_err, ok := cfg_err.(*os.PathError); ok {
 		log.Fatal(cfg_err)
 	}
 
 	if cfg.Section("global").HasKey("crtfile") {
-		crtFile =  cfg.Section("global").Key("crtfile").String()
+		crtFile = cfg.Section("global").Key("crtfile").String()
 	}
 	if cfg.Section("global").HasKey("keyfile") {
-		keyFile =  cfg.Section("global").Key("keyfile").String()
+		keyFile = cfg.Section("global").Key("keyfile").String()
 	}
 	if cfg.Section("global").HasKey("cafile") {
-		caFile =  cfg.Section("global").Key("cafile").String()
+		caFile = cfg.Section("global").Key("cafile").String()
 	}
 	if cfg.Section("global").HasKey("server") {
-		servername =  cfg.Section("global").Key("server").String()
+		servername = cfg.Section("global").Key("server").String()
 	}
 	if cfg.Section("global").HasKey("port") {
-		port =  cfg.Section("global").Key("port").String()
+		port = cfg.Section("global").Key("port").String()
 	}
 }
 
@@ -246,26 +244,26 @@ func main() {
 	loadConfigFile()
 
 	rootCmd := &cobra.Command{
-                Use:   "kubicd",
-                Short: "Kubic Control  Daemon",
-                Run:   kubicd,
-	        Args: cobra.ExactArgs(0),
+		Use:   "kubicd",
+		Short: "Kubic Control  Daemon",
+		Run:   kubicd,
+		Args:  cobra.ExactArgs(0),
 	}
 
 	rootCmd.Version = Version
-        rootCmd.PersistentFlags().StringVarP(&servername, "server", "s", servername, "Servername kubicd is listening on")
-        rootCmd.PersistentFlags().StringVarP(&port, "port", "p", port, "Port on which kubicd is listening")
-        rootCmd.PersistentFlags().StringVar(&crtFile, "crtfile", crtFile, "Certificate with the public key for the daemon")
-        rootCmd.PersistentFlags().StringVar(&keyFile, "keyfile", keyFile, "Private key for the daemon")
-        rootCmd.PersistentFlags().StringVar(&caFile, "cafile", caFile, "Certificate with the public key of the CA for the server certificate")
+	rootCmd.PersistentFlags().StringVarP(&servername, "server", "s", servername, "Servername kubicd is listening on")
+	rootCmd.PersistentFlags().StringVarP(&port, "port", "p", port, "Port on which kubicd is listening")
+	rootCmd.PersistentFlags().StringVar(&crtFile, "crtfile", crtFile, "Certificate with the public key for the daemon")
+	rootCmd.PersistentFlags().StringVar(&keyFile, "keyfile", keyFile, "Private key for the daemon")
+	rootCmd.PersistentFlags().StringVar(&caFile, "cafile", caFile, "Certificate with the public key of the CA for the server certificate")
 
 	if err := rootCmd.Execute(); err != nil {
-                os.Exit (1)
-        }
+		os.Exit(1)
+	}
 }
 
 func kubicd(cmd *cobra.Command, args []string) {
-        log.Infof("Kubic Daemon: %s", Version)
+	log.Infof("Kubic Daemon: %s", Version)
 
 	// Create directory in /var/lib
 	err := os.MkdirAll("/var/lib/kubic-control", os.ModePerm)
@@ -291,7 +289,7 @@ func kubicd(cmd *cobra.Command, args []string) {
 		log.Fatal("Failed to append client certs")
 	}
 
-	lis, err := net.Listen("tcp", servername + ":" + port)
+	lis, err := net.Listen("tcp", servername+":"+port)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}

@@ -15,24 +15,24 @@
 package kubicctl
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
-	"fmt"
-	"bytes"
 )
 
-func ExecuteCmd(command string, arg ...string) (error,string) {
+func ExecuteCmd(command string, arg ...string) (error, string) {
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 
-        cmd := exec.Command(command, arg...)
+	cmd := exec.Command(command, arg...)
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
 	//cmd.Print(cmd)
 
 	if err := cmd.Run(); err != nil {
-		fmt.Fprint(os.Stderr, "Error invoking " + command + ": " + fmt.Sprint(err) + "\n" + stderr.String() + "\n")
+		fmt.Fprint(os.Stderr, "Error invoking "+command+": "+fmt.Sprint(err)+"\n"+stderr.String()+"\n")
 		return err, "Error invoking " + command + ": " + err.Error()
 	} else {
 		fmt.Print(out.String())

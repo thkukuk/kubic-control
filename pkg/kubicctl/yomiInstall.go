@@ -16,21 +16,21 @@ package kubicctl
 
 import (
 	"context"
-	"time"
 	"fmt"
-	"os"
 	"io"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
 func YomiInstallCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "install <name>",
-                Short: "Install a new node with yomi",
-                Run: install,
-		Args: cobra.ExactArgs(1),
+	var subCmd = &cobra.Command{
+		Use:   "install <name>",
+		Short: "Install a new node with yomi",
+		Run:   install,
+		Args:  cobra.ExactArgs(1),
 	}
 
 	return subCmd
@@ -60,26 +60,26 @@ func install(cmd *cobra.Command, args []string) {
 	}
 
 	for {
-                r, err := stream.Recv()
-                if err == io.EOF {
-                        break
-                }
-                if err != nil {
-                        if r == nil {
-                                fmt.Fprintf(os.Stderr, "Installing '%s' with yomi failed: %v\n",
+		r, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			if r == nil {
+				fmt.Fprintf(os.Stderr, "Installing '%s' with yomi failed: %v\n",
 					node, err)
-                        } else {
-                                fmt.Fprintf(os.Stderr, "Installing '%s' with yomi failed: %s\n%v\n",
+			} else {
+				fmt.Fprintf(os.Stderr, "Installing '%s' with yomi failed: %s\n%v\n",
 					node, r.Message, err)
-                        }
-			retval = 1;
-                } else {
-			if (r.Success != true) {
+			}
+			retval = 1
+		} else {
+			if r.Success != true {
 				fmt.Fprintf(os.Stderr, "%s\n", r.Message)
 			} else {
 				fmt.Printf("%s\n", r.Message)
 			}
 		}
-        }
+	}
 	os.Exit(retval)
 }

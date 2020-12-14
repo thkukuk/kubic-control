@@ -16,21 +16,21 @@ package kubicctl
 
 import (
 	"context"
-	"time"
 	"fmt"
-	"os"
 	"io"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
 
 func UpgradeKubernetesCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "upgrade",
-                Short: "Upgrade Kubernetes Cluster",
-                Run: upgradeKubernetes,
-		Args: cobra.ExactArgs(0),
+	var subCmd = &cobra.Command{
+		Use:   "upgrade",
+		Short: "Upgrade Kubernetes Cluster",
+		Run:   upgradeKubernetes,
+		Args:  cobra.ExactArgs(0),
 	}
 
 	subCmd.PersistentFlags().StringVar(&kubernetesVersion, "kubernetes-version", kubernetesVersion, "Kubernetes version of the control plane to deploy")
@@ -52,30 +52,30 @@ func upgradeKubernetes(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 	defer cancel()
 
-	fmt.Print ("Upgrading kubernetes can take a very long time, please be patient.\n")
+	fmt.Print("Upgrading kubernetes can take a very long time, please be patient.\n")
 	stream, err := client.UpgradeKubernetes(ctx, &pb.UpgradeRequest{KubernetesVersion: kubernetesVersion})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not upgrade: %v", err)
 		os.Exit(1)
 	}
 	for {
-                r, err := stream.Recv()
-                if err == io.EOF {
-                        break
-                }
-                if err != nil  {
-                        if r == nil {
-                                fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %v\n",  err)
-                        } else {
-                                fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %s\n%v\n", r.Message, err)
-                        }
-                        os.Exit(1)
-                }
+		r, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			if r == nil {
+				fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %v\n", err)
+			} else {
+				fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %s\n%v\n", r.Message, err)
+			}
+			os.Exit(1)
+		}
 		if r.Success != true {
 			fmt.Fprintf(os.Stderr, "Upgrading kubernetes failed: %s\n", r.Message)
 			os.Exit(1)
 		} else {
 			fmt.Printf("%s\n", r.Message)
 		}
-        }
+	}
 }

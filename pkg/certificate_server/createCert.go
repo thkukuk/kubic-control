@@ -15,11 +15,11 @@
 package certificate
 
 import (
-	"os"
-        "os/exec"
-        "fmt"
-        "bytes"
+	"bytes"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"os/exec"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -28,35 +28,34 @@ import (
 
 var PKI_dir = "/etc/kubicd/pki"
 
-func ExecuteCmd(command string, arg ...string) (bool,string) {
-        var out bytes.Buffer
-        var stderr bytes.Buffer
+func ExecuteCmd(command string, arg ...string) (bool, string) {
+	var out bytes.Buffer
+	var stderr bytes.Buffer
 
-        cmd := exec.Command(command, arg...)
-        cmd.Stdout = &out
-        cmd.Stderr = &stderr
+	cmd := exec.Command(command, arg...)
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
 
-        //log.Info(cmd)
+	//log.Info(cmd)
 
-        if err := cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		errorstr := strings.TrimSpace(stderr.String())
-                log.Error("Error invoking " + command + ": " + fmt.Sprint(err) + "\n" + errorstr)
-                return false, "Error invoking " + command + ": " + err.Error() + " \n(" + errorstr + ")"
-        } else {
-                log.Info(out.String())
-        }
+		log.Error("Error invoking " + command + ": " + fmt.Sprint(err) + "\n" + errorstr)
+		return false, "Error invoking " + command + ": " + err.Error() + " \n(" + errorstr + ")"
+	} else {
+		log.Info(out.String())
+	}
 
-        return true, out.String()
+	return true, out.String()
 }
 
-
-func CreateUser (pki_dir string, cn string) (bool, string) {
+func CreateUser(pki_dir string, cn string) (bool, string) {
 	return ExecuteCmd("certstrap", "--depot-path", pki_dir,
 		"request-cert", "--common-name", cn, "--passphrase", "")
 }
 
-func SignUser (pki_dir string, cn string) (bool, string) {
-        return ExecuteCmd("certstrap", "--depot-path", pki_dir, "sign",
+func SignUser(pki_dir string, cn string) (bool, string) {
+	return ExecuteCmd("certstrap", "--depot-path", pki_dir, "sign",
 		cn, "--CA", "Kubic-Control-CA")
 }
 
@@ -64,24 +63,24 @@ func CreateCert(in *pb.CreateCertRequest) (bool, string, string, string) {
 
 	user := in.Name
 
-        success, message := CreateUser(PKI_dir, user)
-        if success != true {
-                return success, message, "", ""
-        }
-        success, message = SignUser(PKI_dir, user)
-        if  success != true {
-                return success, message, "", ""
-        }
+	success, message := CreateUser(PKI_dir, user)
+	if success != true {
+		return success, message, "", ""
+	}
+	success, message = SignUser(PKI_dir, user)
+	if success != true {
+		return success, message, "", ""
+	}
 
 	content_key, err := ioutil.ReadFile(PKI_dir + "/" + user + ".key")
-        if err != nil {
-                return false, err.Error(), "", ""
-        }
+	if err != nil {
+		return false, err.Error(), "", ""
+	}
 
 	content_crt, err := ioutil.ReadFile(PKI_dir + "/" + user + ".crt")
-        if err != nil {
-                return false, err.Error(), "", ""
-        }
+	if err != nil {
+		return false, err.Error(), "", ""
+	}
 
 	os.Remove(PKI_dir + "/" + user + ".key")
 	os.Remove(PKI_dir + "/" + user + ".crt")

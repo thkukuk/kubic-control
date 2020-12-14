@@ -2,23 +2,23 @@ package deployment
 
 import (
 	"errors"
-        "gopkg.in/ini.v1"
-        "github.com/thkukuk/kubic-control/pkg/tools"
+	"github.com/thkukuk/kubic-control/pkg/tools"
+	"gopkg.in/ini.v1"
 )
 
-const(
-	helmConfig = "/var/lib/kubic-control/k8s-helm.conf"
+const (
+	helmConfig      = "/var/lib/kubic-control/k8s-helm.conf"
 	adminKubeconfig = "/etc/kubernetes/admin.conf"
 )
 
-func setHelmConfig(chartName, releaseName, valuesPath, namespace string) error{
+func setHelmConfig(chartName, releaseName, valuesPath, namespace string) error {
 
 	var success bool
 	var message string
-	if valuesPath == ""{
+	if valuesPath == "" {
 		success, message = tools.ExecuteCmd("helm", "template", releaseName,
 			chartName, "--kubeconfig="+adminKubeconfig)
-	}else{
+	} else {
 		success, message = tools.ExecuteCmd("helm", "template", releaseName,
 			chartName, "--kubeconfig="+adminKubeconfig,
 			"-f", valuesPath)
@@ -27,24 +27,23 @@ func setHelmConfig(chartName, releaseName, valuesPath, namespace string) error{
 	if success != true {
 		return errors.New(message)
 	}
-	
+
 	result, err := tools.Sha256sum_b(message)
 
 	cfg, err := ini.LooseLoad(helmConfig)
 	if err != nil {
 		return err
-        }
+	}
 
 	cfg.Section("").Key(chartName).SetValue(result)
-	cfg.Section("").Key(chartName+".releaseName").SetValue(releaseName)
-	cfg.Section("").Key(chartName+".valuesPath").SetValue(valuesPath)
-	cfg.Section("").Key(chartName+".namespace").SetValue(namespace)
+	cfg.Section("").Key(chartName + ".releaseName").SetValue(releaseName)
+	cfg.Section("").Key(chartName + ".valuesPath").SetValue(valuesPath)
+	cfg.Section("").Key(chartName + ".namespace").SetValue(namespace)
 
-	
 	err = cfg.SaveTo(helmConfig)
-        if err != nil {
+	if err != nil {
 		return err
-        }
+	}
 	return nil
 }
 
@@ -55,17 +54,17 @@ func DeployHelm(chartName, releaseName, valuesPath, namespace string) error {
 	if namespace == "" {
 		namespace = "default"
 	}
-	if valuesPath == ""{
+	if valuesPath == "" {
 		success, message = tools.ExecuteCmd("helm", "install", releaseName,
 			chartName, "--kubeconfig=/etc/kubernetes/admin.conf",
 			"--namespace", namespace)
-	}else{
+	} else {
 		success, message = tools.ExecuteCmd("helm", "install", releaseName,
 			chartName, "--kubeconfig=/etc/kubernetes/admin.conf",
 			"-f", valuesPath,
 			"--namespace", namespace)
 	}
-	
+
 	if success != true {
 		return errors.New(message)
 	}

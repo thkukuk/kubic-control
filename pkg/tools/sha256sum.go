@@ -15,10 +15,10 @@
 package tools
 
 import (
-	"os"
-	"io"
-	"encoding/hex"
 	"crypto/sha256"
+	"encoding/hex"
+	"io"
+	"os"
 )
 
 func Sha256sum_b(buffer string) (result string, err error) {
@@ -29,18 +29,18 @@ func Sha256sum_b(buffer string) (result string, err error) {
 }
 
 func Sha256sum_f(filePath string) (result string, err error) {
-    file, err := os.Open(filePath)
-    if err != nil {
-        return "", err
-    }
-    defer file.Close()
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
 
-    hash := sha256.New()
-    _, err = io.Copy(hash, file)
-    if err != nil {
-        return "", err
-    }
+	hash := sha256.New()
+	_, err = io.Copy(hash, file)
+	if err != nil {
+		return "", err
+	}
 
-    result = hex.EncodeToString(hash.Sum(nil))
-    return result, nil
+	result = hex.EncodeToString(hash.Sum(nil))
+	return result, nil
 }

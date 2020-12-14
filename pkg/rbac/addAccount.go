@@ -15,32 +15,32 @@
 package rbac
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"strings"
 
-        "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 	"gopkg.in/ini.v1"
 )
 
 func AddAccountCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "add <role> <user>",
-                Short: "Add user account to a role",
-                Run: addAccount,
-                Args: cobra.ExactArgs(2),
-        }
+	var subCmd = &cobra.Command{
+		Use:   "add <role> <user>",
+		Short: "Add user account to a role",
+		Run:   addAccount,
+		Args:  cobra.ExactArgs(2),
+	}
 
-        return subCmd
+	return subCmd
 }
 
-func addAccount (cmd *cobra.Command, args []string) {
+func addAccount(cmd *cobra.Command, args []string) {
 	role := args[0]
 	user := args[1]
 	entry := ""
 
 	cfg, err := ini.LooseLoad("/usr/etc/kubicd/rbac.conf", "/etc/kubicd/rbac.conf")
-        if err != nil {
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot load rbac.conf: %v\n", err)
 		os.Exit(1)
 	}
@@ -51,12 +51,12 @@ func addAccount (cmd *cobra.Command, args []string) {
 		entry = cfg.Section("").Key(role).String()
 	}
 	userList := strings.Split(entry, ",")
-        for i := range userList {
-                if user == strings.TrimSpace(userList[i]) {
+	for i := range userList {
+		if user == strings.TrimSpace(userList[i]) {
 			fmt.Printf("User already part of '%s'\n", role)
-                        return
-                }
-        }
+			return
+		}
+	}
 	if len(entry) > 0 {
 		entry = entry + "," + user
 	} else {
@@ -72,6 +72,6 @@ func addAccount (cmd *cobra.Command, args []string) {
 	werr = wcfg.SaveTo("/etc/kubicd/rbac.conf")
 	if werr != nil {
 		fmt.Fprintf(os.Stderr, "Writing rbac.conf failed: %v\n", werr)
-		os.Exit (1)
+		os.Exit(1)
 	}
 }

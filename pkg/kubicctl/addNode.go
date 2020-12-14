@@ -16,12 +16,12 @@ package kubicctl
 
 import (
 	"context"
-	"time"
 	"fmt"
 	"io"
 	"os"
+	"time"
 
-        log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	pb "github.com/thkukuk/kubic-control/api"
 )
@@ -31,11 +31,11 @@ var (
 )
 
 func AddNodeCmd() *cobra.Command {
-        var subCmd = &cobra.Command {
-                Use:   "add <node>",
-                Short: "Add new nodes to cluster",
-                Run: addNode,
-		Args: cobra.ExactArgs(1),
+	var subCmd = &cobra.Command{
+		Use:   "add <node>",
+		Short: "Add new nodes to cluster",
+		Run:   addNode,
+		Args:  cobra.ExactArgs(1),
 	}
 
 	subCmd.PersistentFlags().StringVar(&nodeType, "type", nodeType, "type of node, valid values are 'worker' or 'master'")
@@ -66,25 +66,25 @@ func addNode(cmd *cobra.Command, args []string) {
 	}
 
 	for {
-                r, err := stream.Recv()
-                if err == io.EOF {
-                        break
-                }
-                if err != nil {
-                        if r == nil {
-                                fmt.Fprintf(os.Stderr, "Adding node %s failed: %v\n", nodes, err)
-                        } else {
-                                fmt.Fprintf(os.Stderr, "Adding node %s failed: %s\n%v\n", r.Message, err)
-                        }
-                        os.Exit(1)
-                }
-                if (r.Success != true) {
-                        fmt.Fprintf(os.Stderr, "%s\n", r.Message)
-                        os.Exit(1)
-                } else {
-                        fmt.Printf("%s\n", r.Message)
-                }
-        }
+		r, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			if r == nil {
+				fmt.Fprintf(os.Stderr, "Adding node %s failed: %v\n", nodes, err)
+			} else {
+				fmt.Fprintf(os.Stderr, "Adding node %s failed: %s\n%v\n", r.Message, err)
+			}
+			os.Exit(1)
+		}
+		if r.Success != true {
+			fmt.Fprintf(os.Stderr, "%s\n", r.Message)
+			os.Exit(1)
+		} else {
+			fmt.Printf("%s\n", r.Message)
+		}
+	}
 
 	fmt.Print("Node(s) successfully added\n")
 }

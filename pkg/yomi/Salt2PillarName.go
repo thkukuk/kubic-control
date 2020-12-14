@@ -20,7 +20,7 @@ import (
 
 func Salt2PillarName(name string) string {
 	// Replace all '.' with '_'
-	temp := strings.Replace(name, ".","_",-1)
+	temp := strings.Replace(name, ".", "_", -1)
 	// Replace all spaces with '-'
-	return strings.Replace(temp, " ","-",-1)
+	return strings.Replace(temp, " ", "-", -1)
 }
