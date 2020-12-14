@@ -95,7 +95,7 @@ is installed.
 For cilium or flannel instead of weave you have to use `kubicctl init
 --pod-network cilium` or `kubicctl init --pod-network flannel`.
 
-To deploy kubic without à CNI you have to use `kubicctl init 
+To deploy kubic without a CNI you have to use `kubicctl init 
 --pod-network none`
 
 To add additional worker nodes:
