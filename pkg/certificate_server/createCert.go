@@ -51,7 +51,8 @@ func ExecuteCmd(command string, arg ...string) (bool, string) {
 
 func CreateUser(pki_dir string, cn string) (bool, string) {
 	return ExecuteCmd("certstrap", "--depot-path", pki_dir,
-		"request-cert", "--common-name", cn, "--passphrase", "")
+		"request-cert", "--common-name", cn,
+		"--domain", "KubicD", "--passphrase", "")
 }
 
 func SignUser(pki_dir string, cn string) (bool, string) {
