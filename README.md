@@ -188,8 +188,8 @@ harddisk, install the new node and, if this new node is of type "master" or
 * node - Manage kubernetes nodes
   * add <node>,... - Add new nodes to cluster. Node names must be the name used by salt for that node. A comma separated list or '[]' syntax are allowed to specify more than one new node.
   * list - List all reacheable worker nodes
-  * reboot <node> - Reboot node from cluster. Node will be drained first. Node name must be the name used by salt for that node.
-  * remove - Remove node form cluster
+  * reboot <node> - Reboot node. Node will be drained first. Node name must be the name used by salt for that node.
+  * remove - Remove node from cluster
   * deploy - Install a new node
     * prepare <type> <node> - Prepare configuration to install new node with Yomi
     * install <type> <node> - Install new node with Yomi
