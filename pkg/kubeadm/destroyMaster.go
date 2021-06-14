@@ -35,7 +35,7 @@ func DestroyMaster(in *pb.Empty, stream pb.Kubeadm_DestroyMasterServer) error {
 			return err
 		}
 	}
-	tools.ExecuteCmd("/bin/sh", "-c", "ip link delete cni0;  ip link delete flannel.1; ip link delete cilium_vxlan")
+	tools.ExecuteCmd("/bin/sh", "-c", "ip link delete cni0; ip link delete flannel.1")
 
 	return nil
 }

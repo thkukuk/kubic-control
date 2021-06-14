@@ -45,7 +45,7 @@ func InitMasterCmd() *cobra.Command {
 	}
 
 	subCmd.PersistentFlags().StringVar(&multiMaster, "multi-master", multiMaster, "Setup multimaster cluster, argument needs to be the DNS name of the load balancer")
-	subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network, valid values are 'cilium', 'flannel', 'weave' or 'none'")
+	subCmd.PersistentFlags().StringVar(&podNetwork, "pod-network", podNetwork, "pod network, valid values are 'flannel', 'weave' or 'none'")
 	subCmd.PersistentFlags().StringVar(&adv_addr, "adv-addr", adv_addr, "IP address the API Server will advertise it's listening on")
 	subCmd.PersistentFlags().StringVar(&apiserver_cert_extra_sans, "apiserver-cert-extra-sans", apiserver_cert_extra_sans, "additional IPs to add to the APIserver certificate")
 	subCmd.PersistentFlags().StringVar(&kubernetesVersion, "kubernetes-version", kubernetesVersion, "Kubernetes version of the control plane to deploy")
