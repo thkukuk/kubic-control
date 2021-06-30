@@ -28,9 +28,6 @@ import (
 )
 
 const (
-	cilium_chart     = "/usr/share/k8s-helm/cilium/"
-	cilium_values    = "/etc/kubicd/helm/cilium.yaml"
-	cilium_namespace = "kube-system"
 	flannel_yaml     = "/usr/share/k8s-yaml/flannel/kube-flannel.yaml"
 	weave_yaml       = "/usr/share/k8s-yaml/weave/weave.yaml"
 	kured_yaml       = "/usr/share/k8s-yaml/kured/kured.yaml"
@@ -131,16 +128,8 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			}
 			return nil
 		}
-	} else if strings.EqualFold(arg_pod_network, "cilium") {
-		found, _ = exists(cilium_chart, "")
-		if found != true {
-			if err := stream.Send(&pb.StatusReply{Success: false, Message: "cilium-k8s-yaml is not installed!"}); err != nil {
-				return err
-			}
-			return nil
-		}
 	} else if !strings.EqualFold(arg_pod_network, "none") {
-		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Unsupported pod network, please use 'cilium', 'flannel', 'weave' or 'none'"}); err != nil {
+		if err := stream.Send(&pb.StatusReply{Success: false, Message: "Unsupported pod network, please use 'flannel', 'weave' or 'none'"}); err != nil {
 			return err
 		}
 		return nil
@@ -383,19 +372,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 			}
 			return nil
 		}
-	} else if strings.EqualFold(arg_pod_network, "cilium") {
-		// Setting up cilium
-		if err := stream.Send(&pb.StatusReply{Success: true, Message: "Deploy cilium"}); err != nil {
-			return err
-		}
-		if err := deployment.DeployHelm(cilium_chart, "cilium", cilium_values, cilium_namespace); err != nil {
-			ResetMaster()
-			if err := stream.Send(&pb.StatusReply{Success: success, Message: err.Error()}); err != nil {
-				return err
-			}
-			return nil
-		}
-	} else if strings.EqualFold(arg_pod_network, "cilium") {
+	} else if strings.EqualFold(arg_pod_network, "none") {
 		if err := stream.Send(&pb.StatusReply{Success: true, Message: "No CNI will be deployed"}); err != nil {
 			return err
 		}

@@ -117,7 +117,7 @@ func ResetNode(nodeName string, send OutputStream) (bool, string) {
 		"\"iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
 	tools.ExecuteCmd("salt", nodeName, "cmd.run", "\"rm -rf /var/lib/etcd/*\"")
 	tools.ExecuteCmd("salt", nodeName, "cmd.run", "\"rm -rf /var/lib/cni/*\"")
-	tools.ExecuteCmd("salt", nodeName, "cmd.run", "\"ip link delete cni0;  ip link delete flannel.1; ip link delete cilium_vxlan\"")
+	tools.ExecuteCmd("salt", nodeName, "cmd.run", "\"ip link delete cni0;  ip link delete flannel.1\"")
 	tools.ExecuteCmd("salt", nodeName, "service.disable", "kubelet")
 	tools.ExecuteCmd("salt", nodeName, "service.stop", "kubelet")
 	tools.ExecuteCmd("salt", nodeName, "service.disable", "crio")

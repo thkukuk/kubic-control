@@ -92,8 +92,7 @@ In this case, kubicd will configure the haproxy and add or remove master nodes
 depeding on the kubernetes cluster configuration automatically, if `haproxycfg`
 is installed.
 
-For cilium or flannel instead of weave you have to use `kubicctl init
---pod-network cilium` or `kubicctl init --pod-network flannel`.
+For flannel instead of weave you have to use `kubicctl init --pod-network flannel`.
 
 To deploy kubic without a CNI you have to use `kubicctl init 
 --pod-network none`
@@ -179,7 +178,7 @@ harddisk, install the new node and, if this new node is of type "master" or
 * init - Initialize Kubernetes Master Node
   * `--multi-master=<DNS name>`  	Setup HA masters, the argument must be the DNS name of the load balancer
   * `--haproxy=<salt name>` Adjust haproxy configuration for multi-master setup via salt
-  * `--pod-network=<flannel|cilium>`	Pod network
+  * `--pod-network=<flannel>`	Pod network
   * `--adv-addr=<IPaddr>`	IP address the API Server will advertise on
   * `--apiserver_cert_extra_sans=<IPaddr>`	additional IPs to add to the APIserver certificate
   * `--stage=<official|devel>` Specify to use the official images or from the devel project
