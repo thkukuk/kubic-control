@@ -140,7 +140,7 @@ func upgradeNodes(in *pb.UpgradeRequest,
 			tools.DrainNode(hostname, "")
 
 			success, message = tools.ExecuteCmd("salt", nodelist[i], "cmd.run",
-				"\"kubeadm upgrade node")
+				"\"kubeadm upgrade node\"")
 			if success != true {
 				failedNodes = failedNodes + nodelist[i] + " (kubeadm), "
 			} else {
