@@ -89,10 +89,10 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 
 	// Differentiate between 'name1,name2' and 'name[1,2]'
 	if strings.Index(nodeNames, ",") >= 0 && strings.Index(nodeNames, "[") == -1 {
-		success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", "--out=txt",
+		success, message = tools.ExecuteCmd("salt",  "--out=txt",
 			"-L", nodeNames, "test.ping")
 	} else {
-		success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", "--out=txt",
+		success, message = tools.ExecuteCmd("salt",  "--out=txt",
 			nodeNames, "test.ping")
 	}
 	if success != true {
@@ -121,7 +121,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 
 			stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": adding node..."})
 
-			success, message := tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "service.start", "crio")
+			success, message := tools.ExecuteCmd("salt",  nodelist[i], "service.start", "crio")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 					log.Errorf("Send message failed: %s", err)
@@ -129,7 +129,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 				failed++
 				return
 			}
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "service.enable", "crio")
+			success, message = tools.ExecuteCmd("salt",  nodelist[i], "service.enable", "crio")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 					log.Errorf("Send message failed: %s", err)
@@ -137,7 +137,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 				failed++
 				return
 			}
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "service.start", "kubelet")
+			success, message = tools.ExecuteCmd("salt",  nodelist[i], "service.start", "kubelet")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 					log.Errorf("Send message failed: %s", err)
@@ -145,7 +145,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 				failed++
 				return
 			}
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "service.enable", "kubelet")
+			success, message = tools.ExecuteCmd("salt",  nodelist[i], "service.enable", "kubelet")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 					log.Errorf("Send message failed: %s", err)
@@ -156,7 +156,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 
 			stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": joining cluster..."})
 
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "cmd.run", "\""+joincmd+"\"")
+			success, message = tools.ExecuteCmd("salt",  nodelist[i], "cmd.run", "\""+joincmd+"\"")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 					log.Errorf("Send message failed: %s", err)
@@ -164,7 +164,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 				failed++
 				return
 			}
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "grains.append", "kubicd", "kubic-"+nodeType+"-node")
+			success, message = tools.ExecuteCmd("salt",  nodelist[i], "grains.append", "kubicd", "kubic-"+nodeType+"-node")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 					log.Errorf("Send message failed: %s", err)
@@ -173,7 +173,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 				return
 			}
 			// Configure transactinal-update
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "cmd.run", "if [ -f /etc/transactional-update.conf ]; then grep -q ^REBOOT_METHOD= /etc/transactional-update.conf && sed -i -e 's|REBOOT_METHOD=.*|REBOOT_METHOD=kured|g' /etc/transactional-update.conf || echo REBOOT_METHOD=kured >> /etc/transactional-update.conf ; else echo REBOOT_METHOD=kured > /etc/transactional-update.conf ; fi")
+			success, message = tools.ExecuteCmd("salt",  nodelist[i], "cmd.run", "if [ -f /etc/transactional-update.conf ]; then grep -q ^REBOOT_METHOD= /etc/transactional-update.conf && sed -i -e 's|REBOOT_METHOD=.*|REBOOT_METHOD=kured|g' /etc/transactional-update.conf || echo REBOOT_METHOD=kured >> /etc/transactional-update.conf ; else echo REBOOT_METHOD=kured > /etc/transactional-update.conf ; fi")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 					log.Errorf("Send message failed: %s", err)
@@ -185,7 +185,7 @@ func AddNode(in *pb.AddNodeRequest, stream pb.Kubeadm_AddNodeServer) error {
 			if len(haproxy_salt) > 0 {
 				stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": adding node to haproxy loadbalancer..."})
 
-				success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", haproxy_salt, "cmd.run", "haproxycfg server add "+nodelist[i])
+				success, message = tools.ExecuteCmd("salt",  haproxy_salt, "cmd.run", "haproxycfg server add "+nodelist[i])
 				if success != true {
 					if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 						log.Errorf("Send message failed: %s", err)

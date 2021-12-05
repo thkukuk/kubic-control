@@ -31,7 +31,7 @@ func RebootNode(nodeName string) (bool, string) {
 		return success, message
 	}
 
-	success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "system.reboot")
+	success, message = tools.ExecuteCmd("salt",  nodeName, "system.reboot")
 	if success != true {
 		return success, message
 	}

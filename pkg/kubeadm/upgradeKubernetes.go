@@ -139,18 +139,18 @@ func upgradeNodes(in *pb.UpgradeRequest,
 			// if draining fails, ignore
 			tools.DrainNode(hostname, "")
 
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "cmd.run",
+			success, message = tools.ExecuteCmd("salt",  nodelist[i], "cmd.run",
 				"\"kubeadm upgrade node\"")
 			if success != true {
 				failedNodes = failedNodes + nodelist[i] + " (kubeadm), "
 			} else {
 				// Update kubelet
-				success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "cmd.run",
+				success, message = tools.ExecuteCmd("salt",  nodelist[i], "cmd.run",
 					"\"sed -i s/KUBELET_VER=.*/KUBELET_VER="+kubelet_version+"/ /etc/sysconfig/kubelet\"")
 				if success != true {
 					failedNodes = failedNodes + nodelist[i] + " (kubelet_ver), "
 				} else {
-					success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodelist[i], "service.restart", "kubelet")
+					success, message = tools.ExecuteCmd("salt",  nodelist[i], "service.restart", "kubelet")
 					if success != true {
 						failedNodes = failedNodes + nodelist[i] + " (kubelet), "
 					}

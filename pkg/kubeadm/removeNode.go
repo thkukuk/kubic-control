@@ -46,9 +46,9 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 		var message string
 
 		if strings.Index(in.NodeNames, ",") >= 0 && strings.Index(in.NodeNames, "[") == -1 {
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", "--out=txt", "-L", in.NodeNames, "grains.get", "kubicd")
+			success, message = tools.ExecuteCmd("salt",  "--out=txt", "-L", in.NodeNames, "grains.get", "kubicd")
 		} else {
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", "--out=txt", in.NodeNames, "grains.get", "kubicd")
+			success, message = tools.ExecuteCmd("salt",  "--out=txt", in.NodeNames, "grains.get", "kubicd")
 		}
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
@@ -92,7 +92,7 @@ func RemoveNode(in *pb.RemoveNodeRequest, stream pb.Kubeadm_RemoveNodeServer) er
 			// If loadbalancer is known, remove from haproxy
 			if len(haproxy_salt) > 0 {
 				stream.Send(&pb.StatusReply{Success: true, Message: nodelist[i] + ": removing node from haproxy loadbalancer..."})
-				success, message := tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", haproxy_salt, "cmd.run", "haproxycfg server remove "+nodelist[i])
+				success, message := tools.ExecuteCmd("salt",  haproxy_salt, "cmd.run", "haproxycfg server remove "+nodelist[i])
 				if success != true {
 					if err := stream.Send(&pb.StatusReply{Success: false, Message: nodelist[i] + ": " + message}); err != nil {
 						log.Errorf("Send message failed: %s", err)

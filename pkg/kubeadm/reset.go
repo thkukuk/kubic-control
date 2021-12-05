@@ -101,7 +101,7 @@ func ResetNode(nodeName string, send OutputStream) (bool, string) {
 	/* reset the node. Even if this fails, continue cleanup, but
 	   report back */
 	send(true, nodeName+": reset node...")
-	success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName,
+	success, message = tools.ExecuteCmd("salt",  nodeName,
 		"cmd.run", "kubeadm reset --force")
 	if success != true {
 		send(success, nodeName+": "+message+" (ignored)")
@@ -110,18 +110,18 @@ func ResetNode(nodeName string, send OutputStream) (bool, string) {
 
 	send(true, nodeName+": cleanup after kubeadm...")
 	/* Try some system cleanup, ignore if fails */
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "cmd.run",
+	tools.ExecuteCmd("salt",  nodeName, "cmd.run",
 		"sed -i -e 's|^REBOOT_METHOD=kured|REBOOT_METHOD=auto|g' /etc/transactional-update.conf")
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "grains.delkey", "kubicd")
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "cmd.run",
+	tools.ExecuteCmd("salt",  nodeName, "grains.delkey", "kubicd")
+	tools.ExecuteCmd("salt",  nodeName, "cmd.run",
 		"\"iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X\"")
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "cmd.run", "\"rm -rf /var/lib/etcd/*\"")
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "cmd.run", "\"rm -rf /var/lib/cni/*\"")
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "cmd.run", "\"ip link delete cni0;  ip link delete flannel.1\"")
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "service.disable", "kubelet")
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "service.stop", "kubelet")
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "service.disable", "crio")
-	tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", nodeName, "service.stop", "crio")
+	tools.ExecuteCmd("salt",  nodeName, "cmd.run", "\"rm -rf /var/lib/etcd/*\"")
+	tools.ExecuteCmd("salt",  nodeName, "cmd.run", "\"rm -rf /var/lib/cni/*\"")
+	tools.ExecuteCmd("salt",  nodeName, "cmd.run", "\"ip link delete cni0;  ip link delete flannel.1\"")
+	tools.ExecuteCmd("salt",  nodeName, "service.disable", "kubelet")
+	tools.ExecuteCmd("salt",  nodeName, "service.stop", "kubelet")
+	tools.ExecuteCmd("salt",  nodeName, "service.disable", "crio")
+	tools.ExecuteCmd("salt",  nodeName, "service.stop", "crio")
 
 	/* ignore if we cannot delete the node*/
 	send(true, nodeName+": final node deletion...")

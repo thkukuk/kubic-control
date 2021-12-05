@@ -74,7 +74,7 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	}
 
 	// make sure latest modules are used on minion
-	success, message := tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", in.Saltnode, "saltutil.sync_all")
+	success, message := tools.ExecuteCmd("salt",  in.Saltnode, "saltutil.sync_all")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: message}); err != nil {
@@ -117,7 +117,7 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	useEfi := false
 	if in.Efi == 0 {
 		// UEFI or BIOS?
-		success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", "--out=txt", in.Saltnode, "cmd.run",
+		success, message = tools.ExecuteCmd("salt",  "--out=txt", in.Saltnode, "cmd.run",
 			"test -f /sys/firmware/efi/systab && echo true || echo false")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false,
@@ -154,7 +154,7 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	useBareMetal := false
 	if in.Baremetal == 0 {
 		// bare metal or virtualisation?
-		success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", "--out=txt", in.Saltnode, "cmd.run", "systemd-detect-virt")
+		success, message = tools.ExecuteCmd("salt",  "--out=txt", in.Saltnode, "cmd.run", "systemd-detect-virt")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err != nil {
@@ -191,7 +191,7 @@ func PrepareConfig(in *pb.PrepareConfigRequest, stream pb.Yomi_PrepareConfigServ
 	if len(in.Disk) > 0 {
 		entry = "{% set disk = '" + in.Disk + "' %}\n"
 	} else {
-		success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", "--out=json", in.Saltnode, "devices.hwinfo", "disk")
+		success, message = tools.ExecuteCmd("salt",  "--out=json", in.Saltnode, "devices.hwinfo", "disk")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: false,
 				Message: message}); err != nil {

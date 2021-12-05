@@ -23,7 +23,7 @@ func GetNodeName(target string) (string, error) {
 
 	// salt host names are not identical with kubernetes node name.
 	// Output of hostname should be identical to node name
-	success, message := ExecuteCmd("salt", "--module-executors='[direct_call]'", target, "network.get_hostname")
+	success, message := ExecuteCmd("salt",  target, "network.get_hostname")
 	if success != true {
 		return target, errors.New(message)
 	}
