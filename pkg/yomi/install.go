@@ -39,7 +39,7 @@ func Install(in *pb.InstallRequest, stream pb.Yomi_InstallServer) error {
 	}
 
 	// make sure latest modules are used on minion
-	success, message := tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", in.Saltnode, "saltutil.sync_all")
+	success, message := tools.ExecuteCmd("salt", "--module-executors='direct_call'", in.Saltnode, "saltutil.sync_all")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: message}); err != nil {
@@ -49,7 +49,7 @@ func Install(in *pb.InstallRequest, stream pb.Yomi_InstallServer) error {
 	}
 
 	// wipe harddisk, else salt will not re-create them
-	success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", in.Saltnode, "state.apply", "yomi.storage.wipe")
+	success, message = tools.ExecuteCmd("salt", "--module-executors='direct_call'", in.Saltnode, "state.apply", "yomi.storage.wipe")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: message}); err != nil {
@@ -59,7 +59,7 @@ func Install(in *pb.InstallRequest, stream pb.Yomi_InstallServer) error {
 	}
 
 	// Do final installation
-	success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", in.Saltnode, "state.sls", "yomi.installer")
+	success, message = tools.ExecuteCmd("salt", "--module-executors='direct_call'", in.Saltnode, "state.sls", "yomi.installer")
 	if success != true {
 		if err := stream.Send(&pb.StatusReply{Success: false,
 			Message: message}); err != nil {
