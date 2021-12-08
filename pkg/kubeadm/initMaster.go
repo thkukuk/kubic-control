@@ -51,7 +51,7 @@ func update_cfg(file string, key string, value string) error {
 
 func executeCmdSalt(salt string, command string, arg ...string) (bool, string) {
 	if len(salt) > 0 {
-		return tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", salt, "cmd.run", command+" "+strings.Join(arg[:], " "))
+		return tools.ExecuteCmd("salt", "--module-executors='direct_call'", salt, "cmd.run", command+" "+strings.Join(arg[:], " "))
 	} else {
 		return tools.ExecuteCmd(command, arg...)
 	}
@@ -60,7 +60,7 @@ func executeCmdSalt(salt string, command string, arg ...string) (bool, string) {
 // exists returns whether the given file or directory exists
 func exists(path string, salt string) (bool, error) {
 	if len(salt) > 0 {
-		success, message := tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", "--out=txt", salt, "file.access", path, "f")
+		success, message := tools.ExecuteCmd("salt", "--module-executors='direct_call'", "--out=txt", salt, "file.access", path, "f")
 		if success != true {
 			return false, errors.New(message)
 		}
@@ -178,7 +178,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 				}
 				return nil
 			}
-			success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", in.Haproxy, "cmd.run",
+			success, message = tools.ExecuteCmd("salt", "--module-executors='direct_call'", in.Haproxy, "cmd.run",
 				"\"haproxycfg init --force "+in.MultiMaster+" "+hostname+"\"")
 			if success != true {
 				if err := stream.Send(&pb.StatusReply{Success: false, Message: message}); err != nil {
@@ -333,7 +333,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		// Get kubernetes/admin.conf for kubectl calls
 		tools.ExecuteCmd("mkdir", "/etc/kubernetes")
 		log.Infof("Download /etc/kubernetes/admin.conf")
-		success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", "--out=newline_values_only",
+		success, message = tools.ExecuteCmd("salt", "--module-executors='direct_call'", "--out=newline_values_only",
 			"--out-file=/etc/kubernetes/admin.conf", arg_salt,
 			"cmd.run", "cat /etc/kubernetes/admin.conf")
 		if success != true {
@@ -391,7 +391,7 @@ func InitMaster(in *pb.InitRequest, stream pb.Kubeadm_InitMasterServer) error {
 		return nil
 	}
 	if len(arg_salt) > 0 {
-		success, message = tools.ExecuteCmd("salt", "--module-executors='[direct_call]'", arg_salt, "grains.append", "kubicd", "kubic-master-node")
+		success, message = tools.ExecuteCmd("salt", "--module-executors='direct_call'", arg_salt, "grains.append", "kubicd", "kubic-master-node")
 		if success != true {
 			if err := stream.Send(&pb.StatusReply{Success: success, Message: message}); err != nil {
 				return err

@@ -25,7 +25,7 @@ func GetListOfNodes(role string) (bool, string, []string) {
 	}
 
 	// Get list of all nodes of this role
-	success, message := ExecuteCmd("salt", "--module-executors='[direct_call]'", "-G", "kubicd:kubic-"+role+"-node", "grains.get", "kubic-"+role+"-node")
+	success, message := ExecuteCmd("salt", "--module-executors='direct_call'", "-G", "kubicd:kubic-"+role+"-node", "grains.get", "kubic-"+role+"-node")
 	if success != true {
 		return success, message, nil
 	}
