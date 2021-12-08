@@ -49,6 +49,7 @@ help: ## Display this help screen
 release: ## create release package from git
 	git clone https://github.com/thkukuk/kubic-control
 	mv kubic-control kubic-control-$(VERSION)
+	rm -rf kubic-control-$(VERSION)/.git*
 	sed -i -e 's|USE_VENDOR =|USE_VENDOR = -mod vendor|g' kubic-control-$(VERSION)/Makefile
 	make -C kubic-control-$(VERSION) api
 	make -C kubic-control-$(VERSION) vendor
