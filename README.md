@@ -208,6 +208,12 @@ harddisk, install the new node and, if this new node is of type "master" or
 On the machine where `kubicd` is running, `/etc/kubicd` and
 `/var/lib/kubic-control` should be part of the backup.
 
+## Upgrade Notes
+
+There was a change in `go` in certificate handling. If you get an error message like
+`ERRO[0000] could not initialize: rpc error: code = Unavailable desc = connection error: desc = "transport: authentication handshake failed: x509: certificate relies on legacy Common Name field, use SANs or temporarily enable Common Name matching with GODEBUG=x509ignoreCN=0"`,
+please remove `/etc/kubicd/pki/KubicD.*` and run `kubicctl certificates initialize` again.
+
 ## Notes
 
 `Kubicd` does not store any informations about the state of the kubernetes

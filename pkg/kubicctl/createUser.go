@@ -16,7 +16,7 @@ package kubicctl
 
 func CreateUser(pki_dir string, cn string) error {
 	err, _ := ExecuteCmd("certstrap", "--depot-path", pki_dir, "request-cert",
-		"--common-name", cn, "--passphrase", "")
+		"--common-name", cn, "--domain", cn, "--passphrase", "")
 
 	return err
 }
